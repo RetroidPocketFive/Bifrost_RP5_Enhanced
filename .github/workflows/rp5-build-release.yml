@@ -14,6 +14,10 @@ jobs:
     name: Build Bifrost RP5 Edition
     runs-on: ubuntu-24.04
 
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -25,29 +29,30 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Configure Android SDK path
+      - name: Configure Android SDK
         run: |
-          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
-          echo "$ANDROID_HOME/emulator" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/cmdline-tools/16.0/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/build-tools/36.0.0" >> "$GITHUB_PATH"
 
-      - name: Check Android SDK
+      - name: Check Android environment
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          which sdkmanager
-          sdkmanager --version
-          adb --version
-
-      - name: Install required Android SDK packages
-        run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-36"
-          sdkmanager "build-tools;36.0.0"
+          echo
+          echo "SDK contents:"
+          ls -la "$ANDROID_HOME"
+          echo
+          echo "Command line tools:"
+          ls -la "$ANDROID_HOME/cmdline-tools" || true
+          echo
+          echo "SDK manager:"
+          which sdkmanager || true
+          sdkmanager --version || true
+          echo
+          echo "ADB:"
+          adb --version || true
 
       - name: Make Gradle executable
         run: chmod +x ./gradlew
@@ -55,18 +60,22 @@ jobs:
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
 
+      - name: Find APK
+        run: |
+          find app/build/outputs -type f -name "*.apk" -print
+
       - name: Prepare release APK
         run: |
           mkdir -p release
 
-          APK=$(find app/build/outputs/apk/debug -name "*.apk" -type f | head -n 1)
+          APK=$(find app/build/outputs/apk/debug -type f -name "*.apk" | head -n 1)
 
           if [ -z "$APK" ]; then
-            echo "ERROR: No APK was produced."
+            echo "ERROR: No debug APK was produced."
             exit 1
           fi
 
-          echo "Found APK: $APK"
+          echo "Using APK: $APK"
           cp "$APK" "release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk"
 
       - name: Upload APK as workflow artifact
