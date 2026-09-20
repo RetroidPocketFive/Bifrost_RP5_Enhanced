@@ -25,17 +25,22 @@ jobs:
           java-version: "17"
           cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
 
-      - name: Install Android SDK packages
+      - name: Show Android environment
         run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          adb --version || true
+          sdkmanager --version || true
+
+      - name: Install required Android SDK packages
+        run: |
+          yes | sdkmanager --licenses || true
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-36"
           sdkmanager "build-tools;36.0.0"
-
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
 
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
@@ -44,10 +49,13 @@ jobs:
         run: |
           mkdir -p release
           APK=$(find app/build/outputs/apk/debug -name "*.apk" -type f | head -n 1)
+
           if [ -z "$APK" ]; then
             echo "ERROR: No APK was produced."
             exit 1
           fi
+
+          echo "Found APK: $APK"
           cp "$APK" "release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk"
 
       - name: Upload APK as workflow artifact
