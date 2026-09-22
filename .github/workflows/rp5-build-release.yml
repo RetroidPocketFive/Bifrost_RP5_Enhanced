@@ -35,6 +35,8 @@ jobs:
           echo "$ANDROID_HOME/build-tools/36.0.0" >> "$GITHUB_PATH"
       - name: Make Gradle executable
         run: chmod +x ./gradlew
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
       - name: Find APK
