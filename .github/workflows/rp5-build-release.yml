@@ -2,6 +2,8 @@ name: Android Build and Release
 
 on:
   push:
+    branches:
+      - "v2/**"
     tags:
       - "v*.*.*"
   workflow_dispatch:
@@ -13,78 +15,42 @@ jobs:
   build:
     name: Build Bifrost RP5 Edition
     runs-on: ubuntu-24.04
-
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
-
       - name: Configure Android SDK
         run: |
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/cmdline-tools/16.0/bin" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/36.0.0" >> "$GITHUB_PATH"
-
-      - name: Check Android environment
-        run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          echo
-          echo "SDK contents:"
-          ls -la "$ANDROID_HOME"
-          echo
-          echo "Command line tools:"
-          ls -la "$ANDROID_HOME/cmdline-tools" || true
-          echo
-          echo "SDK manager:"
-          which sdkmanager || true
-          sdkmanager --version || true
-          echo
-          echo "ADB:"
-          adb --version || true
-
       - name: Make Gradle executable
         run: chmod +x ./gradlew
-
       - name: Build debug APK
         run: ./gradlew assembleDebug --stacktrace
-
       - name: Find APK
-        run: |
-          find app/build/outputs -type f -name "*.apk" -print
-
+        run: find app/build/outputs -type f -name "*.apk" -print
       - name: Prepare release APK
         run: |
           mkdir -p release
-
           APK=$(find app/build/outputs/apk/debug -type f -name "*.apk" | head -n 1)
-
-          if [ -z "$APK" ]; then
-            echo "ERROR: No debug APK was produced."
-            exit 1
-          fi
-
-          echo "Using APK: $APK"
+          if [ -z "$APK" ]; then echo "ERROR: No debug APK was produced."; exit 1; fi
           cp "$APK" "release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk"
-
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: Bifrost-RP5-Edition-${{ github.ref_name }}
           path: release/*.apk
           if-no-files-found: error
-
       - name: Upload APK to GitHub Release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
