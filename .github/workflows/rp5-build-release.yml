@@ -16,6 +16,7 @@ jobs:
     name: Build Bifrost RP5 Edition
     runs-on: ubuntu-24.04
     env:
+      SAFE_REF: ${{ github.ref_name }}
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
     steps:
