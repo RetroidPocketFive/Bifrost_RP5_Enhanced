@@ -52,7 +52,7 @@ jobs:
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Bifrost-RP5-Edition-${{ github.ref_name }}
+          name: Bifrost-RP5-Edition-v2-test
           path: release/*.apk
           if-no-files-found: error
       - name: Upload APK to GitHub Release
