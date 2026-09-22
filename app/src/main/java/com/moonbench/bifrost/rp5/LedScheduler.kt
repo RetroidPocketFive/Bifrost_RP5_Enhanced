@@ -57,14 +57,10 @@ class LedScheduler(
         }
         current = next
         val processed = LedColorProcessor.apply(next, brightness, gamma)
-        if (processed.isSameColorAs(lastWritten ?: returnWriteSentinel(processed))) {
+        if (lastWritten?.isSameColorAs(processed) == true) {
             return
         }
         driver.write(processed)
         lastWritten = processed
-    }
-
-    private fun returnWriteSentinel(frame: LedFrame): LedFrame {
-        return LedFrame(-1 and 0xFFFFFF, -1 and 0xFFFFFF, frame.timestampNanos)
     }
 }
