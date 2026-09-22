@@ -1,234 +1,479 @@
-# Bifrost -- LED Controller for the AYN Thor
+# Bifrost RP5 Edition
 
-Bifrost is a custom LED controller for the **AYN Thor** handheld (and might work for other handhelds).  
-It provides a collection of LED animations that can run in the background, including:
+**Bifrost RP5 Edition** is a Retroid Pocket 5-focused enhancement/fork of Bifrost, built around the RP5's independent left/right LED hardware.
+
+The project keeps the useful Bifrost features that already work on the RP5 while introducing a dedicated LED engine designed for low latency, smooth transitions, efficient background operation, calibration, and extensible effects.
+
+> **Development status:** v2 architecture work is in progress. The existing `v0.1.0-alpha.1` release is a known-good RP5 baseline. The new RP5 LED engine is being introduced incrementally and will be validated on real RP5 hardware before release.
+
+---
+
+## 🎮 RP5 Edition Goals
+
+The v2 direction is to make Bifrost feel like a purpose-built RP5 lighting system rather than a collection of independent animations.
+
+### Core architecture
+
+```
+Screen / Audio / Battery / Temperature / App Profile
+                         ↓
+                   Effect Engine
+                         ↓
+                    Frame Mixer
+                         ↓
+              Color Processing Layer
+                         ↓
+                  LED Scheduler
+                         ↓
+                   RP5 LED HAL
+                         ↓
+              PServer / LED Driver
+                         ↓
+                  Left + Right LEDs
+```
+
+The scheduler will become the single authority for LED output. Effects generate desired frames; the scheduler handles timing, smoothing, brightness, gamma, duplicate-frame suppression, priorities, and hardware writes.
+
+---
+
+# ✨ Current Features
+
+Bifrost already provides a substantial set of lighting features, including:
 
 - **Ambient**
 - **Audio Reactive**
-- **Ambi Aurora** (a mix of Ambient + Audio Reactive)
-- **Classic animations:** Breath, Rainbow, Pulse, and more
+- **Ambi Aurora**
+- Static, Breath, Rainbow, Pulse, Strobe, Sparkle, Rave, Chase and other animations
+- Independent left/right LED colors
+- Per-app profiles
+- Automatic profile switching
+- Charging indicators
+- CPU temperature effects
+- Presets
+- Preset artwork
+- Preset export/import
+- Auto-start support
+- External API / live effect control
+- MediaProjection screen capture
+- Accessibility capture fallback
+- Persistent foreground service controls
 
-Bifrost aims to bring a vibrant, customizable lighting experience to the  
-AYN Thor while keeping performance and battery consumption in mind.
-
-> ⚠️ **Important:** For animations to work, **Bifrost must stay alive in the background**.  
-> Closing the app or restricting notification (and screen recording for Ambient) activity will stop LED updates.
-
----
-
-# ✨ Features
-
-## Ambient
-
-Uses Android's screen recording API to sample the screen's left and right average colors.  
-For performance, Bifrost captures the screen in **2×1 pixels** and reads the RGB values directly from the buffer.
-
-### Options
-
-- **Custom color sampler** to eliminate pillarboxing/letterboxing and favor more vivid colors (useful for older content)
-- **Single color mode** to calculate one shared color for both sticks
-- **Saturation boost slider** for more intense colors
-- **Hex color input** for precise color selection
-
-When choosing the custom color sampler, Bifrost captures the screen using a **low-resolution 32-pixel grid**, allowing more advanced color analysis while remaining lightweight:
-
-- **Favors saturated colors** to improve vibrancy
-- Helps eliminate pillarboxing and letterboxing
+These existing capabilities are being retained while the RP5-specific engine is developed.
 
 ---
 
-## Audio Reactive
+# 🧩 v2 RP5 LED Engine
 
-Analyzes live audio levels (using the screen recording permission) to drive LED intensity.
+The first v2 architectural layer now lives under:
 
-### Improvements
+`app/src/main/java/com/moonbench/bifrost/rp5/`
 
-- Redesigned **reactivity system** using a single unified reactivity slider
-- Improved responsiveness and smoother audio-driven animations
+### LED frame model
+
+A `LedFrame` represents the complete desired state of both physical LEDs:
+
+- Left RGB
+- Right RGB
+- Frame timestamp
+
+This gives every effect a common output format.
+
+### LED driver abstraction
+
+The new `LedDriver` interface separates the LED engine from the underlying RP5 hardware transport.
+
+This allows the project to support:
+
+- The real RP5 driver
+- Future Retroid hardware
+- A mock driver for automated tests
+
+### Central scheduler
+
+`LedScheduler` provides the foundation for:
+
+- Configurable refresh rate
+- Frame coalescing
+- Duplicate-frame suppression
+- Brightness processing
+- Gamma processing
+- Smoothing
+- Clean shutdown
+
+The scheduler is intentionally being introduced before replacing the existing service's hardware path so existing functionality remains the reference implementation during migration.
+
+### Colour processing
+
+The new colour layer provides:
+
+- Brightness scaling
+- Gamma correction
+- Left/right frame blending
+- Transition-friendly colour interpolation
 
 ---
 
-## Ambi Aurora
+# 🎨 RP5 Colour Sampling
 
-Combines Ambient color sampling with Audio Reactive intensity for a hybrid effect.
+One of the major v2 features is a dedicated **Colour Sampling** system designed around the physical RP5 analogue sticks.
 
-### Enhancements
+Each LED can have its own sampling region:
 
-- Improved color calculation
-- Supports **custom sampling**, **single color mode**, and **saturation boost**
+```
+┌─────────────────────────────────┐
+│                                 │
+│                                 │
+│     ┌───────┐       ┌───────┐   │
+│     │ LEFT  │       │ RIGHT │   │
+│     │ SAMPLE│       │ SAMPLE│   │
+│     └───────┘       └───────┘   │
+│                                 │
+└─────────────────────────────────┘
+```
+
+### Calibration
+
+The regions are stored using **normalized coordinates** rather than screen pixels.
+
+That means calibration can survive changes in:
+
+- Capture resolution
+- Display resolution
+- Aspect ratio
+- Orientation
+
+Each region has independently adjustable:
+
+- X position
+- Y position
+- Size
+
+The default regions are positioned near the lower left and lower right analogue-stick areas, but users can move them to match their own preferences.
+
+### Live calibration
+
+The same sampling squares will be available over the **live captured screen**.
+
+Users will be able to:
+
+1. Start Live Screen preview.
+2. See the current captured image.
+3. Drag the LEFT and RIGHT sampling regions.
+4. Resize each region.
+5. See the sampled colour immediately.
+6. Test the physical LEDs.
+7. Save the calibration.
+
+A **Gallery** mode will also allow an image to be selected as a calibration canvas before testing against the live screen.
+
+### Sampling methods
+
+The engine is designed to support:
+
+- **Average**
+- **Center weighted**
+- **Dominant colour**
+
+Additional algorithms can be added without changing the rest of the LED pipeline.
+
+### Stability
+
+The sampling system is also intended to support:
+
+- Colour dead zones
+- Temporal smoothing
+- Flicker reduction
+- Orientation-aware mapping
+- Optional overlay visibility
+- Per-profile calibration
 
 ---
 
-## Animation Presets
+# 🎮 Calibration Profiles
 
-- Save multiple animation presets with their own settings
-- Automatically loads the **last selected preset** on app launch
-- Easy organization and quick switching
+Hardware calibration will be kept separate from game/effect profiles.
+
+For example:
+
+**RP5 Hardware Calibration**
+
+- Left sampling region
+- Right sampling region
+- Sampling algorithm
+- Orientation
+- Overlay preference
+
+**Game Profile**
+
+- Ambient / Audio / Static / Ambi Aurora
+- Brightness
+- Smoothing
+- Sensitivity
+- Effect settings
+
+This means the user calibrates the physical device once and can then reuse that calibration across games.
 
 ---
 
-## Performance Profiles
+# 🎛️ Effect System Direction
 
-Bifrost offers multiple performance-level modes.
+v2 is designed around layered responsibilities rather than making every animation responsible for hardware timing.
 
-The **Ragnarok profile** updates the Thor LED controller **as fast as possible**, which may cause latency or even crashes.
+A future configuration can conceptually look like:
+
+### Base
+Screen Ambient
+
+### Modulator
+Audio Reactive
+
+### System Override
+Battery warning
+
+### Output
+RP5 LED Scheduler
+
+This allows the left and right LEDs to behave independently while still being controlled by a common timing and hardware layer.
+
+Examples:
+
+- Left LED samples the left side of the screen.
+- Right LED samples the right side.
+- Audio changes brightness without replacing the sampled colour.
+- A low-battery warning can temporarily override normal effects.
+- App profiles can change the active effect automatically.
 
 ---
 
-# 🚀 New Features
+# ⚡ Performance and Battery
 
-Recent updates introduce several new capabilities.
+RP5 Edition v2 will treat performance as part of the design rather than an afterthought.
 
-## Auto Start
+Planned controls include:
 
-- **Auto-start on boot** so Bifrost resumes automatically after device reboot.
-- If auto-start is skipped because MediaProjection permission is required, Bifrost shows a notification to reopen the app and request the permission.
+### Battery Saver
 
-## App-based Profiles
+- Lower capture rate
+- Lower LED update rate
+- Reduced processing
 
-- Profiles can be **assigned to specific apps**
-- Bifrost automatically switches profiles depending on the **foreground application**
-- Optional **fallback preset** when no mapped app is in the foreground
-- First-use popup to explain app mode behavior
-- Immediate app-profile resolution when app mode is enabled
+### Balanced
 
-## Independent LED Control
+- Normal capture and LED refresh
 
-- **Separate left/right LED control**
-- Each stick can run **different colors or animations**
+### Performance
 
-## Charging Indicator
+- Higher update rate
+- Lowest practical latency
 
-Improved LED feedback while charging:
+The system will also reduce unnecessary work when:
 
-- Breathing lights while charging
-- Charging speed indication
-- Flash notification when charging completes
+- The display is off
+- The service is stopping
+- No frame has changed
+- An effect does not require continuous updates
+- Battery or thermal policy requires throttling
 
-## CPU Temperature Animation
+Screen analysis will use reduced-resolution processing where possible, while calibration/live preview can temporarily use a higher-quality capture.
 
-A new animation that changes LED colors based on **CPU temperature readings**.
+---
 
-## Preset Export / Import
+# 🛠️ Diagnostics and Developer Mode
 
-- Export presets as a **versioned JSON bundle**
-- Import presets in **Replace** or **Add** mode
-- Preset metadata, artwork references, and app-profile flags are preserved
+v2 will include a development/diagnostics layer so hardware problems can be separated from capture and effect problems.
 
-## Preset Artwork and Management
+The planned diagnostics view includes:
 
-- Preset artwork editor supports:
-  - Built-in icons
-  - Custom emoji
-  - Uploaded custom images
-  - Assigned app icons
-- Rename presets directly from the update flow
-- Long-press delete to remove **all presets** with confirmation
-- Horizontal preset presentation with smoother cover-flow and snap behavior
+```
+BIFROST RP5 DIAGNOSTICS
 
-## Animation Color Customization
+Capture
+  Resolution: 1920 × 1080
+  FPS: 30
 
-- Per-preset custom colors for **Battery Indicator**: low / mid / high
-- Per-preset custom colors for **CPU Temperature**: cool / warm / hot
-- Long-press color swatches to reset to defaults
+Sampler
+  Left:  #4287F5
+  Right: #E95671
 
-## Service and UX Controls
+LED
+  Output FPS: 24
+  Duplicate frames: 41%
 
-- Toggle for persistent foreground notification
-- Improved switch visuals and general UX polish
-- Better app-mode fallback handling: if app mode is on and no fallback preset is selected, Bifrost keeps the service active but does not apply an animation until a mapped/fallback preset can be resolved
+Service
+  Running: YES
+```
+
+A hardware test mode will provide direct testing of:
+
+- Left LED
+- Right LED
+- Both LEDs
+- Red
+- Green
+- Blue
+- White
+- Off
+- Fade
+- Pulse
+
+A mock LED driver will allow the frame engine and colour-processing logic to be tested without physical hardware.
+
+---
+
+# 🔧 v2 Development Priorities
+
+## Tier 1 — Engine foundation
+
+- [x] LED frame model
+- [x] LED driver abstraction
+- [x] Central scheduler foundation
+- [x] Brightness processing
+- [x] Gamma processing
+- [x] Frame blending foundation
+- [x] Duplicate-frame suppression
+- [x] Normalized sampling regions
+- [x] Colour sampler foundation
+- [ ] Integrate the scheduler with the existing RP5 hardware driver
+- [ ] Hardware abstraction backed by the current LED controller
+- [ ] Mock LED driver tests
+- [ ] Service lifecycle integration
+- [ ] Sleep/wake recovery
+- [ ] Battery/thermal governor
+- [ ] End-to-end latency diagnostics
+
+## Tier 2 — RP5 sampling
+
+- [x] Independent left/right regions
+- [x] Adjustable normalized position
+- [x] Adjustable region size
+- [x] Average sampling
+- [x] Center-weighted sampling
+- [x] Dominant-colour foundation
+- [ ] Live screen calibration UI
+- [ ] Gallery calibration UI
+- [ ] Drag/resize overlays
+- [ ] Sampled-colour indicators
+- [ ] Physical LED test from calibration screen
+- [ ] Calibration persistence
+- [ ] Orientation-aware calibration
+- [ ] Overlay visibility toggle
+
+## Tier 3 — Product polish
+
+- [ ] RP5-focused settings/navigation
+- [ ] Diagnostics screen
+- [ ] Developer mode
+- [ ] Hardware test screen
+- [ ] Profile/calibration separation
+- [ ] Expanded profile import/export
+- [ ] Presets for common RP5 layouts
+- [ ] Performance governor
+- [ ] Automatic recovery/failsafe LED off
+
+## Tier 4 — Advanced effects
+
+- [ ] Layered effects
+- [ ] Audio + ambient blending
+- [ ] Advanced colour interpolation
+- [ ] Region-of-interest capture optimization
+- [ ] Additional sampling algorithms
+- [ ] Shareable community profiles
+
+---
+
+# 🧪 Testing Strategy
+
+Every major v2 change should be tested at two levels.
+
+### Automated
+
+- Colour sampler tests
+- Normalized coordinate tests
+- Colour-processing tests
+- Scheduler tests
+- Profile/calibration migration tests
+- Service lifecycle tests
+
+### Real RP5
+
+The physical device remains the final authority for:
+
+- LED latency
+- Left/right synchronization
+- Brightness behaviour
+- Sleep/wake recovery
+- Battery impact
+- Thermal behaviour
+- MediaProjection behaviour
+- Live sampling accuracy
+
+Important test scenarios include:
+
+- Game → Home → Game
+- Game → Sleep → Wake → Game
+- Reboot → Auto Start
+- Screen rotation
+- Changing app profiles
+- Starting/stopping capture
+- Battery saver changes
+- Charging/unplugging
+- Service restart
+- Rapid colour changes
+- Rapid audio changes
 
 ---
 
 # 📦 Installation
 
-Bifrost can be installed in two different ways:
+The latest tested APKs are published through the project's GitHub Releases.
 
-## Method 1 — Manual APK install
+For the current RP5 baseline, use the **v0.1.0-alpha.1** release.
 
-1. Download the latest **APK** from the GitHub releases page.
-2. Open your **Downloads** folder.
-3. Tap the APK file to start the installation.
-4. If Android asks to allow installation from **unknown sources**, accept the permission.
-5. Complete the installation.
+Future v2 builds will be clearly labelled as development builds until the new engine has been validated on real RP5 hardware.
 
 ---
 
-## Method 2 — Install & update via Obtainium (recommended)
+# 🔒 Permissions
 
-If you use **Obtainium**, you can automatically receive updates:
+Ambient, Audio Reactive, Ambi Aurora and live screen sampling may require Android screen-capture permission.
 
-1. Open the Obtainium app  
-   https://github.com/ImranR98/Obtainium
+Screen data is processed locally for lighting purposes. Bifrost is not intended to save or transmit captured screen contents.
 
-2. Add a new app using this source:
-   https://github.com/Pollux-MoonBench/Bifrost/releases/
+Additional Android permissions may be required for:
 
-3. Follow the Obtainium installation process.
-
----
-
-# 🔒 Required Permissions
-
-To enable Ambient, Audio Reactive, and Ambi Aurora modes, Bifrost requires:
-
-### Screen recording permission
-
-Used exclusively to sample:
-
-- Screen colors (Ambient)
-- Audio intensity (Audio Reactive)
-
-Bifrost does **not save or transmit screen contents** — sampling happens locally and is reduced to minimal pixel data for efficiency.
+- Foreground service operation
+- Notifications
+- Accessibility fallback capture
+- Automatic startup
+- App-profile detection
 
 ---
 
-# 🎮 Other Tested Devices
+# 🎮 Hardware Focus
 
-Bifrost has been tested and confirmed to work on the following devices:
+Bifrost RP5 Edition is primarily developed and tested for:
 
-### AYN
-- Thor
-- Odin 2 Portal Pro
+- **Retroid Pocket 5**
 
-### Retroid
-- Pocket Mini V2
-- Pocket 5
+The upstream Bifrost project supports other handheld hardware. RP5-specific behaviour is being isolated where practical so future hardware support does not require rewriting the effect system.
 
 ---
 
-# ⚠️ In Dev Status
+# 📌 Project Status
 
-Bifrost is now **out of beta**, but still actively evolving.  
-While overall stability has improved, unexpected behavior may still occur on some devices.
+The project is actively being developed as **Bifrost RP5 Edition**.
 
-### Known issues
+The current release is a stable baseline for testing the existing Bifrost functionality on the RP5.
 
-- Random crashes under certain conditions
-- Granting notification permission at launch may cause the LED toggle switch to appear disabled even though animations continue running
-- On the Retroid Pocket Mini, only the left stick turns on in Ambient mode.  
-  This issue can be solved using the **custom color sampler mode**.
-
-Thanks to **r/hupo224** for helping investigate this issue.
+The v2 branch is introducing the new architecture incrementally. Features marked as planned are design targets and should not be considered available until their implementation and RP5 testing are complete.
 
 ---
 
-# ❤️ Contributors
+# ❤️ Credits
 
-Huge thanks to **KuriGohan-Kamehameha** for the **massive work and new features added to the project**, including major functionality improvements and system integrations.
+Bifrost RP5 Edition builds on the work of the original Bifrost project and its contributors.
 
-Project:  
-https://github.com/KuriGohan-Kamehameha
-
----
-
-# ☕ Support the Project
-
-If you enjoy Bifrost and want to support development, you can **buy me a coffee** here:
-
-👉 https://ko-fi.com/pollux_moonbench
-
-Thank you! ❤️
+Huge thanks to the upstream Bifrost contributors for the existing LED, capture, profile, animation, service and integration work that makes the RP5 Edition possible.
 
 ---
 
@@ -238,4 +483,3 @@ This project is licensed under **GPLv3**.
 
 You are free to use, study, modify, and redistribute the app under the terms of the GPLv3 license.
 
-This app is provided for free in this repository and **cannot be sold to you.**
