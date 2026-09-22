@@ -44,7 +44,8 @@ jobs:
           mkdir -p release
           APK=$(find app/build/outputs/apk/debug -type f -name "*.apk" | head -n 1)
           if [ -z "$APK" ]; then echo "ERROR: No debug APK was produced."; exit 1; fi
-          cp "$APK" "release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk"
+          SAFE_REF="${GITHUB_REF_NAME//\//-}"
+          cp "$APK" "release/Bifrost-RP5-Edition-${SAFE_REF}.apk"
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
