@@ -48,7 +48,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
     override fun onCreate(state:Bundle?) {
         super.onCreate(state)
         val cal=load()
-        view=Rp5CalibrationView { l,r -> save(l,r) }
+        view=Rp5CalibrationView(this) { l,r -> save(l,r); resampleCurrentFrame() }
         view.leftRegion=cal.left; view.rightRegion=cal.right
         val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setBackgroundColor(Color.BLACK) }
         val head=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(24,18,24,8) }
