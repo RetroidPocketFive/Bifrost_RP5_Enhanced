@@ -142,8 +142,10 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         view.leftColor=sampled.left; view.rightColor=sampled.right; testButton.isEnabled=true
     }
 
-    private fun sampleCurrentFrame(){
-        if(!liveMode)status.text="STILL IMAGE CALIBRATION"
+    private fun resampleCurrentFrame(){
+        val sampled=view.sample(sampler) ?: return
+        view.leftColor=sampled.left; view.rightColor=sampled.right
+        status.text=if(liveMode) "LIVE CALIBRATION" else "STILL IMAGE CALIBRATION"
     }
 
     private fun testPhysicalLeds() {
