@@ -630,7 +630,7 @@ class MainActivity : AppCompatActivity() {
             activity = this,
             title = getString(R.string.crash_report_title),
             subtitle = getString(R.string.crash_report_subtitle),
-            body = getString(R.string.crash_report_body),
+            body = getString(R.string.crash_report_body) + "\n\nUse Share the report, then send the text to the Bifrost RP5 Edition GitHub Issues page or directly to the project maintainer. GitHub Issues: https://github.com/RetroidPocketFive/Bifrost_RP5_Enhanced/issues",
             positiveLabelResId = R.string.crash_report_share,
             negativeLabelResId = R.string.crash_report_dismiss,
             cancelable = true,
