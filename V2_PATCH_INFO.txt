@@ -1,0 +1,7 @@
+Bifrost RP5 Edition v2 source patch
+Source branch: v2/rp5-led-engine
+Base: main
+Commit: fb6c49e76f38f3534e907a7d8db2b2ee990b1942
+
+This ZIP contains the v2 RP5 LED engine source/test files and the updated CI workflow.
+Upload the contents into the repository, preserving the directory structure.
