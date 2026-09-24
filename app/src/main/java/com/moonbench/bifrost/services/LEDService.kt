@@ -64,6 +64,8 @@ import com.moonbench.bifrost.external.Terminator
 import com.moonbench.bifrost.tools.Crossfade
 import com.moonbench.bifrost.tools.LedController
 import com.moonbench.bifrost.tools.PerformanceProfile
+import com.moonbench.bifrost.rp5.LedScheduler
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 class LEDService : Service() {
@@ -161,6 +163,10 @@ class LEDService : Service() {
     private var mediaProjection: MediaProjection? = null
     private lateinit var mediaProjectionManager: MediaProjectionManager
     private lateinit var ledController: LedController
+    private val ledExecutor = Executors.newSingleThreadScheduledExecutor { runnable ->
+        Thread(runnable, "Bifrost-RP5-LedScheduler").apply { isDaemon = true }
+    }
+    private lateinit var ledScheduler: LedScheduler
     private var currentAnimation: LedAnimation? = null
     private val handler = Handler(Looper.getMainLooper())
     private val isTransitioning = AtomicBoolean(false)
@@ -407,6 +413,16 @@ class LEDService : Service() {
         createNotificationChannel()
         mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
         ledController = LedController()
+        ledScheduler = LedScheduler(
+            driver = ledController,
+            executor = ledExecutor,
+            refreshHz = 60,
+            brightness = 1f,
+            gamma = 1f,
+            smoothing = 0f,
+        )
+        ledController.attachFrameSink(ledScheduler::submit)
+        ledScheduler.start()
         registerBatteryStateReceiver()
         refreshBatteryStateSnapshot()
         mountScreenBrightnessObserver()
@@ -1229,6 +1245,11 @@ class LEDService : Service() {
             releasePipboyWakeLock()
 
             stopCurrentAnimation()
+
+            // Stop the scheduler before the delayed hardware-off sequence so no
+            // pending animation frame can race the shutdown write.
+            runCatching { ledScheduler.stop(clear = true) }
+            runCatching { ledController.detachFrameSink() }
 
             pendingShutdownRunnable = Runnable {
                 try {
