@@ -91,6 +91,7 @@ import java.util.Date
 import java.util.Locale
 import java.io.File
 import com.moonbench.bifrost.plugins.PluginLaunchManager
+import com.moonbench.bifrost.rp5.Rp5CalibrationActivity
 import com.moonbench.bifrost.plugins.PluginStoreActivity
 import com.moonbench.bifrost.schedule.ScheduleActivity
 
@@ -725,6 +726,9 @@ class MainActivity : AppCompatActivity() {
         sensitivitySeekBar = findViewById(R.id.sensitivitySeekBar)
         saturationBoostSeekBar = findViewById(R.id.saturationBoostSeekBar)
         customSamplingSwitch = findViewById(R.id.customSamplingSwitch)
+        findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
+            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+        }
         singleColorSwitch = findViewById(R.id.singleColorSwitch)
         ambilightUseMediaProjectionSwitch = findViewById(R.id.ambilightUseMediaProjectionSwitch)
         breatheWhenChargingSwitch = findViewById(R.id.breatheWhenChargingSwitch)
