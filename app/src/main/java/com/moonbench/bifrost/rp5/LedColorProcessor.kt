@@ -9,7 +9,11 @@ object LedColorProcessor {
         return LedFrame(
             transform(frame.left, brightness, gamma),
             transform(frame.right, brightness, gamma),
-            frame.timestampNanos
+            frame.timestampNanos,
+            frame.leftTop,
+            frame.leftBottom,
+            frame.rightTop,
+            frame.rightBottom
         )
     }
 
@@ -18,7 +22,11 @@ object LedColorProcessor {
         return LedFrame(
             lerp(from.left, to.left, t),
             lerp(from.right, to.right, t),
-            to.timestampNanos
+            to.timestampNanos,
+            to.leftTop,
+            to.leftBottom,
+            to.rightTop,
+            to.rightBottom
         )
     }
 
