@@ -50,10 +50,10 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         view.leftRegion=cal.left; view.rightRegion=cal.right
         val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setBackgroundColor(Color.BLACK) }
         val head=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(24,18,24,8) }
-        status=TextView(this).apply { text="Live RP5 calibration"; setTextColor(Color.WHITE); textSize=18f }
+        status=TextView(this).apply { text="RP5 LED CALIBRATION"; setTextColor(Color.WHITE); textSize=18f }
         head.addView(status)
         head.addView(TextView(this).apply {
-            text="Drag each square to move it. Drag near an edge to resize. Colours update from the live screen."
+            text="Place the squares over the physical thumb-stick areas. Move or resize them until the sampled colours look right."
             setTextColor(Color.LTGRAY); textSize=13f
         })
         val buttons=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
@@ -75,6 +75,10 @@ class Rp5CalibrationActivity : AppCompatActivity() {
             setOnClickListener { save(view.leftRegion,view.rightRegion); finish() }
         },LinearLayout.LayoutParams(0,56,1f))
         root.addView(head)
+        val sources=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        sources.addView(MaterialButton(this).apply { text="LIVE CALIBRATION"; setOnClickListener { chooseLive() } },LinearLayout.LayoutParams(0,56,1f))
+        sources.addView(MaterialButton(this).apply { text="STILL IMAGE"; setOnClickListener { stillPicker.launch("image/*") } },LinearLayout.LayoutParams(0,56,1f))
+        root.addView(sources)
         root.addView(view,LinearLayout.LayoutParams(-1,0,1f))
         root.addView(buttons)
         testButton.isEnabled=false
@@ -121,6 +125,63 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         },handler)
         display=projection!!.createVirtualDisplay("BifrostRP5Calibration",w,h,dm.densityDpi,
             DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,reader!!.surface,null,handler)
+    }
+
+    private val stillPicker=registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if(uri==null)return@registerForActivityResult
+        val bitmap=runCatching { contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } }.getOrNull()
+        if(bitmap==null){ status.text="Could not open that image."; return@registerForActivityResult }
+        stopCapture(); liveMode=false; view.setFrame(bitmap); sampleBitmap(bitmap)
+        status.text="STILL IMAGE CALIBRATION   LEFT #%06X   RIGHT #%06X".format(view.leftColor and 0xffffff,view.rightColor and 0xffffff)
+    }
+
+    private fun chooseLive(){
+        liveMode=true
+        val code=MainActivity.mediaProjectionResultCode
+        val data=MainActivity.mediaProjectionData
+        if(code!=null && data!=null) runCatching { startLiveCapture(code,data) }.onFailure { requestLivePermission() } else requestLivePermission()
+    }
+
+    private fun requestLivePermission(){
+        val manager=getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        permission.launch(manager.createScreenCaptureIntent())
+    }
+
+    private fun startLiveCapture(code:Int,data:Intent){
+        stopCapture()
+        val manager=getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        projection=manager.getMediaProjection(code,data)
+        val dm=DisplayMetrics()
+        @Suppress("DEPRECATION") (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.getRealMetrics(dm)
+        val captureWidth=480
+        val captureHeight=(dm.heightPixels.toFloat()/dm.widthPixels.toFloat()*captureWidth).toInt().coerceAtLeast(1)
+        reader=ImageReader.newInstance(captureWidth,captureHeight,android.graphics.PixelFormat.RGBA_8888,2)
+        reader!!.setOnImageAvailableListener({ rr ->
+            val image=rr.acquireLatestImage() ?: return@setOnImageAvailableListener
+            try{
+                val plane=image.planes[0]
+                val paddedWidth=captureWidth+(plane.rowStride-plane.pixelStride*captureWidth)/plane.pixelStride
+                val bitmap=Bitmap.createBitmap(paddedWidth,captureHeight,Bitmap.Config.ARGB_8888)
+                bitmap.copyPixelsFromBuffer(plane.buffer)
+                val cropped=if(paddedWidth!=captureWidth)Bitmap.createBitmap(bitmap,0,0,captureWidth,captureHeight)else bitmap
+                if(cropped!==bitmap)bitmap.recycle()
+                sampleBitmap(cropped)
+                runOnUiThread{ view.setFrame(cropped); status.text="LIVE CALIBRATION   LEFT #%06X   RIGHT #%06X".format(view.leftColor and 0xffffff,view.rightColor and 0xffffff); testButton.isEnabled=true }
+            }finally{image.close()}
+        },handler)
+        display=projection!!.createVirtualDisplay("BifrostRP5Calibration",captureWidth,captureHeight,dm.densityDpi,DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,reader!!.surface,null,handler)
+        status.text="LIVE CALIBRATION"
+    }
+
+    private fun sampleBitmap(bitmap:Bitmap){
+        val pixels=IntArray(bitmap.width*bitmap.height)
+        bitmap.getPixels(pixels,0,bitmap.width,0,0,bitmap.width,bitmap.height)
+        val sampled=sampler.sample(pixels,bitmap.width,bitmap.height,view.leftRegion,view.rightRegion)
+        view.leftColor=sampled.left; view.rightColor=sampled.right; testButton.isEnabled=true
+    }
+
+    private fun sampleCurrentFrame(){
+        if(!liveMode)status.text="STILL IMAGE CALIBRATION"
     }
 
     private fun testPhysicalLeds() {
