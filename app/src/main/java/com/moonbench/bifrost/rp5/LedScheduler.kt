@@ -18,7 +18,7 @@ class LedScheduler(
     private var task: ScheduledFuture<*>? = null
     private var current: LedFrame? = null
 
-    private val periodMs = (1000L / refreshHz.coerceIn(1, 120))
+    private val periodMs = (1000.0 / refreshHz.coerceIn(1, 120)).toLong().coerceAtLeast(1L)
 
     init {
         require(brightness in 0f..1f)
