@@ -11,7 +11,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-class Rp5CalibrationView(private val changed: (NormalizedRegion, NormalizedRegion) -> Unit) : View {
+class Rp5CalibrationView(private val changed: (NormalizedRegion, NormalizedRegion) -> Unit) : View(null) {
     var leftRegion = NormalizedRegion(.25f, .78f, .18f); set(v) { field=v; invalidate() }
     var rightRegion = NormalizedRegion(.75f, .78f, .18f); set(v) { field=v; invalidate() }
     var leftColor = Color.WHITE; set(v) { field=v; invalidate() }
