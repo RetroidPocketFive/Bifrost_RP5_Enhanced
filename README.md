@@ -155,13 +155,13 @@ Bifrost can be installed in two different ways:
 
 ## Method 2 — Install & update via Obtainium (recommended)
 
-If you use **Obtainium**, you can automatically receive updates:
+If you use **Obtainium**, you can automatically receive updates from this RP5 Edition repository:
 
 1. Open the Obtainium app  
    https://github.com/ImranR98/Obtainium
 
 2. Add a new app using this source:
-   https://github.com/Pollux-MoonBench/Bifrost/releases/
+   https://github.com/RetroidPocketFive/Bifrost_RP5_Enhanced/releases/
 
 3. Follow the Obtainium installation process.
 
@@ -184,18 +184,11 @@ Bifrost does **not save or transmit screen contents** — sampling happens local
 
 # 🎮 Hardware Focus
 
-**Bifrost RP5 Edition is primarily developed and tested for the Retroid Pocket 5.**
+**Bifrost RP5 Edition is developed specifically for the Retroid Pocket 5.**
 
-The upstream Bifrost project supports other handheld hardware. RP5-specific development is being isolated where practical so future hardware support does not require rewriting the effect system.
+The **Retroid Pocket 5 is the only supported and tested target for this fork**. Other handhelds are untested and may not be supported.
 
-### Retroid
-- **Pocket 5** — primary target
-- Pocket Mini V2 — upstream/compatibility target
-
-### AYN
-- Thor — upstream heritage / compatibility target
-
----
+The upstream Bifrost project supports other hardware, but compatibility with those devices should not be assumed for Bifrost RP5 Edition.
 
 # 📌 RP5 Edition Status
 
