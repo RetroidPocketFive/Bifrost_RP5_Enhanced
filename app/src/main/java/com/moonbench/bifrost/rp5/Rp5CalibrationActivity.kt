@@ -29,6 +29,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
     private lateinit var testButton: MaterialButton
     private val prefs by lazy { getSharedPreferences("bifrost_rp5_calibration", MODE_PRIVATE) }
     private val handler=Handler(Looper.getMainLooper())
+    private val sampler = ColorSampler(SamplingMethod.CENTER_WEIGHTED)
     private var projection:MediaProjection?=null
     private var display:VirtualDisplay?=null
     private var reader:ImageReader?=null
@@ -106,7 +107,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
                 if(cropped!==bitmap) bitmap.recycle()
                 val pixels=IntArray(w*h)
                 cropped.getPixels(pixels,0,w,0,0,w,h)
-                val sampled=ColorSampler.sample(pixels,w,h,view.leftRegion,view.rightRegion)
+                val sampled=sampler.sample(pixels,w,h,view.leftRegion,view.rightRegion)
                 runOnUiThread {
                     view.leftColor=sampled.left
                     view.rightColor=sampled.right
