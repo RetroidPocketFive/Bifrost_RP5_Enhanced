@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.hardware.display.DisplayManager
 import android.hardware.display.VirtualDisplay
@@ -34,12 +35,13 @@ class Rp5CalibrationActivity : AppCompatActivity() {
     private var projection:MediaProjection?=null
     private var display:VirtualDisplay?=null
     private var reader:ImageReader?=null
+    private var liveMode=false
 
     private val permission=registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if(r.resultCode==Activity.RESULT_OK && r.data!=null) {
             MainActivity.mediaProjectionResultCode=r.resultCode
             MainActivity.mediaProjectionData=r.data
-            capture(r.resultCode,r.data!!)
+            startLiveCapture(r.resultCode,r.data!!)
         } else status.text="Screen capture permission is required for live calibration."
     }
 
@@ -84,47 +86,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         testButton.isEnabled=false
         setContentView(root)
 
-        if(MainActivity.mediaProjectionResultCode!=null && MainActivity.mediaProjectionData!=null)
-            capture(MainActivity.mediaProjectionResultCode!!,MainActivity.mediaProjectionData!!)
-        else {
-            val m=getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-            permission.launch(m.createScreenCaptureIntent())
-        }
-    }
-
-    private fun capture(code:Int,data:Intent) {
-        stopCapture()
-        val manager=getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        projection=manager.getMediaProjection(code,data)
-        val dm=DisplayMetrics()
-        @Suppress("DEPRECATION")
-        (getSystemService(Context.WINDOW_SERVICE) as WindowManager).defaultDisplay.getRealMetrics(dm)
-        val w=dm.widthPixels; val h=dm.heightPixels
-        reader=ImageReader.newInstance(w,h,android.graphics.PixelFormat.RGBA_8888,2)
-        reader!!.setOnImageAvailableListener({ rr ->
-            val image=rr.acquireLatestImage() ?: return@setOnImageAvailableListener
-            try {
-                val plane=image.planes[0]
-                val bitmapWidth=w+(plane.rowStride-plane.pixelStride*w)/plane.pixelStride
-                val bitmap=Bitmap.createBitmap(bitmapWidth,h,Bitmap.Config.ARGB_8888)
-                bitmap.copyPixelsFromBuffer(plane.buffer)
-                val cropped=if(bitmapWidth!=w) Bitmap.createBitmap(bitmap,0,0,w,h) else bitmap
-                if(cropped!==bitmap) bitmap.recycle()
-                val pixels=IntArray(w*h)
-                cropped.getPixels(pixels,0,w,0,0,w,h)
-                val sampled=sampler.sample(pixels,w,h,view.leftRegion,view.rightRegion)
-                runOnUiThread {
-                    view.leftColor=sampled.left
-                    view.rightColor=sampled.right
-                    testButton.isEnabled=true
-                    view.setFrame(cropped.copy(Bitmap.Config.ARGB_8888,false))
-                    status.text="LIVE   LEFT #%06X   RIGHT #%06X".format(sampled.left and 0xffffff,sampled.right and 0xffffff)
-                    cropped.recycle()
-                }
-            } finally { image.close() }
-        },handler)
-        display=projection!!.createVirtualDisplay("BifrostRP5Calibration",w,h,dm.densityDpi,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,reader!!.surface,null,handler)
+        status.text="Choose LIVE CALIBRATION or STILL IMAGE to begin."
     }
 
     private val stillPicker=registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
