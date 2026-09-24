@@ -140,18 +140,18 @@ class LedController : LedDriver {
                 .append(" > /sys/class/sn3112l/led/brightness")
         }
         if (leftBottom) {
-            if (commandBuilder.isNotEmpty()) commandBuilder.append(" && ")
-            commandBuilder.append("echo 2-").append(sr).append(':').append(sg).append(':').append(sb).append(':').append(br)
+            if (commandBuilder.isNotEmpty()) commandBuilder.append(" ; ")
+            commandBuilder.append("echo 2-").append(sr).append(':').append(sg).append(':').append(sb)
                 .append(" > /sys/class/sn3112l/led/brightness")
         }
         if (rightTop) {
-            if (commandBuilder.isNotEmpty()) commandBuilder.append(" && ")
-            commandBuilder.append("echo 1-").append(sr).append(':').append(sg).append(':').append(sb).append(':').append(br)
+            if (commandBuilder.isNotEmpty()) commandBuilder.append(" ; ")
+            commandBuilder.append("echo 1-").append(sr).append(':').append(sg).append(':').append(sb)
                 .append(" > /sys/class/sn3112r/led/brightness")
         }
         if (rightBottom) {
-            if (commandBuilder.isNotEmpty()) commandBuilder.append(" && ")
-            commandBuilder.append("echo 2-").append(sr).append(':').append(sg).append(':').append(sb).append(':').append(br)
+            if (commandBuilder.isNotEmpty()) commandBuilder.append(" ; ")
+            commandBuilder.append("echo 2-").append(sr).append(':').append(sg).append(':').append(sb)
                 .append(" > /sys/class/sn3112r/led/brightness")
         }
 
@@ -216,11 +216,11 @@ class LedController : LedDriver {
         val cmd = StringBuilder(220)
         if (leftTop) cmd.append("echo 1-").append(slr).append(':').append(slg).append(':').append(slb)
             .append(" > /sys/class/sn3112l/led/brightness")
-        if (leftBottom) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 2-").append(slr).append(':').append(slg).append(':').append(slb).append(':').append(br)
+        if (leftBottom) { if (cmd.isNotEmpty()) cmd.append(" ; "); cmd.append("echo 2-").append(slr).append(':').append(slg).append(':').append(slb)
             .append(" > /sys/class/sn3112l/led/brightness") }
-        if (rightTop) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 1-").append(srr).append(':').append(srg).append(':').append(srb)
+        if (rightTop) { if (cmd.isNotEmpty()) cmd.append(" ; "); cmd.append("echo 1-").append(srr).append(':').append(srg).append(':').append(srb)
             .append(" > /sys/class/sn3112r/led/brightness") }
-        if (rightBottom) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 2-").append(srr).append(':').append(srg).append(':').append(srb).append(':').append(br)
+        if (rightBottom) { if (cmd.isNotEmpty()) cmd.append(" ; "); cmd.append("echo 2-").append(srr).append(':').append(srg).append(':').append(srb)
             .append(" > /sys/class/sn3112r/led/brightness") }
         if (cmd.isNotEmpty()) executeCommandDirect(cmd.toString())
     }
