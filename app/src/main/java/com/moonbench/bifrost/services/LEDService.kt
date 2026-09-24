@@ -106,6 +106,10 @@ class LEDService : Service() {
         const val ACTION_EXTERNAL_DISPLAY = "com.moonbench.bifrost.EXTERNAL_DISPLAY"
         const val ACTION_EXTERNAL_CLEAR = "com.moonbench.bifrost.EXTERNAL_CLEAR"
         const val ACTION_EXTERNAL_PULSE = "com.moonbench.bifrost.EXTERNAL_PULSE"
+        const val ACTION_RP5_LED_TEST = "com.moonbench.bifrost.RP5_LED_TEST"
+        const val EXTRA_RP5_LEFT_COLOR = "rp5.leftColor"
+        const val EXTRA_RP5_RIGHT_COLOR = "rp5.rightColor"
+        const val EXTRA_RP5_TEST_DURATION_MS = "rp5.durationMs"
         const val EXTRA_EXTERNAL_PULSE_KIND = "external.pulseKind"
         const val EXTRA_ALLOW_BACKGROUND_RUN = "allowBackgroundRun"
         const val EXTRA_BATTERY_OVERRIDE_WHEN_PLUGGED = "batteryOverrideWhenPlugged"
@@ -473,6 +477,11 @@ class LEDService : Service() {
             return START_NOT_STICKY
         }
 
+        if (intent.action == ACTION_RP5_LED_TEST) {
+            handleRp5LedTest(intent)
+            return START_NOT_STICKY
+        }
+
         allowBackgroundRun = intent.getBooleanExtra(EXTRA_ALLOW_BACKGROUND_RUN, allowBackgroundRun)
         currentBatteryOverrideWhenPlugged = intent.getBooleanExtra(
             EXTRA_BATTERY_OVERRIDE_WHEN_PLUGGED,
@@ -607,6 +616,21 @@ class LEDService : Service() {
         }
 
         return START_NOT_STICKY
+    }
+
+    private fun handleRp5LedTest(intent: Intent) {
+        val left = intent.getIntExtra(EXTRA_RP5_LEFT_COLOR, Color.WHITE) and 0xFFFFFF
+        val right = intent.getIntExtra(EXTRA_RP5_RIGHT_COLOR, left) and 0xFFFFFF
+        val duration = intent.getLongExtra(EXTRA_RP5_TEST_DURATION_MS, 1500L).coerceIn(250L, 5000L)
+        Log.d(TAG, "RP5 LED test: left=#%06X right=#%06X duration=%dms".format(left, right, duration))
+        ledController.setLedColorDual(
+            Color.red(left), Color.green(left), Color.blue(left),
+            Color.red(right), Color.green(right), Color.blue(right)
+        )
+        handler.postDelayed({
+            if (!isStopping.get()) ledController.clear()
+            stopSelf()
+        }, duration)
     }
 
     private fun handleUpdateParams(intent: Intent) {
