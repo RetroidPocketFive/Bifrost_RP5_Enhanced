@@ -57,6 +57,11 @@
              declared or R8 (minifyEnabled) renames the class and startActivity
              fails with ActivityNotFoundException, crashing app launch. -->
         <activity
+            android:name=".rp5.Rp5CalibrationActivity"
+            android:exported="false"
+            android:label="RP5 Live Calibration" />
+
+        <activity
             android:name=".StartupGuideActivity"
             android:exported="false" />
 
