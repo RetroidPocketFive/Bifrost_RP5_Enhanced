@@ -1,6 +1,6 @@
-# Bifrost -- LED Controller for the AYN Thor
+# Bifrost RP5 Edition
 
-Bifrost is a custom LED controller for the **AYN Thor** handheld (and might work for other handhelds).  
+Bifrost RP5 Edition is a Retroid Pocket 5-focused enhancement of Bifrost, built around the RP5's independent left/right LED hardware.  
 It provides a collection of LED animations that can run in the background, including:
 
 - **Ambient**
@@ -8,8 +8,7 @@ It provides a collection of LED animations that can run in the background, inclu
 - **Ambi Aurora** (a mix of Ambient + Audio Reactive)
 - **Classic animations:** Breath, Rainbow, Pulse, and more
 
-Bifrost aims to bring a vibrant, customizable lighting experience to the  
-AYN Thor while keeping performance and battery consumption in mind.
+Bifrost RP5 Edition aims to provide a vibrant, customizable lighting experience on the **Retroid Pocket 5**, while keeping performance, latency, and battery consumption in mind.
 
 > ⚠️ **Important:** For animations to work, **Bifrost must stay alive in the background**.  
 > Closing the app or restricting notification (and screen recording for Ambient) activity will stop LED updates.
@@ -71,7 +70,7 @@ Combines Ambient color sampling with Audio Reactive intensity for a hybrid effec
 
 Bifrost offers multiple performance-level modes.
 
-The **Ragnarok profile** updates the Thor LED controller **as fast as possible**, which may cause latency or even crashes.
+The performance system is being tuned for the RP5 LED hardware, with the goal of balancing update rate, latency, stability, and battery consumption.
 
 ---
 
@@ -183,31 +182,39 @@ Bifrost does **not save or transmit screen contents** — sampling happens local
 
 ---
 
-# 🎮 Other Tested Devices
+# 🎮 Hardware Focus
 
-Bifrost has been tested and confirmed to work on the following devices:
+**Bifrost RP5 Edition is primarily developed and tested for the Retroid Pocket 5.**
 
-### AYN
-- Thor
-- Odin 2 Portal Pro
+The upstream Bifrost project supports other handheld hardware. RP5-specific development is being isolated where practical so future hardware support does not require rewriting the effect system.
 
 ### Retroid
-- Pocket Mini V2
-- Pocket 5
+- **Pocket 5** — primary target
+- Pocket Mini V2 — upstream/compatibility target
+
+### AYN
+- Thor — upstream heritage / compatibility target
 
 ---
 
-# ⚠️ In Dev Status
+# 📌 RP5 Edition Status
 
-Bifrost is now **out of beta**, but still actively evolving.  
+Bifrost RP5 Edition is actively being developed as an RP5-focused fork. The existing Bifrost functionality remains the baseline while the new RP5-specific LED engine, calibration, diagnostics, and performance work are introduced incrementally.
+
+> **v2 development:** The `v2/rp5-led-engine` branch contains the new RP5 LED engine architecture and development roadmap. Features marked as planned are not considered complete until they are implemented and validated on real RP5 hardware.
+
+---
+
+# ⚠️ Development Status
+
+The project is still actively evolving.  
 While overall stability has improved, unexpected behavior may still occur on some devices.
 
 ### Known issues
 
 - Random crashes under certain conditions
 - Granting notification permission at launch may cause the LED toggle switch to appear disabled even though animations continue running
-- On the Retroid Pocket Mini, only the left stick turns on in Ambient mode.  
-  This issue can be solved using the **custom color sampler mode**.
+- Some upstream device-specific issues may remain outside the RP5 target path.
 
 Thanks to **r/hupo224** for helping investigate this issue.
 
