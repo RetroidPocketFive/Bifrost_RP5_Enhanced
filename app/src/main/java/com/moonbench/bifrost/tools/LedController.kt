@@ -136,7 +136,7 @@ class LedController : LedDriver {
 
         val commandBuilder = StringBuilder(220)
         if (leftTop) {
-            commandBuilder.append("echo 1-").append(sr).append(':').append(sg).append(':').append(sb).append(':').append(br)
+            commandBuilder.append("echo 1-").append(sr).append(':').append(sg).append(':').append(sb)
                 .append(" > /sys/class/sn3112l/led/brightness")
         }
         if (leftBottom) {
@@ -214,11 +214,11 @@ class LedController : LedDriver {
         val srg = (rg * s).roundToInt().coerceIn(0, 255)
         val srb = (rb * s).roundToInt().coerceIn(0, 255)
         val cmd = StringBuilder(220)
-        if (leftTop) cmd.append("echo 1-").append(slr).append(':').append(slg).append(':').append(slb).append(':').append(br)
+        if (leftTop) cmd.append("echo 1-").append(slr).append(':').append(slg).append(':').append(slb)
             .append(" > /sys/class/sn3112l/led/brightness")
         if (leftBottom) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 2-").append(slr).append(':').append(slg).append(':').append(slb).append(':').append(br)
             .append(" > /sys/class/sn3112l/led/brightness") }
-        if (rightTop) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 1-").append(srr).append(':').append(srg).append(':').append(srb).append(':').append(br)
+        if (rightTop) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 1-").append(srr).append(':').append(srg).append(':').append(srb)
             .append(" > /sys/class/sn3112r/led/brightness") }
         if (rightBottom) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 2-").append(srr).append(':').append(srg).append(':').append(srb).append(':').append(br)
             .append(" > /sys/class/sn3112r/led/brightness") }
@@ -289,10 +289,10 @@ class LedController : LedDriver {
     fun setBrightness(brightness: Int) {
         val b = brightness.coerceIn(0, 255)
         val commands = listOf(
-            "echo 1-0:0:0:$b > /sys/class/sn3112l/led/brightness",
-            "echo 2-0:0:0:$b > /sys/class/sn3112l/led/brightness",
-            "echo 1-0:0:0:$b > /sys/class/sn3112r/led/brightness",
-            "echo 2-0:0:0:$b > /sys/class/sn3112r/led/brightness"
+            "echo 1-0:0:0 > /sys/class/sn3112l/led/brightness",
+            "echo 2-0:0:0 > /sys/class/sn3112l/led/brightness",
+            "echo 1-0:0:0 > /sys/class/sn3112r/led/brightness",
+            "echo 2-0:0:0 > /sys/class/sn3112r/led/brightness"
         )
         val command = commands.joinToString(" && ")
         executeCommandDirect(command)
