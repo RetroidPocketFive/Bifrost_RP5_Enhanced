@@ -2595,10 +2595,48 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupAnimationSpinner() {
         val types = LedAnimationType.values().toList()
-        val labels = types.map { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } }
-        val adapter = ArrayAdapter(this, R.layout.item_spinner_bifrost, labels)
-        adapter.setDropDownViewResource(R.layout.item_spinner_dropdown_bifrost)
-        animationSpinner.adapter = adapter
+        val animationDescriptions = mapOf(
+            LedAnimationType.AMBIENT to "Match screen colours on the two thumb-stick LEDs.",
+            LedAnimationType.AUDIO_REACTIVE to "Pulse LED brightness and colour with system audio.",
+            LedAnimationType.AMBIAURORA to "Ambient screen colours combined with audio-reactive brightness.",
+            LedAnimationType.BATTERY_INDICATOR to "Show battery level using a colour-coded LED state.",
+            LedAnimationType.CPU_TEMPERATURE to "Change colour as device CPU temperature rises.",
+            LedAnimationType.STATIC to "Keep the LEDs on one or two selected colours.",
+            LedAnimationType.BREATH to "Smoothly fade the selected colour in and out.",
+            LedAnimationType.RAINBOW to "Continuously cycle through the full colour spectrum.",
+            LedAnimationType.PULSE to "Quickly brighten and dim the selected colour.",
+            LedAnimationType.STROBE to "Fast repeated flashes of the selected colour.",
+            LedAnimationType.SPARKLE to "Create irregular bright sparkle-like LED flashes.",
+            LedAnimationType.FADE_TRANSITION to "Smoothly transition between the selected colours.",
+            LedAnimationType.RAVE to "Fast energetic colour changes for music and games.",
+            LedAnimationType.CHASE to "Move a bright colour pattern around the LED zones.",
+            LedAnimationType.PIPBOY to "Retro green terminal-style pulsing LED effect."
+        )
+        val animationAdapter = object : BaseAdapter() {
+            override fun getCount() = types.size
+            override fun getItem(position: Int) = types[position]
+            override fun getItemId(position: Int) = position.toLong()
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+                val row = (convertView as? LinearLayout) ?: LinearLayout(this@MainActivity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(12, 8, 12, 8)
+                }
+                row.removeAllViews()
+                row.addView(TextView(this@MainActivity).apply {
+                    text = types[position].name.lowercase().replaceFirstChar { c -> c.uppercase() }
+                    setTextColor(resources.getColor(R.color.bifrost_text, theme))
+                    textSize = 14f
+                })
+                row.addView(TextView(this@MainActivity).apply {
+                    text = animationDescriptions[types[position]].orEmpty()
+                    setTextColor(resources.getColor(R.color.bifrost_text_secondary, theme))
+                    textSize = 10f
+                    setPadding(0, 2, 0, 0)
+                })
+                return row
+            }
+        }
+        animationSpinner.adapter = animationAdapter
         animationSpinner.setSelection(types.indexOf(selectedAnimationType))
 
         animationSpinner.onItemSelectedListener =
