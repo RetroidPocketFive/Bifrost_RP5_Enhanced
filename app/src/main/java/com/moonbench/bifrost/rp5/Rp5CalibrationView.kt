@@ -26,6 +26,13 @@ class Rp5CalibrationView(context: Context, private val changed: (NormalizedRegio
 
     fun setFrame(value: Bitmap?) { bitmap?.recycle(); bitmap=value; invalidate() }
 
+    fun sample(sampler: ColorSampler): ColorSampler.SampledColors? {
+        val b=bitmap ?: return null
+        val pixels=IntArray(b.width*b.height)
+        b.getPixels(pixels,0,b.width,0,0,b.width,b.height)
+        return sampler.sample(pixels,b.width,b.height,leftRegion,rightRegion)
+    }
+
     override fun onDraw(c: Canvas) {
         super.onDraw(c)
         val b=bitmap
