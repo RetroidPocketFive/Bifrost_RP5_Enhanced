@@ -161,6 +161,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var liveWallpaperSettingsScroll: ScrollView
     private lateinit var liveWallpaperVideoPathText: TextView
     private lateinit var liveWallpaperPickVideoButton: MaterialButton
+    private lateinit var liveWallpaperPickImageButton: MaterialButton
     private lateinit var liveWallpaperApplyButton: MaterialButton
     private lateinit var liveWallpaperRemoveButton: MaterialButton
     private lateinit var liveWallpaperPerformanceSpinner: Spinner
@@ -560,6 +561,19 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Live wallpaper video updated", Toast.LENGTH_SHORT).show()
         }
 
+    private val liveWallpaperImagePickerLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            if (setStaticImageWallpaper(uri)) {
+                prefs.edit().putBoolean("static_image_wallpaper_applied", true).apply()
+                refreshLiveWallpaperVideoSummary()
+                refreshLiveWallpaperActionButtons()
+                Toast.makeText(this, "Image wallpaper applied", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Unable to apply that image as wallpaper", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     private val liveWallpaperApplyLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             scheduleLiveWallpaperApplyStateSync(initialDelayMs = 180L)
@@ -697,6 +711,11 @@ class MainActivity : AppCompatActivity() {
         liveWallpaperSettingsScroll = findViewById(R.id.liveWallpaperSettingsScroll)
         liveWallpaperVideoPathText = findViewById(R.id.liveWallpaperVideoPathText)
         liveWallpaperPickVideoButton = findViewById(R.id.liveWallpaperPickVideoButton)
+        liveWallpaperPickImageButton = MaterialButton(this).apply {
+            text = "PICK IMAGE"
+            setOnClickListener { liveWallpaperImagePickerLauncher.launch("image/*") }
+        }
+        (liveWallpaperPickVideoButton.parent as? LinearLayout)?.addView(liveWallpaperPickImageButton, 0, LinearLayout.LayoutParams(0, 40, 1f).apply { marginEnd = 4 })
         liveWallpaperApplyButton = findViewById(R.id.liveWallpaperApplyButton)
         liveWallpaperRemoveButton = findViewById(R.id.liveWallpaperRemoveButton)
         liveWallpaperPerformanceSpinner = findViewById(R.id.liveWallpaperPerformanceSpinner)
@@ -1123,17 +1142,31 @@ class MainActivity : AppCompatActivity() {
     private fun refreshLiveWallpaperActionButtons() {
         val isWallpaperApplied = LiveWallpaperSettingsManager.isWallpaperApplied(prefs) || syncLiveWallpaperAppliedState()
         liveWallpaperPickVideoButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
+        liveWallpaperPickImageButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
         liveWallpaperApplyButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
         liveWallpaperRemoveButton.visibility = if (isWallpaperApplied) View.VISIBLE else View.GONE
     }
 
     private fun refreshLiveWallpaperVideoSummary() {
         val uri = LiveWallpaperSettingsManager.getVideoUri(prefs)
-        liveWallpaperVideoPathText.text = if (uri == null) {
+        val staticApplied = prefs.getBoolean("static_image_wallpaper_applied", false)
+        liveWallpaperVideoPathText.text = if (staticApplied) {
+            "Static image wallpaper applied"
+        } else if (uri == null) {
             "No video selected"
         } else {
             uri.lastPathSegment ?: uri.toString()
         }
+    }
+
+    private fun setStaticImageWallpaper(uri: Uri): Boolean {
+        return runCatching {
+            contentResolver.openInputStream(uri).use { input ->
+                requireNotNull(input) { "Unable to open image" }
+                WallpaperManager.getInstance(this).setStream(input, null, true, WallpaperManager.FLAG_SYSTEM)
+            }
+            true
+        }.getOrDefault(false)
     }
 
     private fun removeLiveWallpaper() {
@@ -1147,6 +1180,7 @@ class MainActivity : AppCompatActivity() {
         LiveWallpaperSettingsManager.clearVideoUri(prefs)
         deleteLocalLiveWallpaperVideoIfExists()
         LiveWallpaperSettingsManager.setWallpaperApplied(prefs, false)
+        prefs.edit().putBoolean("static_image_wallpaper_applied", false).apply()
         prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_APPLY_IN_PROGRESS, false).apply()
         prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_RESTORE_SETTINGS, false).apply()
         refreshLiveWallpaperVideoSummary()
