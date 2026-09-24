@@ -1128,6 +1128,17 @@
                                 android:layout_height="wrap_content" />
                         </LinearLayout>
 
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/rp5CalibrationButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="LIVE RP5 CALIBRATION"
+                            android:textColor="@color/bifrost_text"
+                            app:cornerRadius="10dp"
+                            app:strokeColor="@color/bifrost_accent"
+                            app:strokeWidth="1dp" />
+
                         <com.google.android.material.switchmaterial.SwitchMaterial
                             android:id="@+id/customSamplingSwitch"
                             android:layout_width="wrap_content"
