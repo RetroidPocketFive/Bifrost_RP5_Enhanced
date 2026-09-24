@@ -1,5 +1,6 @@
 package com.moonbench.bifrost.rp5
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -11,7 +12,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-class Rp5CalibrationView(private val changed: (NormalizedRegion, NormalizedRegion) -> Unit) : View(null) {
+class Rp5CalibrationView(context: Context, private val changed: (NormalizedRegion, NormalizedRegion) -> Unit) : View(context) {
     var leftRegion = NormalizedRegion(.25f, .78f, .18f); set(v) { field=v; invalidate() }
     var rightRegion = NormalizedRegion(.75f, .78f, .18f); set(v) { field=v; invalidate() }
     var leftColor = Color.WHITE; set(v) { field=v; invalidate() }
