@@ -3,17 +3,29 @@ package com.moonbench.bifrost.tools
 import android.os.IBinder
 import android.os.Parcel
 import android.util.Log
+import com.moonbench.bifrost.rp5.LedDriver
+import com.moonbench.bifrost.rp5.LedFrame
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.roundToInt
 
-class LedController {
+class LedController : LedDriver {
     companion object {
         private const val TAG = "LedController"
     }
 
     private val pServerBinder: IBinder?
     private val lock = ReentrantLock()
+
+    @Volatile
+    private var frameSink: ((LedFrame) -> Unit)? = null
+
+    private var lastLeftR = 0
+    private var lastLeftG = 0
+    private var lastLeftB = 0
+    private var lastRightR = 0
+    private var lastRightG = 0
+    private var lastRightB = 0
 
     private var lastCommand: String? = null
     private var lastExecuteTime = 0L
@@ -46,6 +58,38 @@ class LedController {
         }
     }
 
+    /**
+     * Routes animation frames into the RP5 scheduler when attached. The scheduler
+     * eventually calls [write] on this same controller, which bypasses [frameSink]
+     * and performs the single hardware transaction.
+     */
+    fun attachFrameSink(sink: (LedFrame) -> Unit) {
+        frameSink = sink
+    }
+
+    fun detachFrameSink() {
+        frameSink = null
+    }
+
+    override fun write(frame: LedFrame) {
+        emitFrameDirect(frame)
+    }
+
+    override fun clear() {
+        setLedColorDirect(0, 0, 0, 0, true, true, true, true)
+    }
+
+    private fun submitFrame(frame: LedFrame) {
+        frameSink?.invoke(frame) ?: emitFrameDirect(frame)
+    }
+
+    private fun emitFrameDirect(frame: LedFrame) {
+        setLedColorDualDirect(
+            frame.left, frame.right,
+            frame.leftTop, frame.leftBottom, frame.rightTop, frame.rightBottom
+        )
+    }
+
     fun setLedColor(
         red: Int,
         green: Int,
@@ -64,10 +108,20 @@ class LedController {
 
         lock.withLock {
             lastR = r; lastG = g; lastB = b
+            lastLeftR = r; lastLeftG = g; lastLeftB = b
+            lastRightR = r; lastRightG = g; lastRightB = b
             lastLeftTop = leftTop; lastLeftBottom = leftBottom
             lastRightTop = rightTop; lastRightBottom = rightBottom
         }
-        emit(r, g, b, br, leftTop, leftBottom, rightTop, rightBottom)
+
+        submitFrame(LedFrame(
+            left = (r shl 16) or (g shl 8) or b,
+            right = (r shl 16) or (g shl 8) or b,
+            leftTop = leftTop,
+            leftBottom = leftBottom,
+            rightTop = rightTop,
+            rightBottom = rightBottom
+        ))
     }
 
     /** Apply masterScale to (r,g,b) and write the selected zones. */
@@ -130,10 +184,20 @@ class LedController {
         val br = brightness.coerceIn(0, 255)
         lock.withLock {
             lastR = lr; lastG = lg; lastB = lb
+            lastLeftR = lr; lastLeftG = lg; lastLeftB = lb
+            lastRightR = rr; lastRightG = rg; lastRightB = rb
             lastLeftTop = leftTop; lastLeftBottom = leftBottom
             lastRightTop = rightTop; lastRightBottom = rightBottom
         }
-        emitDual(lr, lg, lb, rr, rg, rb, br, leftTop, leftBottom, rightTop, rightBottom)
+
+        submitFrame(LedFrame(
+            left = (lr shl 16) or (lg shl 8) or lb,
+            right = (rr shl 16) or (rg shl 8) or rb,
+            leftTop = leftTop,
+            leftBottom = leftBottom,
+            rightTop = rightTop,
+            rightBottom = rightBottom
+        ))
     }
 
     /** Build one &&-joined command covering all selected zones (left zones use the
@@ -169,13 +233,25 @@ class LedController {
      */
     fun setMasterScale(scale: Float) {
         masterScale = scale.coerceIn(0f, 1f)
-        val r: Int; val g: Int; val b: Int
         val lt: Boolean; val lb: Boolean; val rt: Boolean; val rb: Boolean
+        val lr: Int; val lg: Int; val lbv: Int
+        val rr: Int; val rg: Int; val rbv: Int
         lock.withLock {
-            r = lastR; g = lastG; b = lastB
             lt = lastLeftTop; lb = lastLeftBottom; rt = lastRightTop; rb = lastRightBottom
+            lr = (lastLeftR * masterScale).roundToInt().coerceIn(0, 255)
+            lg = (lastLeftG * masterScale).roundToInt().coerceIn(0, 255)
+            lbv = (lastLeftB * masterScale).roundToInt().coerceIn(0, 255)
+            rr = (lastRightR * masterScale).roundToInt().coerceIn(0, 255)
+            rg = (lastRightG * masterScale).roundToInt().coerceIn(0, 255)
+            rbv = (lastRightB * masterScale).roundToInt().coerceIn(0, 255)
         }
-        if (lt || lb || rt || rb) emit(r, g, b, 255, lt, lb, rt, rb)
+        if (lt || lb || rt || rb) submitFrame(
+            LedFrame(
+                left = (lr shl 16) or (lg shl 8) or lbv,
+                right = (rr shl 16) or (rg shl 8) or rbv,
+                leftTop = lt, leftBottom = lb, rightTop = rt, rightBottom = rb
+            )
+        )
     }
 
     /**
@@ -184,7 +260,30 @@ class LedController {
      * re-showing the outgoing colour before the incoming animation's first frame.
      */
     fun resetFadeBaseline() {
-        lock.withLock { lastR = 0; lastG = 0; lastB = 0 }
+        lock.withLock {
+            lastR = 0; lastG = 0; lastB = 0
+            lastLeftR = 0; lastLeftG = 0; lastLeftB = 0
+            lastRightR = 0; lastRightG = 0; lastRightB = 0
+        }
+    }
+
+    private fun setLedColorDirect(
+        red: Int, green: Int, blue: Int, brightness: Int,
+        leftTop: Boolean, leftBottom: Boolean, rightTop: Boolean, rightBottom: Boolean
+    ) {
+        emit(red.coerceIn(0, 255), green.coerceIn(0, 255), blue.coerceIn(0, 255),
+            brightness.coerceIn(0, 255), leftTop, leftBottom, rightTop, rightBottom)
+    }
+
+    private fun setLedColorDualDirect(
+        left: Int, right: Int,
+        leftTop: Boolean, leftBottom: Boolean, rightTop: Boolean, rightBottom: Boolean
+    ) {
+        emitDual(
+            (left shr 16) and 0xFF, (left shr 8) and 0xFF, left and 0xFF,
+            (right shr 16) and 0xFF, (right shr 8) and 0xFF, right and 0xFF,
+            255, leftTop, leftBottom, rightTop, rightBottom
+        )
     }
 
     fun setBrightness(brightness: Int) {
