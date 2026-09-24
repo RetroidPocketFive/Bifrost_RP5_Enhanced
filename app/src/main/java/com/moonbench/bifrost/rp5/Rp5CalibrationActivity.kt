@@ -21,10 +21,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.moonbench.bifrost.MainActivity
+import com.moonbench.bifrost.services.LEDService
 
 class Rp5CalibrationActivity : AppCompatActivity() {
     private lateinit var view: Rp5CalibrationView
     private lateinit var status: TextView
+    private lateinit var testButton: MaterialButton
     private val prefs by lazy { getSharedPreferences("bifrost_rp5_calibration", MODE_PRIVATE) }
     private val handler=Handler(Looper.getMainLooper())
     private var projection:MediaProjection?=null
@@ -53,6 +55,11 @@ class Rp5CalibrationActivity : AppCompatActivity() {
             setTextColor(Color.LTGRAY); textSize=13f
         })
         val buttons=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+        testButton=MaterialButton(this).apply {
+            text="Test LEDs"
+            setOnClickListener { testPhysicalLeds() }
+        }
+        buttons.addView(testButton,LinearLayout.LayoutParams(0,56,1f))
         buttons.addView(MaterialButton(this).apply {
             text="Reset"
             setOnClickListener {
@@ -68,6 +75,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         root.addView(head)
         root.addView(view,LinearLayout.LayoutParams(-1,0,1f))
         root.addView(buttons)
+        testButton.isEnabled=false
         setContentView(root)
 
         if(MainActivity.mediaProjectionResultCode!=null && MainActivity.mediaProjectionData!=null)
@@ -102,6 +110,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
                 runOnUiThread {
                     view.leftColor=sampled.left
                     view.rightColor=sampled.right
+                    testButton.isEnabled=true
                     view.setFrame(cropped.copy(Bitmap.Config.ARGB_8888,false))
                     status.text="LIVE   LEFT #%06X   RIGHT #%06X".format(sampled.left and 0xffffff,sampled.right and 0xffffff)
                     cropped.recycle()
@@ -110,6 +119,24 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         },handler)
         display=projection!!.createVirtualDisplay("BifrostRP5Calibration",w,h,dm.densityDpi,
             DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,reader!!.surface,null,handler)
+    }
+
+    private fun testPhysicalLeds() {
+        val intent = Intent(this, LEDService::class.java).apply {
+            action = LEDService.ACTION_RP5_LED_TEST
+            putExtra(LEDService.EXTRA_RP5_LEFT_COLOR, view.leftColor)
+            putExtra(LEDService.EXTRA_RP5_RIGHT_COLOR, view.rightColor)
+            putExtra(LEDService.EXTRA_RP5_TEST_DURATION_MS, 1500L)
+        }
+        runCatching {
+            startService(intent)
+            status.text = "LED TEST   LEFT #%06X   RIGHT #%06X".format(
+                view.leftColor and 0xffffff,
+                view.rightColor and 0xffffff
+            )
+        }.onFailure {
+            status.text = "LED test failed to start: ${it.message ?: "unknown error"}"
+        }
     }
 
     private fun load()=Rp5Calibration(
