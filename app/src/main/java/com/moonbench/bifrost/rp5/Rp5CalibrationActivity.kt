@@ -91,17 +91,20 @@ class Rp5CalibrationActivity : AppCompatActivity() {
             val image=rr.acquireLatestImage() ?: return@setOnImageAvailableListener
             try {
                 val plane=image.planes[0]
-                val bitmap=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888)
+                val bitmapWidth=w+(plane.rowStride-plane.pixelStride*w)/plane.pixelStride
+                val bitmap=Bitmap.createBitmap(bitmapWidth,h,Bitmap.Config.ARGB_8888)
                 bitmap.copyPixelsFromBuffer(plane.buffer)
+                val cropped=if(bitmapWidth!=w) Bitmap.createBitmap(bitmap,0,0,w,h) else bitmap
+                if(cropped!==bitmap) bitmap.recycle()
                 val pixels=IntArray(w*h)
-                bitmap.getPixels(pixels,0,w,0,0,w,h)
+                cropped.getPixels(pixels,0,w,0,0,w,h)
                 val sampled=ColorSampler.sample(pixels,w,h,view.leftRegion,view.rightRegion)
                 runOnUiThread {
                     view.leftColor=sampled.left
                     view.rightColor=sampled.right
-                    view.setFrame(bitmap.copy(Bitmap.Config.ARGB_8888,false))
+                    view.setFrame(cropped.copy(Bitmap.Config.ARGB_8888,false))
                     status.text="LIVE   LEFT #%06X   RIGHT #%06X".format(sampled.left and 0xffffff,sampled.right and 0xffffff)
-                    bitmap.recycle()
+                    cropped.recycle()
                 }
             } finally { image.close() }
         },handler)
