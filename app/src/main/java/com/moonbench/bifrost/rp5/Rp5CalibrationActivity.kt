@@ -30,6 +30,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences("bifrost_rp5_calibration", MODE_PRIVATE) }
     private val handler=Handler(Looper.getMainLooper())
     private val sampler = ColorSampler(SamplingMethod.CENTER_WEIGHTED)
+    private val sampler = ColorSampler(SamplingMethod.CENTER_WEIGHTED)
     private var projection:MediaProjection?=null
     private var display:VirtualDisplay?=null
     private var reader:ImageReader?=null
