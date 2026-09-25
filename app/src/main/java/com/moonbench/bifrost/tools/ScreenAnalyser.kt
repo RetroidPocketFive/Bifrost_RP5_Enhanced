@@ -53,6 +53,9 @@ private const val HUE_CYCLE = 6f
 private const val HUE_STEP = 60f
 
 private const val SCREENSHOT_MIN_INTERVAL_MS = 100L
+private const val DEADBAND_THRESHOLD = 4
+private const val REGION_GRID_WIDTH = 48
+private const val REGION_REFRESH_INTERVAL_MS = 500L
 
 data class ScreenColors(
     val leftColor: Int = Color.BLACK,
@@ -68,6 +71,7 @@ class ScreenAnalyzer(
     var saturationBoost: Float = 0.0f,
     initialTopPixelPercentage: Float = 0.3f,
     private val displayId: Int = Display.DEFAULT_DISPLAY,
+    private val regionContext: android.content.Context? = null,
     private val onColorsAnalyzed: (ScreenColors) -> Unit
 ) {
     var topPixelPercentage: Float = initialTopPixelPercentage
@@ -79,6 +83,11 @@ class ScreenAnalyzer(
     private var captureHeight = DEFAULT_CAPTURE_HEIGHT
     private var lastProcessedTime = 0L
     private var lastEmittedColors: ScreenColors? = null
+
+    private var regionModeActive: Boolean = false
+    private var cachedLeftRegion: SamplingRegion = SamplingRegion.LEFT_HALF
+    private var cachedRightRegion: SamplingRegion = SamplingRegion.RIGHT_HALF
+    private var lastRegionRefreshMs = 0L
 
     private var imageReader: ImageReader? = null
     private var virtualDisplay: VirtualDisplay? = null
@@ -97,7 +106,25 @@ class ScreenAnalyzer(
         if (isRunning) return
         isRunning = true
 
-        if (useSingleColor) {
+        regionModeActive = regionContext != null && SamplingRegionStore.isEnabled(regionContext)
+        if (regionModeActive && regionContext != null) {
+            cachedLeftRegion = SamplingRegionStore.getLeft(regionContext)
+            cachedRightRegion = SamplingRegionStore.getRight(regionContext)
+        }
+
+        if (regionModeActive) {
+            captureWidth = REGION_GRID_WIDTH
+            val aspectRatio = displayMetrics.heightPixels.toFloat() / displayMetrics.widthPixels.toFloat()
+            captureHeight = (captureWidth * aspectRatio).toInt()
+                .coerceAtLeast(DEFAULT_CAPTURE_HEIGHT)
+                .coerceAtMost(REGION_GRID_WIDTH)
+        } else if (useSingleColor && useCustomSampling) {
+            captureWidth = CUSTOM_SAMPLING_WIDTH
+            val aspectRatio = displayMetrics.heightPixels.toFloat() / displayMetrics.widthPixels.toFloat()
+            captureHeight = (captureWidth * aspectRatio).toInt()
+                .coerceAtLeast(DEFAULT_CAPTURE_HEIGHT)
+                .coerceAtMost(CUSTOM_SAMPLING_WIDTH)
+        } else if (useSingleColor) {
             captureWidth = SINGLE_COLOR_CAPTURE_SIZE
             captureHeight = SINGLE_COLOR_CAPTURE_SIZE
         } else if (useCustomSampling) {
@@ -190,7 +217,18 @@ class ScreenAnalyzer(
         val pixelStride = plane.pixelStride
         val rowStride = plane.rowStride
 
-        val colors = if (useSingleColor) {
+        refreshRegions()
+        val colors = if (regionModeActive) {
+            val left = regionToPixels(cachedLeftRegion)
+            val right = regionToPixels(cachedRightRegion)
+            val leftColor = averageRegionTopWeighted(
+                buffer, left.startX, left.endX, left.startY, left.endY, rowStride, pixelStride
+            )
+            val rightColor = averageRegionTopWeighted(
+                buffer, right.startX, right.endX, right.startY, right.endY, rowStride, pixelStride
+            )
+            ScreenColors(leftColor = leftColor, rightColor = rightColor)
+        } else if (useSingleColor) {
             val singleColor = if (useCustomSampling) {
                 averageRegionTopWeighted(buffer, 0, captureWidth - 1, 0, captureHeight - 1, rowStride, pixelStride)
             } else {
@@ -213,10 +251,46 @@ class ScreenAnalyzer(
             rightColor = applySaturationBoost(colors.rightColor)
         )
 
-        if (boostedColors != lastEmittedColors) {
+        val previous = lastEmittedColors
+        val shouldEmit = previous == null ||
+            colorDeltaExceeds(previous.leftColor, boostedColors.leftColor, DEADBAND_THRESHOLD) ||
+            colorDeltaExceeds(previous.rightColor, boostedColors.rightColor, DEADBAND_THRESHOLD)
+        if (shouldEmit) {
             lastEmittedColors = boostedColors
             onColorsAnalyzed(boostedColors)
         }
+    }
+
+    private fun colorDeltaExceeds(a: Int, b: Int, threshold: Int): Boolean {
+        val dr = kotlin.math.abs(Color.red(a) - Color.red(b))
+        val dg = kotlin.math.abs(Color.green(a) - Color.green(b))
+        val db = kotlin.math.abs(Color.blue(a) - Color.blue(b))
+        return dr > threshold || dg > threshold || db > threshold
+    }
+
+    private data class PixelRect(val startX: Int, val endX: Int, val startY: Int, val endY: Int)
+
+    private fun regionToPixels(region: SamplingRegion): PixelRect {
+        if (captureWidth < 2 || captureHeight < 2) {
+            val maxX = (captureWidth - 1).coerceAtLeast(0)
+            val maxY = (captureHeight - 1).coerceAtLeast(0)
+            return PixelRect(0, maxX, 0, maxY)
+        }
+        val l = (region.left * captureWidth).toInt().coerceIn(0, captureWidth - 2)
+        val r = (region.right * captureWidth).toInt().coerceIn(l + 1, captureWidth - 1)
+        val t = (region.top * captureHeight).toInt().coerceIn(0, captureHeight - 2)
+        val b = (region.bottom * captureHeight).toInt().coerceIn(t + 1, captureHeight - 1)
+        return PixelRect(l, r, t, b)
+    }
+
+    private fun refreshRegions() {
+        if (!regionModeActive) return
+        val ctx = regionContext ?: return
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastRegionRefreshMs < REGION_REFRESH_INTERVAL_MS) return
+        lastRegionRefreshMs = now
+        cachedLeftRegion = SamplingRegionStore.getLeft(ctx)
+        cachedRightRegion = SamplingRegionStore.getRight(ctx)
     }
 
     // ── Accessibility path (takeScreenshot, ~10 fps max) ──────────────────────
@@ -303,7 +377,15 @@ class ScreenAnalyzer(
 
     private fun processBitmap(bitmap: Bitmap) {
         if (!isRunning) return
-        val colors = if (useSingleColor) {
+        refreshRegions()
+        val colors = if (regionModeActive) {
+            val left = regionToPixels(cachedLeftRegion)
+            val right = regionToPixels(cachedRightRegion)
+            ScreenColors(
+                leftColor = averageRegionTopWeighted(bitmap, left.startX, left.endX, left.startY, left.endY),
+                rightColor = averageRegionTopWeighted(bitmap, right.startX, right.endX, right.startY, right.endY)
+            )
+        } else if (useSingleColor) {
             val c = if (useCustomSampling)
                 averageRegionTopWeighted(bitmap, 0, captureWidth - 1, 0, captureHeight - 1)
             else
@@ -322,7 +404,11 @@ class ScreenAnalyzer(
             leftColor  = applySaturationBoost(colors.leftColor),
             rightColor = applySaturationBoost(colors.rightColor)
         )
-        if (boostedColors != lastEmittedColors) {
+        val previous = lastEmittedColors
+        val shouldEmit = previous == null ||
+            colorDeltaExceeds(previous.leftColor, boostedColors.leftColor, DEADBAND_THRESHOLD) ||
+            colorDeltaExceeds(previous.rightColor, boostedColors.rightColor, DEADBAND_THRESHOLD)
+        if (shouldEmit) {
             lastEmittedColors = boostedColors
             onColorsAnalyzed(boostedColors)
         }
