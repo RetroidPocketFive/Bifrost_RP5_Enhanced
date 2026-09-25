@@ -471,11 +471,14 @@ The v2 branch is introducing the new architecture incrementally. Features marked
 
 # ❤️ Credits
 
-Bifrost RP5 Edition builds on the work of the original Bifrost project and its contributors.
+Bifrost RP5 Edition is a separate RP5-focused project built from the original Bifrost project.
 
-Huge thanks to the upstream Bifrost contributors for the existing LED, capture, profile, animation, service and integration work that makes the RP5 Edition possible.
+Huge thanks to the original Bifrost project and its contributors for the existing LED, capture, profile, animation, service and integration work that made this project possible.
 
----
+**Original Bifrost project:**  
+https://github.com/Pollux-MoonBench/Bifrost
+
+The RP5 Edition also acknowledges and thanks everyone who contributes to this project through testing, issue reports, hardware investigation, development, documentation, and feedback.
 
 # 📜 License
 
