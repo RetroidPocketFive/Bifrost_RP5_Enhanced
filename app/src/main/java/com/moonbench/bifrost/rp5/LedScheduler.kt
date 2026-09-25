@@ -32,7 +32,30 @@ class LedScheduler(
     }
 
     fun submit(frame: LedFrame) {
-        pending.set(frame)
+        pending.getAndUpdate { previous ->
+            mergeFrames(previous, frame)
+        }
+    }
+
+    /**
+     * Some existing Bifrost animations emit the left and right sticks as
+     * separate partial frames. The scheduler must merge those updates instead
+     * of letting the second write erase the first one.
+     */
+    private fun mergeFrames(previous: LedFrame?, incoming: LedFrame): LedFrame {
+        if (previous == null) return incoming
+        val leftChanged = incoming.leftTop || incoming.leftBottom
+        val rightChanged = incoming.rightTop || incoming.rightBottom
+
+        return LedFrame(
+            left = if (leftChanged) incoming.left else previous.left,
+            right = if (rightChanged) incoming.right else previous.right,
+            timestampNanos = incoming.timestampNanos,
+            leftTop = previous.leftTop || incoming.leftTop,
+            leftBottom = previous.leftBottom || incoming.leftBottom,
+            rightTop = previous.rightTop || incoming.rightTop,
+            rightBottom = previous.rightBottom || incoming.rightBottom
+        )
     }
 
     fun stop(clear: Boolean = true) {
