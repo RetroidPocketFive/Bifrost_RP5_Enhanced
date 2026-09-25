@@ -62,6 +62,11 @@
             android:label="RP5 Live Calibration" />
 
         <activity
+            android:name=".SamplingEditorActivity"
+            android:exported="false"
+            android:label="Sampling Areas" />
+
+        <activity
             android:name=".StartupGuideActivity"
             android:exported="false" />
 
