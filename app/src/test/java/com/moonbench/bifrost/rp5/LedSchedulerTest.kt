@@ -64,7 +64,7 @@ class LedSchedulerTest {
         val executor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
         try {
             val driver = MockLedDriver()
-            val scheduler = LedScheduler(driver, executor, refreshHz = 60)
+            val scheduler = LedScheduler(driver, executor, refreshHz = 60, gamma = 1f)
             scheduler.submit(LedFrame(left = 0x112233, right = 0, leftTop = true, leftBottom = true, rightTop = false, rightBottom = false))
             scheduler.submit(LedFrame(left = 0, right = 0xAABBCC, leftTop = false, leftBottom = false, rightTop = true, rightBottom = true))
             scheduler.tickForTest()
