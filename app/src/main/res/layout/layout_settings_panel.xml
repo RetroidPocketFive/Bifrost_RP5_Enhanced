@@ -1159,6 +1159,22 @@
                             app:trackTint="@color/switch_track_tint" />
                     </LinearLayout>
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/editSamplingAreasButton"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/bifrost_spacing_md"
+                        android:text="EDIT SAMPLING AREAS"
+                        android:textSize="12sp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Position and resize the screen area each stick samples for Ambient / Ambi Aurora."
+                        android:textColor="@color/bifrost_text_secondary"
+                        android:textSize="8sp" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
