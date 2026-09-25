@@ -41,7 +41,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Tap â€œCaptureâ€ to grab a screenshot for reference.\nRectangles still work without one."
+            android:text="Choose LIVE CAPTURE to grab the game screen after a short delay, or STILL IMAGE to load a screenshot.\nRectangles work without a reference image."
             android:textColor="#888888"
             android:textSize="12sp"
             android:textAlignment="center"
@@ -100,7 +100,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginEnd="6dp"
-            android:text="Capture" />
+            android:text="LIVE CAPTURE" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnImport"
@@ -108,7 +108,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="Import" />
+            android:text="STILL IMAGE" />
     </LinearLayout>
 
     <LinearLayout
