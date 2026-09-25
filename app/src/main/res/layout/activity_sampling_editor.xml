@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@android:color/black">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/samplingToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:title="Sampling Areas"
+        app:titleTextColor="@android:color/white"
+        app:navigationIcon="@drawable/baseline_arrow_back_24" />
+
+    <TextView
+        android:id="@+id/samplingHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:text="Drag a rectangle to move it, drag a corner to resize. Each rectangle is the screen area a stick samples. When enabled, these override Single Color mode for Ambient / Ambi Aurora. Tap Import to load a screenshot of your game as a reference, or Capture for a 5s delayed grab (needs the Bifrost accessibility service)."
+        android:textColor="#CCCCCC"
+        android:textSize="12sp" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#101010">
+
+        <com.moonbench.bifrost.ui.SamplingCanvasView
+            android:id="@+id/samplingCanvas"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="8dp" />
+
+        <TextView
+            android:id="@+id/samplingPlaceholder"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Tap â€œCaptureâ€ to grab a screenshot for reference.\nRectangles still work without one."
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:textAlignment="center"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="12dp">
+
+        <View
+            android:id="@+id/leftSwatch"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@android:color/holo_blue_dark" />
+
+        <TextView
+            android:id="@+id/leftSwatchLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="16dp"
+            android:text="Left stick"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp" />
+
+        <View
+            android:id="@+id/rightSwatch"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@android:color/holo_orange_dark" />
+
+        <TextView
+            android:id="@+id/rightSwatchLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="Right stick"
+            android:textColor="#CCCCCC"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCapture"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:text="Capture" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnImport"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Import" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        android:paddingBottom="12dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnReset"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
+            android:text="Reset" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDisable"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="Disable" />
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSave"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:text="Save &amp; Apply" />
+</LinearLayout>
