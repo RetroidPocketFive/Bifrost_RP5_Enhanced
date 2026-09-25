@@ -772,7 +772,7 @@ class MainActivity : AppCompatActivity() {
         saturationBoostSeekBar = findViewById(R.id.saturationBoostSeekBar)
         customSamplingSwitch = findViewById(R.id.customSamplingSwitch)
         findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+            startActivity(Intent(this, SamplingEditorActivity::class.java))
         }
         singleColorSwitch = findViewById(R.id.singleColorSwitch)
         ambilightUseMediaProjectionSwitch = findViewById(R.id.ambilightUseMediaProjectionSwitch)
