@@ -1883,7 +1883,8 @@ class LEDService : Service() {
                     currentUseCustomSampling,
                     currentUseSingleColor,
                     saturationBoost,
-                    currentAmbientDisplayId
+                    currentAmbientDisplayId,
+                    regionContext = this
                 )
             }
             LedAnimationType.AUDIO_REACTIVE -> {
@@ -1908,7 +1909,8 @@ class LEDService : Service() {
                     profile,
                     currentUseCustomSampling,
                     currentUseSingleColor,
-                    saturationBoost
+                    saturationBoost,
+                    regionContext = this
                 )
             }
             LedAnimationType.BATTERY_INDICATOR -> BatteryIndicatorAnimation(
