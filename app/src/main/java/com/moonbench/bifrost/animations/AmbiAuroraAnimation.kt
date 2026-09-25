@@ -19,7 +19,8 @@ class AmbiAuroraAnimation(
     private val profile: PerformanceProfile,
     private val useCustomSampling: Boolean,
     private val useSingleColor: Boolean,
-    initialSaturationBoost: Float = 0.0f
+    initialSaturationBoost: Float = 0.0f,
+    private val regionContext: android.content.Context? = null
 ) : LedAnimation(ledController) {
 
     override val type: LedAnimationType = LedAnimationType.AMBIAURORA
@@ -133,7 +134,8 @@ class AmbiAuroraAnimation(
             profile,
             useCustomSampling,
             useSingleColor,
-            saturationBoost
+            saturationBoost,
+            regionContext = regionContext
         ) { colors ->
             pendingColors = colors
             hasColorUpdate = true
@@ -239,24 +241,11 @@ class AmbiAuroraAnimation(
         val rightGreen = (Color.green(currentRightColor) * scale).roundToInt().coerceIn(0, 255)
         val rightBlue = (Color.blue(currentRightColor) * scale).roundToInt().coerceIn(0, 255)
 
-        ledController.setLedColor(
-            leftRed,
-            leftGreen,
-            leftBlue,
-            leftTop = true,
-            leftBottom = true,
-            rightTop = false,
-            rightBottom = false
-        )
-
-        ledController.setLedColor(
-            rightRed,
-            rightGreen,
-            rightBlue,
-            leftTop = false,
-            leftBottom = false,
-            rightTop = true,
-            rightBottom = true
+        ledController.setLedColorDual(
+            leftR = leftRed, leftG = leftGreen, leftB = leftBlue,
+            rightR = rightRed, rightG = rightGreen, rightB = rightBlue,
+            leftTop = true, leftBottom = true,
+            rightTop = true, rightBottom = true
         )
     }
 }
