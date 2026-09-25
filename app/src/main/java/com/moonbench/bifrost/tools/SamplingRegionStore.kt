@@ -39,6 +39,10 @@ data class SamplingRegion(
         val LEFT_HALF = SamplingRegion(0f, 0f, 0.5f, 1f)
         val RIGHT_HALF = SamplingRegion(0.5f, 0f, 1f, 1f)
 
+        // RP5 thumb-area defaults: small, independently movable regions near the lower left/right portions of the screen.
+        val RP5_LEFT_DEFAULT = SamplingRegion(0.16f, 0.69f, 0.34f, 0.87f)
+        val RP5_RIGHT_DEFAULT = SamplingRegion(0.66f, 0.69f, 0.84f, 0.87f)
+
         // 4:3 centre crop â€” useful for older console content with pillarboxing.
         val CENTER_4_3_LEFT: SamplingRegion
             get() = SamplingRegion(0.125f, 0f, 0.5f, 1f)
@@ -83,11 +87,11 @@ object SamplingRegionStore {
 
     fun getLeft(context: Context): SamplingRegion =
         SamplingRegion.decode(prefs(context).getString(KEY_LEFT, null))
-            ?: SamplingRegion.LEFT_HALF
+            ?: SamplingRegion.RP5_LEFT_DEFAULT
 
     fun getRight(context: Context): SamplingRegion =
         SamplingRegion.decode(prefs(context).getString(KEY_RIGHT, null))
-            ?: SamplingRegion.RIGHT_HALF
+            ?: SamplingRegion.RP5_RIGHT_DEFAULT
 
     fun setRegions(context: Context, left: SamplingRegion, right: SamplingRegion) {
         prefs(context).edit()
