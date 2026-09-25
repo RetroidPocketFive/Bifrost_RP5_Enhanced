@@ -209,18 +209,21 @@ While overall stability has improved, unexpected behavior may still occur on som
 - Granting notification permission at launch may cause the LED toggle switch to appear disabled even though animations continue running
 - Some upstream device-specific issues may remain outside the RP5 target path.
 
-Thanks to **r/hupo224** for helping investigate this issue.
 
 ---
 
 # ❤️ Contributors
 
-Huge thanks to **KuriGohan-Kamehameha** for the **massive work and new features added to the project**, including major functionality improvements and system integrations.
+Bifrost RP5 Edition is a separate RP5-focused project based on the original Bifrost project.
 
-Project:  
-https://github.com/KuriGohan-Kamehameha
+Huge thanks to the original Bifrost project and its contributors for the substantial LED, capture, animation, service, profile, and integration work that made this project possible.
 
----
+**Original Bifrost project:**  
+https://github.com/Pollux-MoonBench/Bifrost
+
+Special thanks to **KuriGohan-Kamehameha** for the major work and features contributed to the original Bifrost project.
+
+And thank you to everyone who contributes to Bifrost RP5 Edition through development, testing, hardware investigation, issue reports, documentation, and feedback.
 
 # ☕ Support the Project
 
