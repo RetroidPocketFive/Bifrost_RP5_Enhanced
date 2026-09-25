@@ -37,7 +37,7 @@ class Rp5CalibrationView(context: Context, private val changed: (NormalizedRegio
         super.onDraw(c)
         val b=bitmap
         if (b != null) {
-            val scale=max(width.toFloat()/b.width,height.toFloat()/b.height)
+            val scale=min(width.toFloat()/b.width,height.toFloat()/b.height)
             val w=b.width*scale; val h=b.height*scale
             c.drawBitmap(b,null,RectF((width-w)/2f,(height-h)/2f,(width+w)/2f,(height+h)/2f),paint)
         } else c.drawColor(Color.BLACK)
@@ -47,11 +47,33 @@ class Rp5CalibrationView(context: Context, private val changed: (NormalizedRegio
 
     private fun drawRegion(c:Canvas,r:NormalizedRegion,color:Int,label:String,id:Int) {
         val s=r.size*min(width,height); val x=r.centerX*width; val y=r.centerY*height
-        paint.style=Paint.Style.STROKE; paint.strokeWidth=if(active==id)5f else 3f; paint.color=color
-        c.drawRect(x-s/2f,y-s/2f,x+s/2f,y+s/2f,paint)
-        paint.style=Paint.Style.FILL; paint.color=Color.argb(190,0,0,0)
-        c.drawRect(x-s/2f,y-s/2f,x-s/2f+70f,y-s/2f+30f,paint)
-        paint.color=Color.WHITE; paint.textSize=15f; c.drawText(label,x-s/2f+8f,y-s/2f+21f,paint)
+        val left=x-s/2f; val top=y-s/2f
+        paint.style=Paint.Style.FILL
+        paint.color=Color.argb(if(active==id) 48 else 28,Color.red(color),Color.green(color),Color.blue(color))
+        c.drawRect(left,top,left+s,top+s,paint)
+
+        paint.style=Paint.Style.STROKE
+        paint.strokeWidth=if(active==id)6f else 4f
+        paint.color=Color.WHITE
+        c.drawRect(left,top,left+s,top+s,paint)
+        paint.strokeWidth=2f
+        paint.color=color
+        c.drawRect(left+2f,top+2f,left+s-2f,top+s-2f,paint)
+
+        // Corner handles make resize affordance obvious on a touch screen.
+        paint.style=Paint.Style.FILL
+        paint.color=color
+        val h=10f
+        c.drawCircle(left,top,h/2f,paint)
+        c.drawCircle(left+s,top,h/2f,paint)
+        c.drawCircle(left,top+s,h/2f,paint)
+        c.drawCircle(left+s,top+s,h/2f,paint)
+
+        paint.color=Color.argb(205,0,0,0)
+        c.drawRoundRect(RectF(left,top,left+92f,top+34f),8f,8f,paint)
+        paint.color=Color.WHITE
+        paint.textSize=15f
+        c.drawText(label,left+9f,top+23f,paint)
     }
 
     override fun onTouchEvent(e:MotionEvent):Boolean {
