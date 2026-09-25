@@ -59,4 +59,24 @@ class LedSchedulerTest {
             executor.shutdownNow()
         }
     }
+    @Test
+    fun mergesPartialLeftAndRightFrames() {
+        val executor = java.util.concurrent.Executors.newSingleThreadScheduledExecutor()
+        try {
+            val driver = MockLedDriver()
+            val scheduler = LedScheduler(driver, executor, refreshHz = 60)
+            scheduler.submit(LedFrame(left = 0x112233, right = 0, leftTop = true, leftBottom = true, rightTop = false, rightBottom = false))
+            scheduler.submit(LedFrame(left = 0, right = 0xAABBCC, leftTop = false, leftBottom = false, rightTop = true, rightBottom = true))
+            scheduler.tickForTest()
+
+            val written = driver.writes.last()
+            assertEquals(0x112233, written.left)
+            assertEquals(0xAABBCC, written.right)
+            assertTrue(written.leftTop && written.leftBottom)
+            assertTrue(written.rightTop && written.rightBottom)
+        } finally {
+            executor.shutdownNow()
+        }
+    }
+
 }
