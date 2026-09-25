@@ -774,6 +774,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
             startActivity(Intent(this, SamplingEditorActivity::class.java))
         }
+        findViewById<MaterialButton>(R.id.editSamplingAreasButton).setOnClickListener {
+            startActivity(Intent(this, SamplingEditorActivity::class.java))
+        }
         singleColorSwitch = findViewById(R.id.singleColorSwitch)
         ambilightUseMediaProjectionSwitch = findViewById(R.id.ambilightUseMediaProjectionSwitch)
         breatheWhenChargingSwitch = findViewById(R.id.breatheWhenChargingSwitch)
