@@ -246,17 +246,33 @@ class SamplingEditorActivity : AppCompatActivity() {
                             }
                             return
                         }
-                        // Render into a software ARGB_8888 bitmap so getPixel()
-                        // (used for swatches) is safe and fast.
+                        // Accessibility screenshots are hardware-backed on Android 13.
+                        // A hardware bitmap cannot be drawn onto a software Canvas, so copy
+                        // it into a normal ARGB_8888 bitmap first. This also makes getPixel()
+                        // safe for the swatch sampling below.
+                        val softwareSource = try {
+                            hw.copy(Bitmap.Config.ARGB_8888, false)
+                        } finally {
+                            hw.recycle()
+                        }
+                        if (softwareSource == null) {
+                            runOnUiThread {
+                                Toast.makeText(this@SamplingEditorActivity, "Could not convert screenshot.", Toast.LENGTH_LONG).show()
+                            }
+                            return
+                        }
+
                         val metrics = getDisplayMetrics()
                         val targetW = 360
-                        val targetH = (targetW * metrics.heightPixels.toFloat() / metrics.widthPixels.toFloat()).toInt().coerceAtLeast(120)
-                        val software = Bitmap.createBitmap(targetW, targetH, Bitmap.Config.ARGB_8888)
-                        val c = Canvas(software)
-                        val src = Rect(0, 0, hw.width, hw.height)
-                        val dst = Rect(0, 0, targetW, targetH)
-                        c.drawBitmap(hw, src, dst, null)
-                        hw.recycle()
+                        val targetH = (targetW * metrics.heightPixels.toFloat() / metrics.widthPixels.toFloat())
+                            .toInt().coerceAtLeast(120)
+                        val software = if (softwareSource.width != targetW || softwareSource.height != targetH) {
+                            Bitmap.createScaledBitmap(softwareSource, targetW, targetH, true).also {
+                                softwareSource.recycle()
+                            }
+                        } else {
+                            softwareSource
+                        }
                         referenceBitmap?.recycle()
                         referenceBitmap = software
                         runOnUiThread {
