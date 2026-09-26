@@ -97,7 +97,7 @@ class SamplingEditorActivity : AppCompatActivity() {
             importImageLauncher.launch("image/*")
         }
         findViewById<MaterialButton>(R.id.btnReset).setOnClickListener {
-            canvas.setRegions(SamplingRegion.LEFT_HALF, SamplingRegion.RIGHT_HALF, notify = true)
+            canvas.setRegions(SamplingRegion.RP5_LEFT_DEFAULT, SamplingRegion.RP5_RIGHT_DEFAULT, notify = true)
         }
         findViewById<MaterialButton>(R.id.btnDisable).setOnClickListener { disableAndFinish() }
         findViewById<MaterialButton>(R.id.btnSave).setOnClickListener { saveAndFinish() }
