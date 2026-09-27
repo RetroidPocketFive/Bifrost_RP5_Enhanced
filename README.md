@@ -427,7 +427,7 @@ Important test scenarios include:
 
 The latest tested APKs are published through the project's GitHub Releases.
 
-For the current RP5 baseline, use the **v0.1.0-alpha.1** release.
+For the current RP5 baseline, use the **v0.1.0-alpha.1** release. V4 development builds are for real-RP5 testing and are not production releases.
 
 Future v2 builds will be clearly labelled as development builds until the new engine has been validated on real RP5 hardware.
 
@@ -455,7 +455,7 @@ Bifrost RP5 Edition is primarily developed and tested for:
 
 - **Retroid Pocket 5**
 
-The upstream Bifrost project supports other handheld hardware. RP5-specific behaviour is being isolated where practical so future hardware support does not require rewriting the effect system.
+Bifrost RP5 Edition is developed specifically for the **Retroid Pocket 5**. Other handhelds are not supported targets for this fork unless explicitly validated.
 
 ---
 
