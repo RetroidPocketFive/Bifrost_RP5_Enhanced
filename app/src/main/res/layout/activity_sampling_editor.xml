@@ -11,135 +11,316 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        app:title="Sampling Areas"
+        app:title="Calibration"
         app:titleTextColor="@android:color/white"
         app:navigationIcon="@drawable/baseline_arrow_back_24" />
 
-    <TextView
-        android:id="@+id/samplingHint"
+    <LinearLayout
+        android:id="@+id/chooserPanel"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="12dp"
-        android:text="Drag a rectangle to move it, drag a corner to resize. Each rectangle is the screen area a stick samples. When enabled, these override Single Color mode for Ambient / Ambi Aurora. Tap Import to load a screenshot of your game as a reference, or Capture for a 5s delayed grab (needs the Bifrost accessibility service)."
-        android:textColor="#CCCCCC"
-        android:textSize="12sp" />
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="24dp">
 
-    <FrameLayout
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CALIBRATION"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="24sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="Choose how to get the game screen used for calibration."
+            android:textColor="#BBBBBB"
+            android:textSize="14sp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChooseLive"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="LIVE GAME SCREEN" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChooseStill"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="STILL IMAGE" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:gravity="center"
+            android:text="LIVE waits 5 seconds, then captures the game. STILL lets you choose a screenshot."
+            android:textColor="#777777"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/editorPanel"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#101010">
+        android:orientation="vertical"
+        android:visibility="gone">
 
-        <com.moonbench.bifrost.ui.SamplingCanvasView
-            android:id="@+id/samplingCanvas"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_margin="8dp" />
-
-        <TextView
-            android:id="@+id/samplingPlaceholder"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Choose LIVE CAPTURE to grab the game screen after a short delay, or STILL IMAGE to load a screenshot.\nRectangles work without a reference image."
-            android:textColor="#888888"
-            android:textSize="12sp"
-            android:textAlignment="center"
-            android:visibility="gone" />
-    </FrameLayout>
+            android:orientation="vertical"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp">
+
+            <TextView
+                android:id="@+id/editorTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="LEFT STICK"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/editorSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Zoomed view."
+                android:textColor="#AAAAAA"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#101010">
+
+            <com.moonbench.bifrost.ui.SamplingCanvasView
+                android:id="@+id/samplingCanvas"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="4dp" />
+
+            <TextView
+                android:id="@+id/samplingPlaceholder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="No reference image. The sampling box can still be positioned."
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="6dp"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/leftReferenceButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="LEFT"
+                android:textSize="10sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/rightReferenceButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="RIGHT"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRecapture"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="RECAPTURE"
+                android:textSize="10sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnReset"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="4dp"
+                android:text="RESET"
+                android:textSize="10sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDisable"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="DISABLE"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:orientation="horizontal"
+            android:padding="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBack"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="BACK" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnNext"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="NEXT" />
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/colorTestPanel"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:padding="12dp">
-
-        <View
-            android:id="@+id/leftSwatch"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="@android:color/holo_blue_dark" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:visibility="gone">
 
         <TextView
-            android:id="@+id/leftSwatchLabel"
-            android:layout_width="wrap_content"
+            android:id="@+id/colorTestTitle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:layout_marginEnd="16dp"
-            android:text="Left stick"
-            android:textColor="#CCCCCC"
+            android:text="LED COLOR MATCH"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/colorTestSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:text="Compare the screen color with the physical thumbstick LEDs. This is a diagnostic test; it does not change the color engine."
+            android:textColor="#AAAAAA"
             android:textSize="12sp" />
 
         <View
-            android:id="@+id/rightSwatch"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:background="@android:color/holo_orange_dark" />
+            android:id="@+id/testColorSwatch"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginVertical="10dp"
+            android:background="#FF0000" />
 
         <TextView
-            android:id="@+id/rightSwatchLabel"
-            android:layout_width="wrap_content"
+            android:id="@+id/testColorName"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
-            android:text="Right stick"
-            android:textColor="#CCCCCC"
-            android:textSize="12sp" />
+            android:gravity="center"
+            android:text="RED"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="22sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestLeft"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="3dp"
+                android:text="TEST LEFT" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestBoth"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="3dp"
+                android:text="TEST BOTH" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTestRight"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="3dp"
+                android:text="TEST RIGHT" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnColorBack"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="BACK" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnColorNext"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="NEXT COLOR" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnFinishCalibration"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="SAVE &amp; APPLY" />
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCapture"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="6dp"
-            android:text="LIVE CAPTURE" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnImport"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="STILL IMAGE" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingHorizontal="12dp"
-        android:paddingBottom="12dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnReset"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="6dp"
-            android:text="Reset" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDisable"
-            style="@style/Widget.Material3.Button.OutlinedButton"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:text="Disable" />
-    </LinearLayout>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnSave"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="12dp"
-        android:text="Save &amp; Apply" />
 </LinearLayout>
