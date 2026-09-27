@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - "v2/**"
-      - "v3/**"
+      - "v3/**\n      - v4/**"
     tags:
       - "v*.*.*"
   workflow_dispatch:
