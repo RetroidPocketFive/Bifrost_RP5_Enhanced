@@ -3,9 +3,7 @@ package com.moonbench.bifrost
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Rect
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -20,46 +18,50 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.moonbench.bifrost.services.BifrostAccessibilityService
+import com.moonbench.bifrost.services.LEDService
 import com.moonbench.bifrost.tools.SamplingRegion
 import com.moonbench.bifrost.tools.SamplingRegionStore
 import com.moonbench.bifrost.ui.SamplingCanvasView
 import java.io.InputStream
 import java.util.concurrent.Executor
 
-/**
- * Lets the user position and resize the per-stick screen sampling regions used
- * by Ambient / Ambi Aurora. A reference screenshot is taken via the
- * accessibility service (no MediaProjection, so no conflict with the running
- * LED service) and shown as the canvas background so the user can see what each
- * rectangle covers. Regions are saved as screen fractions and applied live by
- * ScreenAnalyzer on its next capture frame.
- *
- * The screenshot is DELAYED (a 5-second countdown): the editor itself would be
- * captured otherwise. The user taps Capture, switches to their game within the
- * countdown, and the screenshot captures the game instead of this editor.
- *
- * Custom regions take priority over Single Color mode for Ambient / Ambi
- * Aurora. Enabling/disabling regions requires toggling the effect off/on.
- */
 class SamplingEditorActivity : AppCompatActivity() {
 
+    private enum class Page { CHOOSER, EDITOR, COLOR_TEST }
+    private var page = Page.CHOOSER
+    private var activeStick = 0
+    private var colorIndex = 0
+
+    private lateinit var chooserPanel: View
+    private lateinit var editorPanel: View
+    private lateinit var colorTestPanel: View
     private lateinit var canvas: SamplingCanvasView
-    private lateinit var leftSwatch: View
-    private lateinit var rightSwatch: View
+    private lateinit var editorTitle: TextView
+    private lateinit var editorSubtitle: TextView
     private lateinit var placeholder: TextView
-    private lateinit var captureButton: MaterialButton
+    private lateinit var leftReferenceButton: MaterialButton
+    private lateinit var rightReferenceButton: MaterialButton
+    private lateinit var btnNext: MaterialButton
+    private lateinit var btnBack: MaterialButton
+    private lateinit var testColorSwatch: View
+    private lateinit var testColorName: TextView
+
     private var referenceBitmap: Bitmap? = null
     private val handler = Handler(Looper.getMainLooper())
     private var captureCountdownActive = false
 
-    // Image picker for importing a reference screenshot from the user's files.
-    // This is the reliable path when the accessibility screenshot capture
-    // isn't available or fails â€” the user can grab a screenshot of their game
-    // with any tool and import it here.
+    private data class TestColor(val name: String, val color: Int)
+    private val testColors = listOf(
+        TestColor("RED", Color.rgb(255, 0, 0)),
+        TestColor("BLUE", Color.rgb(0, 80, 255)),
+        TestColor("YELLOW", Color.rgb(255, 220, 0)),
+        TestColor("GREEN", Color.rgb(0, 220, 80)),
+        TestColor("WHITE", Color.WHITE)
+    )
+
     private val importImageLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
-            importImageFromUri(uri)
+            if (uri != null) importImageFromUri(uri)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,19 +69,32 @@ class SamplingEditorActivity : AppCompatActivity() {
         setContentView(R.layout.activity_sampling_editor)
 
         val toolbar = findViewById<MaterialToolbar>(R.id.samplingToolbar)
-        toolbar.setNavigationOnClickListener { finish() }
+        toolbar.setNavigationOnClickListener {
+            when (page) {
+                Page.CHOOSER -> finish()
+                Page.EDITOR -> if (activeStick == 0) showChooser() else showEditor(0)
+                Page.COLOR_TEST -> showEditor(1)
+            }
+        }
 
+        chooserPanel = findViewById(R.id.chooserPanel)
+        editorPanel = findViewById(R.id.editorPanel)
+        colorTestPanel = findViewById(R.id.colorTestPanel)
         canvas = findViewById(R.id.samplingCanvas)
-        leftSwatch = findViewById(R.id.leftSwatch)
-        rightSwatch = findViewById(R.id.rightSwatch)
+        editorTitle = findViewById(R.id.editorTitle)
+        editorSubtitle = findViewById(R.id.editorSubtitle)
         placeholder = findViewById(R.id.samplingPlaceholder)
-        captureButton = findViewById(R.id.btnCapture)
+        leftReferenceButton = findViewById(R.id.leftReferenceButton)
+        rightReferenceButton = findViewById(R.id.rightReferenceButton)
+        btnNext = findViewById(R.id.btnNext)
+        btnBack = findViewById(R.id.btnBack)
+        testColorSwatch = findViewById(R.id.testColorSwatch)
+        testColorName = findViewById(R.id.testColorName)
 
-        // Match the canvas content rect to the real screen aspect so rectangles
-        // represent the same screen area whether or not a screenshot is present.
         val metrics = getDisplayMetrics()
-        canvas.screenAspectRatio = if (metrics.heightPixels > 0)
-            metrics.widthPixels.toFloat() / metrics.heightPixels.toFloat() else 16f / 9f
+        canvas.screenAspectRatio =
+            if (metrics.heightPixels > 0) metrics.widthPixels.toFloat() / metrics.heightPixels.toFloat()
+            else 16f / 9f
 
         canvas.setRegions(
             SamplingRegionStore.getLeft(this),
@@ -88,34 +103,150 @@ class SamplingEditorActivity : AppCompatActivity() {
 
         canvas.listener = object : SamplingCanvasView.OnRegionsChangedListener {
             override fun onRegionsChanged(left: SamplingRegion, right: SamplingRegion) {
-                updateSwatches(left, right)
+                updateReferenceButtons(left, right)
             }
         }
 
-        captureButton.setOnClickListener { startDelayedCapture() }
-        findViewById<MaterialButton>(R.id.btnImport).setOnClickListener {
+        findViewById<MaterialButton>(R.id.btnChooseLive).setOnClickListener {
+            showEditor(0)
+            startDelayedCapture()
+        }
+        findViewById<MaterialButton>(R.id.btnChooseStill).setOnClickListener {
+            showEditor(0)
             importImageLauncher.launch("image/*")
         }
-        findViewById<MaterialButton>(R.id.btnReset).setOnClickListener {
-            canvas.setRegions(SamplingRegion.RP5_LEFT_DEFAULT, SamplingRegion.RP5_RIGHT_DEFAULT, notify = true)
+        findViewById<MaterialButton>(R.id.btnRecapture).setOnClickListener {
+            startDelayedCapture()
         }
-        findViewById<MaterialButton>(R.id.btnDisable).setOnClickListener { disableAndFinish() }
-        findViewById<MaterialButton>(R.id.btnSave).setOnClickListener { saveAndFinish() }
+        findViewById<MaterialButton>(R.id.btnReset).setOnClickListener {
+            canvas.setRegions(
+                SamplingRegion.RP5_LEFT_DEFAULT,
+                SamplingRegion.RP5_RIGHT_DEFAULT,
+                notify = true
+            )
+        }
+        findViewById<MaterialButton>(R.id.btnDisable).setOnClickListener {
+            SamplingRegionStore.setEnabled(this, false)
+            Toast.makeText(
+                this,
+                "Custom sampling areas disabled. Ambient will use its normal sampling split.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
+        }
 
-        updateSwatches(canvas.leftRegion, canvas.rightRegion)
+        leftReferenceButton.setOnClickListener {
+            activeStick = 0
+            showEditor(0)
+            runLedTest(canvasColor(canvas.leftRegion), Color.BLACK)
+        }
+        rightReferenceButton.setOnClickListener {
+            activeStick = 1
+            showEditor(1)
+            runLedTest(Color.BLACK, canvasColor(canvas.rightRegion))
+        }
+
+        btnBack.setOnClickListener {
+            if (activeStick == 0) showChooser() else showEditor(0)
+        }
+        btnNext.setOnClickListener {
+            if (activeStick == 0) showEditor(1) else showColorTest()
+        }
+
+        findViewById<MaterialButton>(R.id.btnTestLeft).setOnClickListener {
+            runLedTest(testColors[colorIndex].color, Color.BLACK)
+        }
+        findViewById<MaterialButton>(R.id.btnTestBoth).setOnClickListener {
+            runLedTest(testColors[colorIndex].color, testColors[colorIndex].color)
+        }
+        findViewById<MaterialButton>(R.id.btnTestRight).setOnClickListener {
+            runLedTest(Color.BLACK, testColors[colorIndex].color)
+        }
+        findViewById<MaterialButton>(R.id.btnColorBack).setOnClickListener {
+            if (colorIndex == 0) showEditor(1)
+            else {
+                colorIndex--
+                updateColorTest()
+            }
+        }
+        findViewById<MaterialButton>(R.id.btnColorNext).setOnClickListener {
+            if (colorIndex < testColors.lastIndex) {
+                colorIndex++
+                updateColorTest()
+            } else {
+                Toast.makeText(
+                    this,
+                    "All five diagnostic colors tested. Use BACK if you want to repeat a color.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+        findViewById<MaterialButton>(R.id.btnFinishCalibration).setOnClickListener {
+            saveAndFinish()
+        }
+
+        updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
+        showChooser()
+    }
+
+    private fun showChooser() {
+        page = Page.CHOOSER
+        chooserPanel.visibility = View.VISIBLE
+        editorPanel.visibility = View.GONE
+        colorTestPanel.visibility = View.GONE
+    }
+
+    private fun showEditor(stick: Int) {
+        page = Page.EDITOR
+        activeStick = stick.coerceIn(0, 1)
+        chooserPanel.visibility = View.GONE
+        editorPanel.visibility = View.VISIBLE
+        colorTestPanel.visibility = View.GONE
+
+        canvas.focus = if (activeStick == 0) SamplingCanvasView.Focus.LEFT else SamplingCanvasView.Focus.RIGHT
+        editorTitle.text = if (activeStick == 0) "LEFT STICK" else "RIGHT STICK"
+        editorSubtitle.text =
+            "Zoomed view. Drag the box to move it; drag a corner to resize. Tap the color reference to test the physical LED."
+        btnBack.text = if (activeStick == 0) "BACK" else "LEFT STICK"
+        btnNext.text = if (activeStick == 0) "RIGHT STICK →" else "COLOR MATCH →"
+        updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
         updatePlaceholder()
     }
 
-    private fun updatePlaceholder() {
-        placeholder.visibility = if (referenceBitmap == null && !captureCountdownActive) View.VISIBLE else View.GONE
+    private fun showColorTest() {
+        page = Page.COLOR_TEST
+        colorIndex = 0
+        chooserPanel.visibility = View.GONE
+        editorPanel.visibility = View.GONE
+        colorTestPanel.visibility = View.VISIBLE
+        updateColorTest()
     }
 
-    private fun updateSwatches(left: SamplingRegion, right: SamplingRegion) {
-        val bmp = referenceBitmap
-        if (bmp != null && bmp.width > 0 && bmp.height > 0) {
-            leftSwatch.setBackgroundColor(averageColor(bmp, left))
-            rightSwatch.setBackgroundColor(averageColor(bmp, right))
-        }
+    private fun updateColorTest() {
+        val test = testColors[colorIndex]
+        testColorSwatch.setBackgroundColor(test.color)
+        testColorName.text = test.name + "  (" + (colorIndex + 1) + "/" + testColors.size + ")"
+    }
+
+    private fun updatePlaceholder() {
+        placeholder.visibility =
+            if (referenceBitmap == null && !captureCountdownActive) View.VISIBLE else View.GONE
+    }
+
+    private fun updateReferenceButtons(left: SamplingRegion, right: SamplingRegion) {
+        val leftColor = if (referenceBitmap != null) canvasColor(left) else Color.rgb(40, 130, 255)
+        val rightColor = if (referenceBitmap != null) canvasColor(right) else Color.rgb(255, 130, 30)
+        leftReferenceButton.text = "LEFT  " + hex(leftColor)
+        rightReferenceButton.text = "RIGHT  " + hex(rightColor)
+        leftReferenceButton.setTextColor(contrastText(leftColor))
+        rightReferenceButton.setTextColor(contrastText(rightColor))
+        leftReferenceButton.setBackgroundColor(leftColor)
+        rightReferenceButton.setBackgroundColor(rightColor)
+    }
+
+    private fun canvasColor(region: SamplingRegion): Int {
+        val bmp = referenceBitmap ?: return Color.BLACK
+        return averageColor(bmp, region)
     }
 
     private fun averageColor(bmp: Bitmap, region: SamplingRegion): Int {
@@ -123,95 +254,90 @@ class SamplingEditorActivity : AppCompatActivity() {
         val x1 = (region.right * bmp.width).toInt().coerceIn(x0 + 1, bmp.width)
         val y0 = (region.top * bmp.height).toInt().coerceIn(0, bmp.height - 1)
         val y1 = (region.bottom * bmp.height).toInt().coerceIn(y0 + 1, bmp.height)
-        var r = 0; var g = 0; var b = 0; var n = 0
+        var r = 0L
+        var g = 0L
+        var b = 0L
+        var n = 0L
         val stepX = maxOf(1, (x1 - x0) / 24)
         val stepY = maxOf(1, (y1 - y0) / 24)
         for (y in y0 until y1 step stepY) {
             for (x in x0 until x1 step stepX) {
                 val c = bmp.getPixel(x, y)
-                r += Color.red(c); g += Color.green(c); b += Color.blue(c); n++
+                r += Color.red(c)
+                g += Color.green(c)
+                b += Color.blue(c)
+                n++
             }
         }
-        if (n == 0) return Color.BLACK
-        return Color.rgb(r / n, g / n, b / n)
+        return if (n == 0L) Color.BLACK else Color.rgb((r / n).toInt(), (g / n).toInt(), (b / n).toInt())
+    }
+
+    private fun hex(color: Int): String =
+        "#%02X%02X%02X".format(Color.red(color), Color.green(color), Color.blue(color))
+
+    private fun contrastText(color: Int): Int {
+        val luminance = 0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)
+        return if (luminance > 150) Color.BLACK else Color.WHITE
     }
 
     private fun startDelayedCapture() {
         val service = BifrostAccessibilityService.instance
         if (service == null || !BifrostAccessibilityService.isEnabled(service)) {
-            Toast.makeText(this, "Enable the Bifrost accessibility service first, then tap Capture again.", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                this,
+                "Enable the Bifrost accessibility service first, then try LIVE GAME SCREEN again.",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
         if (captureCountdownActive) return
-        captureCountdownActive = true
-        captureButton.isEnabled = false
-        captureButton.text = "Switch to gameâ€¦"
-        updatePlaceholder()
 
-        Toast.makeText(this, "Capturing in 5s â€” switch to your game now.", Toast.LENGTH_LONG).show()
-        // No further toasts: a countdown toast could overlay the screenshot.
+        captureCountdownActive = true
+        updatePlaceholder()
+        Toast.makeText(this, "Capturing in 5s — switch to your game now.", Toast.LENGTH_LONG).show()
+
         handler.postDelayed({
             if (isFinishing || isDestroyed) return@postDelayed
             captureCountdownActive = false
-            captureButton.isEnabled = true
-            captureButton.text = "Capture"
+            updatePlaceholder()
             takeReferenceScreenshot(service)
         }, 5000L)
     }
 
-    /**
-     * Import an image the user picked (a screenshot of their game, or any
-     * reference picture) and use it as the editor canvas background. The image
-     * is downscaled to a bounded width and decoded as a software ARGB_8888
-     * bitmap so swatch colour sampling is safe and fast. This is reference-only;
-     * runtime sampling still uses the normal Ambient capture path.
-     */
     private fun importImageFromUri(uri: Uri) {
         try {
-            contentResolver.openInputStream(uri)?.use { input: InputStream ->
+            contentResolver.openInputStream(uri)?.use {
                 val metrics = getDisplayMetrics()
                 val targetW = 540
-                val targetH = (targetW * metrics.heightPixels.toFloat() / metrics.widthPixels.toFloat())
-                    .toInt().coerceAtLeast(120)
-
-                val bounds = android.graphics.BitmapFactory.Options().apply {
-                    inJustDecodeBounds = true
-                }
-                android.graphics.BitmapFactory.decodeStream(input, null, bounds)
+                val targetH = (targetW * metrics.heightPixels.toFloat() / metrics.widthPixels.toFloat()).toInt().coerceAtLeast(120)
+                val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                android.graphics.BitmapFactory.decodeStream(it, null, bounds)
                 if (bounds.outWidth <= 0 || bounds.outHeight <= 0) {
-                    runOnUiThread {
-                        Toast.makeText(this, "Could not read that image.", Toast.LENGTH_LONG).show()
-                    }
+                    Toast.makeText(this, "Could not read that image.", Toast.LENGTH_LONG).show()
                     return
                 }
 
                 val sample = calculateInSampleSize(bounds.outWidth, bounds.outHeight, targetW, targetH)
-
                 contentResolver.openInputStream(uri)?.use { dec ->
                     val opts = android.graphics.BitmapFactory.Options().apply {
                         inSampleSize = sample
                         inPreferredConfig = Bitmap.Config.ARGB_8888
                     }
-                    val decoded = android.graphics.BitmapFactory.decodeStream(dec, null, opts) ?: return
+                    val decoded = android.graphics.BitmapFactory.decodeStream(dec, null, opts) ?: return@use
                     val scaled = if (decoded.width != targetW || decoded.height != targetH) {
                         Bitmap.createScaledBitmap(decoded, targetW, targetH, true).also { decoded.recycle() }
-                    } else {
-                        decoded
-                    }
+                    } else decoded
+
                     referenceBitmap?.recycle()
                     referenceBitmap = scaled
-                    runOnUiThread {
-                        canvas.backgroundBitmap = referenceBitmap
-                        updatePlaceholder()
-                        updateSwatches(canvas.leftRegion, canvas.rightRegion)
-                        Toast.makeText(this, "Image imported â€” position your rectangles over it.", Toast.LENGTH_SHORT).show()
-                    }
+                    canvas.backgroundBitmap = scaled
+                    updatePlaceholder()
+                    updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
+                    Toast.makeText(this, "Still image loaded. Position the highlighted stick area.", Toast.LENGTH_SHORT).show()
                 }
             }
         } catch (e: Throwable) {
-            runOnUiThread {
-                Toast.makeText(this, "Import failed: ${e.message}", Toast.LENGTH_LONG).show()
-            }
+            Toast.makeText(this, "Import failed: " + e.message, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -231,72 +357,85 @@ class SamplingEditorActivity : AppCompatActivity() {
         try {
             service.takeScreenshot(
                 android.view.Display.DEFAULT_DISPLAY,
-                Executor { cmd -> runOnUiThread(cmd) },
+                Executor { command -> runOnUiThread(command) },
                 object : AccessibilityService.TakeScreenshotCallback {
                     override fun onSuccess(screenshot: AccessibilityService.ScreenshotResult) {
                         if (isFinishing || isDestroyed) {
                             screenshot.hardwareBuffer.close()
                             return
                         }
+
                         val hw = Bitmap.wrapHardwareBuffer(screenshot.hardwareBuffer, screenshot.colorSpace)
                         screenshot.hardwareBuffer.close()
                         if (hw == null) {
-                            runOnUiThread {
-                                Toast.makeText(this@SamplingEditorActivity, "Screenshot unavailable.", Toast.LENGTH_LONG).show()
-                            }
+                            Toast.makeText(this@SamplingEditorActivity, "Screenshot unavailable.", Toast.LENGTH_LONG).show()
                             return
                         }
-                        // Accessibility screenshots are hardware-backed on Android 13.
-                        // A hardware bitmap cannot be drawn onto a software Canvas, so copy
-                        // it into a normal ARGB_8888 bitmap first. This also makes getPixel()
-                        // safe for the swatch sampling below.
+
                         val softwareSource = try {
                             hw.copy(Bitmap.Config.ARGB_8888, false)
                         } finally {
                             hw.recycle()
                         }
                         if (softwareSource == null) {
-                            runOnUiThread {
-                                Toast.makeText(this@SamplingEditorActivity, "Could not convert screenshot.", Toast.LENGTH_LONG).show()
-                            }
+                            Toast.makeText(this@SamplingEditorActivity, "Could not convert screenshot.", Toast.LENGTH_LONG).show()
                             return
                         }
 
                         val metrics = getDisplayMetrics()
-                        val targetW = 360
-                        val targetH = (targetW * metrics.heightPixels.toFloat() / metrics.widthPixels.toFloat())
-                            .toInt().coerceAtLeast(120)
+                        val targetW = 540
+                        val targetH = (targetW * metrics.heightPixels.toFloat() / metrics.widthPixels.toFloat()).toInt().coerceAtLeast(120)
                         val software = if (softwareSource.width != targetW || softwareSource.height != targetH) {
-                            Bitmap.createScaledBitmap(softwareSource, targetW, targetH, true).also {
-                                softwareSource.recycle()
-                            }
-                        } else {
-                            softwareSource
-                        }
+                            Bitmap.createScaledBitmap(softwareSource, targetW, targetH, true).also { softwareSource.recycle() }
+                        } else softwareSource
+
                         referenceBitmap?.recycle()
                         referenceBitmap = software
-                        runOnUiThread {
-                            canvas.backgroundBitmap = referenceBitmap
-                            updatePlaceholder()
-                            updateSwatches(canvas.leftRegion, canvas.rightRegion)
-                        }
+                        canvas.backgroundBitmap = software
+                        updatePlaceholder()
+                        updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
+                        Toast.makeText(this@SamplingEditorActivity, "Game screen captured.", Toast.LENGTH_SHORT).show()
                     }
 
                     override fun onFailure(errorCode: Int) {
-                        if (isFinishing || isDestroyed) return
-                        runOnUiThread {
-                            captureButton.isEnabled = true
-                            updatePlaceholder()
-                            Toast.makeText(this@SamplingEditorActivity, "Screenshot failed (error $errorCode). You can still position rectangles.", Toast.LENGTH_LONG).show()
-                        }
+                        captureCountdownActive = false
+                        updatePlaceholder()
+                        Toast.makeText(
+                            this@SamplingEditorActivity,
+                            "Screenshot failed (error " + errorCode + "). You can still position the areas.",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             )
-        } catch (e: SecurityException) {
-            Toast.makeText(this, "Accessibility permission unavailable.", Toast.LENGTH_LONG).show()
         } catch (e: Throwable) {
-            Toast.makeText(this, "Screenshot unavailable: ${e.message}", Toast.LENGTH_LONG).show()
+            captureCountdownActive = false
+            updatePlaceholder()
+            Toast.makeText(this, "Screenshot unavailable: " + e.message, Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun runLedTest(left: Int, right: Int) {
+        val intent = Intent(this, LEDService::class.java).apply {
+            action = LEDService.ACTION_RP5_LED_TEST
+            putExtra(LEDService.EXTRA_RP5_LEFT_COLOR, left)
+            putExtra(LEDService.EXTRA_RP5_RIGHT_COLOR, right)
+            putExtra(LEDService.EXTRA_RP5_TEST_DURATION_MS, 1500L)
+        }
+        runCatching { startService(intent) }.onFailure {
+            Toast.makeText(this, "LED test could not start: " + it.message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun saveAndFinish() {
+        SamplingRegionStore.setRegions(this, canvas.leftRegion, canvas.rightRegion)
+        SamplingRegionStore.setEnabled(this, true)
+        Toast.makeText(
+            this,
+            "Sampling areas saved and enabled for Ambient / Ambi Aurora.",
+            Toast.LENGTH_LONG
+        ).show()
+        finish()
     }
 
     private fun getDisplayMetrics(): DisplayMetrics {
@@ -305,21 +444,10 @@ class SamplingEditorActivity : AppCompatActivity() {
         return metrics
     }
 
-    private fun saveAndFinish() {
-        SamplingRegionStore.setRegions(this, canvas.leftRegion, canvas.rightRegion)
-        SamplingRegionStore.setEnabled(this, true)
-        Toast.makeText(this, "Sampling areas saved. If Ambient is running, toggle it off/on to apply the new capture grid.", Toast.LENGTH_LONG).show()
-        finish()
-    }
-
-    private fun disableAndFinish() {
-        SamplingRegionStore.setEnabled(this, false)
-        Toast.makeText(this, "Custom sampling areas off â€” using left/right split. Toggle the effect off/on to apply.", Toast.LENGTH_LONG).show()
-        finish()
-    }
-
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
+        referenceBitmap?.recycle()
+        referenceBitmap = null
         super.onDestroy()
     }
 }
