@@ -2,6 +2,7 @@ package com.moonbench.bifrost
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
@@ -240,8 +241,8 @@ class SamplingEditorActivity : AppCompatActivity() {
         rightReferenceButton.text = "RIGHT  " + hex(rightColor)
         leftReferenceButton.setTextColor(contrastText(leftColor))
         rightReferenceButton.setTextColor(contrastText(rightColor))
-        leftReferenceButton.setBackgroundColor(leftColor)
-        rightReferenceButton.setBackgroundColor(rightColor)
+        leftReferenceButton.setBackgroundTintList(ColorStateList.valueOf(leftColor))
+        rightReferenceButton.setBackgroundTintList(ColorStateList.valueOf(rightColor))
     }
 
     private fun canvasColor(region: SamplingRegion): Int {
