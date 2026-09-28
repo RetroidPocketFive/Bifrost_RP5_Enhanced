@@ -56,6 +56,7 @@ private const val SCREENSHOT_MIN_INTERVAL_MS = 100L
 private const val DEADBAND_THRESHOLD = 4
 private const val REGION_GRID_WIDTH = 48
 private const val REGION_REFRESH_INTERVAL_MS = 500L
+private const val STABLE_FRAMES = 2
 
 data class ScreenColors(
     val leftColor: Int = Color.BLACK,
@@ -83,6 +84,10 @@ class ScreenAnalyzer(
     private var captureHeight = DEFAULT_CAPTURE_HEIGHT
     private var lastProcessedTime = 0L
     private var lastEmittedColors: ScreenColors? = null
+    private val stabilityFilter = ScreenColorStabilityFilter(
+        deadband = DEADBAND_THRESHOLD,
+        requiredStableFrames = STABLE_FRAMES
+    )
 
     private var regionModeActive: Boolean = false
     private var cachedLeftRegion: SamplingRegion = SamplingRegion.LEFT_HALF
@@ -168,6 +173,7 @@ class ScreenAnalyzer(
         projectionCallback = null
         captureInFlight = false
         lastEmittedColors = null
+        stabilityFilter.reset()
     }
 
     // ── VirtualDisplay path (MediaProjection, ~60 fps) ────────────────────────
@@ -251,13 +257,9 @@ class ScreenAnalyzer(
             rightColor = applySaturationBoost(colors.rightColor)
         )
 
-        val previous = lastEmittedColors
-        val shouldEmit = previous == null ||
-            colorDeltaExceeds(previous.leftColor, boostedColors.leftColor, DEADBAND_THRESHOLD) ||
-            colorDeltaExceeds(previous.rightColor, boostedColors.rightColor, DEADBAND_THRESHOLD)
-        if (shouldEmit) {
-            lastEmittedColors = boostedColors
-            onColorsAnalyzed(boostedColors)
+        stabilityFilter.offer(boostedColors)?.let { stableColors ->
+            lastEmittedColors = stableColors
+            onColorsAnalyzed(stableColors)
         }
     }
 
