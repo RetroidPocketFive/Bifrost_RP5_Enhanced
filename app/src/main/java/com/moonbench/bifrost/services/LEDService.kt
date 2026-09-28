@@ -110,6 +110,7 @@ class LEDService : Service() {
         const val EXTRA_RP5_LEFT_COLOR = "rp5.leftColor"
         const val EXTRA_RP5_RIGHT_COLOR = "rp5.rightColor"
         const val EXTRA_RP5_TEST_DURATION_MS = "rp5.durationMs"
+        const val EXTRA_RP5_TEST_BYPASS_CALIBRATION = "rp5.bypassCalibration"
         const val EXTRA_EXTERNAL_PULSE_KIND = "external.pulseKind"
         const val EXTRA_ALLOW_BACKGROUND_RUN = "allowBackgroundRun"
         const val EXTRA_BATTERY_OVERRIDE_WHEN_PLUGGED = "batteryOverrideWhenPlugged"
@@ -623,10 +624,18 @@ class LEDService : Service() {
         val right = intent.getIntExtra(EXTRA_RP5_RIGHT_COLOR, left) and 0xFFFFFF
         val duration = intent.getLongExtra(EXTRA_RP5_TEST_DURATION_MS, 1500L).coerceIn(250L, 5000L)
         Log.d(TAG, "RP5 LED test: left=#%06X right=#%06X duration=%dms".format(left, right, duration))
-        ledController.setLedColorDual(
-            Color.red(left), Color.green(left), Color.blue(left),
-            Color.red(right), Color.green(right), Color.blue(right)
-        )
+        val bypassCalibration = intent.getBooleanExtra(EXTRA_RP5_TEST_BYPASS_CALIBRATION, false)
+        if (bypassCalibration) {
+            ledController.setLedColorDualUncorrected(
+                Color.red(left), Color.green(left), Color.blue(left),
+                Color.red(right), Color.green(right), Color.blue(right)
+            )
+        } else {
+            ledController.setLedColorDual(
+                Color.red(left), Color.green(left), Color.blue(left),
+                Color.red(right), Color.green(right), Color.blue(right)
+            )
+        }
         handler.postDelayed({
             if (!isStopping.get()) ledController.clear()
             stopSelf()
