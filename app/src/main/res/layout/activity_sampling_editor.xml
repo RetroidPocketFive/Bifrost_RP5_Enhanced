@@ -238,17 +238,95 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:text="Compare the screen color with the physical thumbstick LEDs. This is a diagnostic test; it does not change the color engine."
+            android:text="Match the physical LED to the screen colour. Adjust raw RGB, test it, then save the primary. Green can be corrected independently from blue."
             android:textColor="#AAAAAA"
             android:textSize="12sp" />
 
-        <View
-            android:id="@+id/testColorSwatch"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginVertical="10dp"
-            android:background="#FF0000" />
+            android:layout_height="52dp"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMatchLeft"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="LEFT STICK" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMatchRight"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="RIGHT STICK" />
+
+            <TextView
+                android:id="@+id/matchStickName"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="0.8"
+                android:gravity="center"
+                android:text="LEFT STICK"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="74dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingEnd="4dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SCREEN TARGET"
+                    android:textColor="#AAAAAA"
+                    android:textSize="10sp" />
+
+                <View
+                    android:id="@+id/targetColorSwatch"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="#00FF00" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:paddingStart="4dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="RAW LED COMMAND"
+                    android:textColor="#AAAAAA"
+                    android:textSize="10sp" />
+
+                <View
+                    android:id="@+id/rawColorSwatch"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="#00FF00" />
+            </LinearLayout>
+        </LinearLayout>
 
         <TextView
             android:id="@+id/testColorName"
@@ -258,7 +336,49 @@
             android:text="RED"
             android:textColor="@android:color/white"
             android:textStyle="bold"
-            android:textSize="22sp" />
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/redValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="R 255"
+            android:textColor="#FF7777"
+            android:textSize="11sp" />
+
+        <SeekBar
+            android:id="@+id/redSeek"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:max="255" />
+
+        <TextView
+            android:id="@+id/greenValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="G 255"
+            android:textColor="#77FF77"
+            android:textSize="11sp" />
+
+        <SeekBar
+            android:id="@+id/greenSeek"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:max="255" />
+
+        <TextView
+            android:id="@+id/blueValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="B 255"
+            android:textColor="#7799FF"
+            android:textSize="11sp" />
+
+        <SeekBar
+            android:id="@+id/blueSeek"
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:max="255" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -266,31 +386,31 @@
             android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTestLeft"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:id="@+id/btnTestAdjusted"
+                style="@style/Widget.Material3.Button"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="3dp"
-                android:text="TEST LEFT" />
+                android:text="TEST RAW LED" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTestBoth"
+                android:id="@+id/btnSavePrimary"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginHorizontal="3dp"
-                android:text="TEST BOTH" />
+                android:text="SAVE PRIMARY" />
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTestRight"
+                android:id="@+id/btnResetLedCalibration"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginStart="3dp"
-                android:text="TEST RIGHT" />
+                android:text="RESET" />
         </LinearLayout>
 
         <LinearLayout
@@ -314,7 +434,7 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:text="NEXT COLOR" />
+                android:text="NEXT PRIMARY" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
