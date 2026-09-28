@@ -70,24 +70,31 @@ object LedColorCalibration {
     }
 
     fun apply(context: Context, stick: Stick, color: Int): Int {
-        val red = getPrimaryCommand(context, stick, Primary.RED)
-        val green = getPrimaryCommand(context, stick, Primary.GREEN)
-        val blue = getPrimaryCommand(context, stick, Primary.BLUE)
-
-        val r = Color.red(color) / 255f
-        val g = Color.green(color) / 255f
-        val b = Color.blue(color) / 255f
-
-        // The three calibrated command vectors are the matrix columns.
-        val outR = red.red * r + green.red * g + blue.red * b
-        val outG = red.green * r + green.green * g + blue.green * b
-        val outB = red.blue * r + green.blue * g + blue.blue * b
-
-        return Color.rgb(
-            outR.roundToInt().coerceIn(0, 255),
-            outG.roundToInt().coerceIn(0, 255),
-            outB.roundToInt().coerceIn(0, 255)
+        return applyWithCommands(
+            color,
+            getPrimaryCommand(context, stick, Primary.RED),
+            getPrimaryCommand(context, stick, Primary.GREEN),
+            getPrimaryCommand(context, stick, Primary.BLUE)
         )
+    }
+
+    fun applyWithCommands(
+        color: Int,
+        redCommand: CommandColor,
+        greenCommand: CommandColor,
+        blueCommand: CommandColor
+    ): Int {
+        val r = ((color shr 16) and 0xFF) / 255f
+        val g = ((color shr 8) and 0xFF) / 255f
+        val b = (color and 0xFF) / 255f
+
+        val outR = redCommand.red * r + greenCommand.red * g + blueCommand.red * b
+        val outG = redCommand.green * r + greenCommand.green * g + blueCommand.green * b
+        val outB = redCommand.blue * r + greenCommand.blue * g + blueCommand.blue * b
+
+        return (outR.roundToInt().coerceIn(0, 255) shl 16) or
+            (outG.roundToInt().coerceIn(0, 255) shl 8) or
+            outB.roundToInt().coerceIn(0, 255)
     }
 
     fun applyDual(context: Context, left: Int, right: Int): Pair<Int, Int> =
