@@ -103,6 +103,15 @@ class SamplingEditorActivity : AppCompatActivity() {
         btnBack = findViewById(R.id.btnBack)
         testColorSwatch = findViewById(R.id.testColorSwatch)
         testColorName = findViewById(R.id.testColorName)
+        matchStickName = findViewById(R.id.matchStickName)
+        targetColorSwatch = findViewById(R.id.targetColorSwatch)
+        rawColorSwatch = findViewById(R.id.rawColorSwatch)
+        redSeek = findViewById(R.id.redSeek)
+        greenSeek = findViewById(R.id.greenSeek)
+        blueSeek = findViewById(R.id.blueSeek)
+        redValue = findViewById(R.id.redValue)
+        greenValue = findViewById(R.id.greenValue)
+        blueValue = findViewById(R.id.blueValue)
 
         val metrics = getDisplayMetrics()
         canvas.screenAspectRatio =
