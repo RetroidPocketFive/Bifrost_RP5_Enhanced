@@ -214,18 +214,25 @@ class SamplingEditorActivity : AppCompatActivity() {
         }
         findViewById<MaterialButton>(R.id.btnColorNext).setOnClickListener {
             if (colorIndex < testColors.lastIndex) {
+                saveCurrentPrimary()
                 colorIndex++
                 updateColorTest()
             } else {
                 Toast.makeText(
                     this,
-                    "All five diagnostic colors tested. Use BACK if you want to repeat a color.",
+                    "White is a verification colour. Save & Apply when the stick looks correct.",
                     Toast.LENGTH_LONG
                 ).show()
             }
         }
         findViewById<MaterialButton>(R.id.btnFinishCalibration).setOnClickListener {
-            saveAndFinish()
+            if (colorIndex <= 2) saveCurrentPrimary()
+            Toast.makeText(
+                this,
+                "LED colour calibration saved for normal Ambient / Ambi Aurora output.",
+                Toast.LENGTH_LONG
+            ).show()
+            finish()
         }
 
         updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
@@ -268,7 +275,9 @@ class SamplingEditorActivity : AppCompatActivity() {
     private fun updateColorTest() {
         val test = testColors[colorIndex]
         testColorSwatch.setBackgroundColor(test.color)
+        targetColorSwatch.setBackgroundColor(test.color)
         testColorName.text = test.name + "  (" + (colorIndex + 1) + "/" + testColors.size + ")"
+        loadMatchCommand()
     }
 
     private fun matchStickLabel(): String =
@@ -524,12 +533,13 @@ class SamplingEditorActivity : AppCompatActivity() {
         }
     }
 
-    private fun runLedTest(left: Int, right: Int) {
+    private fun runLedTest(left: Int, right: Int, bypassCalibration: Boolean = false) {
         val intent = Intent(this, LEDService::class.java).apply {
             action = LEDService.ACTION_RP5_LED_TEST
             putExtra(LEDService.EXTRA_RP5_LEFT_COLOR, left)
             putExtra(LEDService.EXTRA_RP5_RIGHT_COLOR, right)
             putExtra(LEDService.EXTRA_RP5_TEST_DURATION_MS, 1500L)
+            putExtra(LEDService.EXTRA_RP5_TEST_BYPASS_CALIBRATION, bypassCalibration)
         }
         runCatching { startService(intent) }.onFailure {
             Toast.makeText(this, "LED test could not start: " + it.message, Toast.LENGTH_LONG).show()
