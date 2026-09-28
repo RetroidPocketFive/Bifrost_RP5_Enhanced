@@ -13,6 +13,7 @@ import android.util.DisplayMetrics
 import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
+import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +23,7 @@ import com.moonbench.bifrost.services.BifrostAccessibilityService
 import com.moonbench.bifrost.services.LEDService
 import com.moonbench.bifrost.tools.SamplingRegion
 import com.moonbench.bifrost.tools.SamplingRegionStore
+import com.moonbench.bifrost.rp5.LedColorCalibration
 import com.moonbench.bifrost.ui.SamplingCanvasView
 import java.io.InputStream
 import java.util.concurrent.Executor
@@ -46,6 +48,17 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var btnBack: MaterialButton
     private lateinit var testColorSwatch: View
     private lateinit var testColorName: TextView
+    private lateinit var matchStickName: TextView
+    private lateinit var targetColorSwatch: View
+    private lateinit var rawColorSwatch: View
+    private lateinit var redSeek: SeekBar
+    private lateinit var greenSeek: SeekBar
+    private lateinit var blueSeek: SeekBar
+    private lateinit var redValue: TextView
+    private lateinit var greenValue: TextView
+    private lateinit var blueValue: TextView
+    private var matchStick = LedColorCalibration.Stick.LEFT
+    private var matchAdjusting = false
 
     private var referenceBitmap: Bitmap? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -54,10 +67,9 @@ class SamplingEditorActivity : AppCompatActivity() {
     private data class TestColor(val name: String, val color: Int)
     private val testColors = listOf(
         TestColor("RED", Color.rgb(255, 0, 0)),
-        TestColor("BLUE", Color.rgb(0, 80, 255)),
-        TestColor("YELLOW", Color.rgb(255, 220, 0)),
-        TestColor("GREEN", Color.rgb(0, 220, 80)),
-        TestColor("WHITE", Color.WHITE)
+        TestColor("GREEN", Color.GREEN),
+        TestColor("BLUE", Color.BLUE),
+        TestColor("WHITE", Color.WHITE),
     )
 
     private val importImageLauncher =
