@@ -271,6 +271,72 @@ class SamplingEditorActivity : AppCompatActivity() {
         testColorName.text = test.name + "  (" + (colorIndex + 1) + "/" + testColors.size + ")"
     }
 
+    private fun matchStickLabel(): String =
+        if (matchStick == LedColorCalibration.Stick.LEFT) "LEFT" else "RIGHT"
+
+    private fun loadMatchCommand() {
+        matchStickName.text = matchStickLabel() + " STICK"
+        val primary = when (colorIndex.coerceAtMost(2)) {
+            0 -> LedColorCalibration.Primary.RED
+            1 -> LedColorCalibration.Primary.GREEN
+            else -> LedColorCalibration.Primary.BLUE
+        }
+        val command = if (colorIndex <= 2) {
+            LedColorCalibration.getPrimaryCommand(this, matchStick, primary)
+        } else {
+            LedColorCalibration.CommandColor(
+                Color.red(testColors[colorIndex].color),
+                Color.green(testColors[colorIndex].color),
+                Color.blue(testColors[colorIndex].color)
+            )
+        }
+        matchAdjusting = true
+        redSeek.progress = command.red
+        greenSeek.progress = command.green
+        blueSeek.progress = command.blue
+        matchAdjusting = false
+        updateMatchValues()
+    }
+
+    private fun updateMatchValues() {
+        val command = Color.rgb(redSeek.progress, greenSeek.progress, blueSeek.progress)
+        redValue.text = "R " + redSeek.progress
+        greenValue.text = "G " + greenSeek.progress
+        blueValue.text = "B " + blueSeek.progress
+        rawColorSwatch.setBackgroundColor(command)
+    }
+
+    private fun testAdjustedCommand() {
+        val command = Color.rgb(redSeek.progress, greenSeek.progress, blueSeek.progress)
+        val left = if (matchStick == LedColorCalibration.Stick.LEFT) command else Color.BLACK
+        val right = if (matchStick == LedColorCalibration.Stick.RIGHT) command else Color.BLACK
+        runLedTest(left, right, true)
+        Toast.makeText(
+            this,
+            "Raw " + matchStickLabel() + " output sent. Adjust RGB until it visually matches the target.",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun saveCurrentPrimary() {
+        if (colorIndex > 2) {
+            Toast.makeText(this, "WHITE is verification only; it is not a matrix primary.", Toast.LENGTH_LONG).show()
+            return
+        }
+        val primary = LedColorCalibration.Primary.values()[colorIndex]
+        LedColorCalibration.setPrimaryCommand(
+            this,
+            matchStick,
+            primary,
+            LedColorCalibration.CommandColor(redSeek.progress, greenSeek.progress, blueSeek.progress)
+        )
+        Toast.makeText(
+            this,
+            matchStickLabel() + " " + primary.name + " correction saved.",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
     private fun updatePlaceholder() {
         placeholder.visibility =
             if (referenceBitmap == null && !captureCountdownActive) View.VISIBLE else View.GONE
