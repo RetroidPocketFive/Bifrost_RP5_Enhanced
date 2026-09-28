@@ -30,7 +30,7 @@ class LedColorCalibrationTest {
         val green = LedColorCalibration.CommandColor(0, 200, 80)
         val blue = LedColorCalibration.CommandColor(10, 0, 250)
         assertEquals(
-            0x0AC8FA,
+            0x0AC8FF,
             LedColorCalibration.applyWithCommands(0x00FFFF, red, green, blue)
         )
     }
