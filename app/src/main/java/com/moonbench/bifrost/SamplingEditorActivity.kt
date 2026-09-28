@@ -175,15 +175,36 @@ class SamplingEditorActivity : AppCompatActivity() {
             if (activeStick == 0) showEditor(1) else showColorTest()
         }
 
-        findViewById<MaterialButton>(R.id.btnTestLeft).setOnClickListener {
-            runLedTest(testColors[colorIndex].color, Color.BLACK)
+        findViewById<MaterialButton>(R.id.btnMatchLeft).setOnClickListener {
+            matchStick = LedColorCalibration.Stick.LEFT
+            loadMatchCommand()
         }
-        findViewById<MaterialButton>(R.id.btnTestBoth).setOnClickListener {
-            runLedTest(testColors[colorIndex].color, testColors[colorIndex].color)
+        findViewById<MaterialButton>(R.id.btnMatchRight).setOnClickListener {
+            matchStick = LedColorCalibration.Stick.RIGHT
+            loadMatchCommand()
         }
-        findViewById<MaterialButton>(R.id.btnTestRight).setOnClickListener {
-            runLedTest(Color.BLACK, testColors[colorIndex].color)
+        findViewById<MaterialButton>(R.id.btnTestAdjusted).setOnClickListener {
+            testAdjustedCommand()
         }
+        findViewById<MaterialButton>(R.id.btnSavePrimary).setOnClickListener {
+            saveCurrentPrimary()
+        }
+        findViewById<MaterialButton>(R.id.btnResetLedCalibration).setOnClickListener {
+            LedColorCalibration.reset(this, matchStick)
+            loadMatchCommand()
+            Toast.makeText(this, matchStickLabel() + " LED calibration reset.", Toast.LENGTH_SHORT).show()
+        }
+
+        val seekListener = object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (!matchAdjusting) updateMatchValues()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        }
+        redSeek.setOnSeekBarChangeListener(seekListener)
+        greenSeek.setOnSeekBarChangeListener(seekListener)
+        blueSeek.setOnSeekBarChangeListener(seekListener)
         findViewById<MaterialButton>(R.id.btnColorBack).setOnClickListener {
             if (colorIndex == 0) showEditor(1)
             else {
