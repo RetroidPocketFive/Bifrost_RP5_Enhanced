@@ -1,5 +1,6 @@
 package com.moonbench.bifrost.tools
 
+import android.content.Context
 import android.os.IBinder
 import android.os.Parcel
 import android.util.Log
@@ -10,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.roundToInt
 
-class LedController : LedDriver {
+class LedController(private val context: Context) : LedDriver {
     companion object {
         private const val TAG = "LedController"
     }
