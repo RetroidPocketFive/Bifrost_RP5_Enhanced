@@ -416,7 +416,7 @@ class LEDService : Service() {
         super.onCreate()
         createNotificationChannel()
         mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
-        ledController = LedController()
+        ledController = LedController(this)
         ledScheduler = LedScheduler(
             driver = ledController,
             executor = ledExecutor,
