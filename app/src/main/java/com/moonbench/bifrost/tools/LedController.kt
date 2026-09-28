@@ -5,6 +5,7 @@ import android.os.Parcel
 import android.util.Log
 import com.moonbench.bifrost.rp5.LedDriver
 import com.moonbench.bifrost.rp5.LedFrame
+import com.moonbench.bifrost.rp5.LedColorCalibration
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.roundToInt
@@ -179,25 +180,89 @@ class LedController : LedDriver {
         rightBottom: Boolean = true
     ) {
         if (pServerBinder == null) return
-        val lr = leftR.coerceIn(0, 255); val lg = leftG.coerceIn(0, 255); val lb = leftB.coerceIn(0, 255)
-        val rr = rightR.coerceIn(0, 255); val rg = rightG.coerceIn(0, 255); val rb = rightB.coerceIn(0, 255)
-        val br = brightness.coerceIn(0, 255)
+
+        val leftRaw = (leftR.coerceIn(0, 255) shl 16) or
+            (leftG.coerceIn(0, 255) shl 8) or leftB.coerceIn(0, 255)
+        val rightRaw = (rightR.coerceIn(0, 255) shl 16) or
+            (rightG.coerceIn(0, 255) shl 8) or rightB.coerceIn(0, 255)
+
+        // The calibration is applied at the final hardware boundary so Ambient,
+        // AmbiAurora, presets and external API colours all use the same correction.
+        val calibrated = LedColorCalibration.applyDual(context, leftRaw, rightRaw)
+        submitCalibratedFrame(
+            calibrated.first,
+            calibrated.second,
+            leftTop,
+            leftBottom,
+            rightTop,
+            rightBottom
+        )
+    }
+
+    /**
+     * One-shot physical test that deliberately bypasses the saved correction.
+     * The calibration UI uses this while the user is adjusting the raw RGB
+     * command; normal LED output should always use [setLedColorDual].
+     */
+    fun setLedColorDualUncorrected(
+        leftR: Int, leftG: Int, leftB: Int,
+        rightR: Int, rightG: Int, rightB: Int,
+        leftTop: Boolean = true,
+        leftBottom: Boolean = true,
+        rightTop: Boolean = true,
+        rightBottom: Boolean = true
+    ) {
+        if (pServerBinder == null) return
+        val left = (leftR.coerceIn(0, 255) shl 16) or
+            (leftG.coerceIn(0, 255) shl 8) or leftB.coerceIn(0, 255)
+        val right = (rightR.coerceIn(0, 255) shl 16) or
+            (rightG.coerceIn(0, 255) shl 8) or rightB.coerceIn(0, 255)
+        emitFrameDirect(
+            LedFrame(
+                left = left,
+                right = right,
+                leftTop = leftTop,
+                leftBottom = leftBottom,
+                rightTop = rightTop,
+                rightBottom = rightBottom
+            )
+        )
+    }
+
+    private fun submitCalibratedFrame(
+        left: Int,
+        right: Int,
+        leftTop: Boolean,
+        leftBottom: Boolean,
+        rightTop: Boolean,
+        rightBottom: Boolean
+    ) {
         lock.withLock {
-            lastR = lr; lastG = lg; lastB = lb
-            lastLeftR = lr; lastLeftG = lg; lastLeftB = lb
-            lastRightR = rr; lastRightG = rg; lastRightB = rb
-            lastLeftTop = leftTop; lastLeftBottom = leftBottom
-            lastRightTop = rightTop; lastRightBottom = rightBottom
+            lastLeftR = (left shr 16) and 0xFF
+            lastLeftG = (left shr 8) and 0xFF
+            lastLeftB = left and 0xFF
+            lastRightR = (right shr 16) and 0xFF
+            lastRightG = (right shr 8) and 0xFF
+            lastRightB = right and 0xFF
+            lastR = lastLeftR
+            lastG = lastLeftG
+            lastB = lastLeftB
+            lastLeftTop = leftTop
+            lastLeftBottom = leftBottom
+            lastRightTop = rightTop
+            lastRightBottom = rightBottom
         }
 
-        submitFrame(LedFrame(
-            left = (lr shl 16) or (lg shl 8) or lb,
-            right = (rr shl 16) or (rg shl 8) or rb,
-            leftTop = leftTop,
-            leftBottom = leftBottom,
-            rightTop = rightTop,
-            rightBottom = rightBottom
-        ))
+        submitFrame(
+            LedFrame(
+                left = left,
+                right = right,
+                leftTop = leftTop,
+                leftBottom = leftBottom,
+                rightTop = rightTop,
+                rightBottom = rightBottom
+            )
+        )
     }
 
     /** Build one &&-joined command covering all selected zones (left zones use the
