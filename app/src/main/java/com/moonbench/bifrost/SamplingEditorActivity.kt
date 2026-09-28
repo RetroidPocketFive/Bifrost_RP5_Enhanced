@@ -46,7 +46,6 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var rightReferenceButton: MaterialButton
     private lateinit var btnNext: MaterialButton
     private lateinit var btnBack: MaterialButton
-    private lateinit var testColorSwatch: View
     private lateinit var testColorName: TextView
     private lateinit var matchStickName: TextView
     private lateinit var targetColorSwatch: View
@@ -101,7 +100,6 @@ class SamplingEditorActivity : AppCompatActivity() {
         rightReferenceButton = findViewById(R.id.rightReferenceButton)
         btnNext = findViewById(R.id.btnNext)
         btnBack = findViewById(R.id.btnBack)
-        testColorSwatch = findViewById(R.id.testColorSwatch)
         testColorName = findViewById(R.id.testColorName)
         matchStickName = findViewById(R.id.matchStickName)
         targetColorSwatch = findViewById(R.id.targetColorSwatch)
@@ -274,7 +272,6 @@ class SamplingEditorActivity : AppCompatActivity() {
 
     private fun updateColorTest() {
         val test = testColors[colorIndex]
-        testColorSwatch.setBackgroundColor(test.color)
         targetColorSwatch.setBackgroundColor(test.color)
         testColorName.text = test.name + "  (" + (colorIndex + 1) + "/" + testColors.size + ")"
         loadMatchCommand()
