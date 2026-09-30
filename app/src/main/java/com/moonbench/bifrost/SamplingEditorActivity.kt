@@ -281,7 +281,7 @@ class SamplingEditorActivity : AppCompatActivity() {
         if (matchStick == LedColorCalibration.Stick.LEFT) "LEFT" else "RIGHT"
 
     private fun loadMatchCommand() {
-        matchStickName.text = matchStickLabel() + " STICK"
+        matchStickName.text = "SELECTED: " + matchStickLabel()
         val primary = when (colorIndex.coerceAtMost(2)) {
             0 -> LedColorCalibration.Primary.RED
             1 -> LedColorCalibration.Primary.GREEN
