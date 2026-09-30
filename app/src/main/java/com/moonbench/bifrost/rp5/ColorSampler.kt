@@ -45,8 +45,8 @@ class ColorSampler(
             SamplingMethod.CENTER_WEIGHTED -> weighted(pixels, width, x0, x1, y0, y1)
             SamplingMethod.DOMINANT -> dominant(pixels, width, x0, x1, y0, y1)
             SamplingMethod.EDGE_REJECTED_WEIGHTED -> {
-                val dx = ((x1 - x0) * 0.15f).toInt()
-                val dy = ((y1 - y0) * 0.15f).toInt()
+                val dx = if (x1 - x0 > 2) kotlin.math.ceil((x1 - x0) * 0.15f).toInt() else 0
+                val dy = if (y1 - y0 > 2) kotlin.math.ceil((y1 - y0) * 0.15f).toInt() else 0
                 val ex0 = (x0 + dx).coerceAtMost(x1 - 1)
                 val ex1 = (x1 - dx).coerceAtLeast(ex0 + 1)
                 val ey0 = (y0 + dy).coerceAtMost(y1 - 1)
