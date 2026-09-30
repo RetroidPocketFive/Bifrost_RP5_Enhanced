@@ -64,6 +64,8 @@ import com.moonbench.bifrost.external.Terminator
 import com.moonbench.bifrost.tools.Crossfade
 import com.moonbench.bifrost.tools.LedController
 import com.moonbench.bifrost.tools.PerformanceProfile
+import com.moonbench.bifrost.rp5.LedScheduler
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 
 class LEDService : Service() {
@@ -104,6 +106,11 @@ class LEDService : Service() {
         const val ACTION_EXTERNAL_DISPLAY = "com.moonbench.bifrost.EXTERNAL_DISPLAY"
         const val ACTION_EXTERNAL_CLEAR = "com.moonbench.bifrost.EXTERNAL_CLEAR"
         const val ACTION_EXTERNAL_PULSE = "com.moonbench.bifrost.EXTERNAL_PULSE"
+        const val ACTION_RP5_LED_TEST = "com.moonbench.bifrost.RP5_LED_TEST"
+        const val EXTRA_RP5_LEFT_COLOR = "rp5.leftColor"
+        const val EXTRA_RP5_RIGHT_COLOR = "rp5.rightColor"
+        const val EXTRA_RP5_TEST_DURATION_MS = "rp5.durationMs"
+        const val EXTRA_RP5_TEST_BYPASS_CALIBRATION = "rp5.bypassCalibration"
         const val EXTRA_EXTERNAL_PULSE_KIND = "external.pulseKind"
         const val EXTRA_ALLOW_BACKGROUND_RUN = "allowBackgroundRun"
         const val EXTRA_BATTERY_OVERRIDE_WHEN_PLUGGED = "batteryOverrideWhenPlugged"
@@ -161,6 +168,10 @@ class LEDService : Service() {
     private var mediaProjection: MediaProjection? = null
     private lateinit var mediaProjectionManager: MediaProjectionManager
     private lateinit var ledController: LedController
+    private val ledExecutor = Executors.newSingleThreadScheduledExecutor { runnable ->
+        Thread(runnable, "Bifrost-RP5-LedScheduler").apply { isDaemon = true }
+    }
+    private lateinit var ledScheduler: LedScheduler
     private var currentAnimation: LedAnimation? = null
     private val handler = Handler(Looper.getMainLooper())
     private val isTransitioning = AtomicBoolean(false)
@@ -406,7 +417,17 @@ class LEDService : Service() {
         super.onCreate()
         createNotificationChannel()
         mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
-        ledController = LedController()
+        ledController = LedController(this)
+        ledScheduler = LedScheduler(
+            driver = ledController,
+            executor = ledExecutor,
+            refreshHz = 60,
+            brightness = 1f,
+            gamma = 1f,
+            smoothing = 0f,
+        )
+        ledController.attachFrameSink(ledScheduler::submit)
+        ledScheduler.start()
         registerBatteryStateReceiver()
         refreshBatteryStateSnapshot()
         mountScreenBrightnessObserver()
@@ -454,6 +475,11 @@ class LEDService : Service() {
 
         if (intent.action == ACTION_EXTERNAL_PULSE) {
             handleExternalPulse(intent.getStringExtra(EXTRA_EXTERNAL_PULSE_KIND))
+            return START_NOT_STICKY
+        }
+
+        if (intent.action == ACTION_RP5_LED_TEST) {
+            handleRp5LedTest(intent)
             return START_NOT_STICKY
         }
 
@@ -591,6 +617,29 @@ class LEDService : Service() {
         }
 
         return START_NOT_STICKY
+    }
+
+    private fun handleRp5LedTest(intent: Intent) {
+        val left = intent.getIntExtra(EXTRA_RP5_LEFT_COLOR, Color.WHITE) and 0xFFFFFF
+        val right = intent.getIntExtra(EXTRA_RP5_RIGHT_COLOR, left) and 0xFFFFFF
+        val duration = intent.getLongExtra(EXTRA_RP5_TEST_DURATION_MS, 1500L).coerceIn(250L, 5000L)
+        Log.d(TAG, "RP5 LED test: left=#%06X right=#%06X duration=%dms".format(left, right, duration))
+        val bypassCalibration = intent.getBooleanExtra(EXTRA_RP5_TEST_BYPASS_CALIBRATION, false)
+        if (bypassCalibration) {
+            ledController.setLedColorDualUncorrected(
+                Color.red(left), Color.green(left), Color.blue(left),
+                Color.red(right), Color.green(right), Color.blue(right)
+            )
+        } else {
+            ledController.setLedColorDual(
+                Color.red(left), Color.green(left), Color.blue(left),
+                Color.red(right), Color.green(right), Color.blue(right)
+            )
+        }
+        handler.postDelayed({
+            if (!isStopping.get()) ledController.clear()
+            stopSelf()
+        }, duration)
     }
 
     private fun handleUpdateParams(intent: Intent) {
@@ -1230,6 +1279,11 @@ class LEDService : Service() {
 
             stopCurrentAnimation()
 
+            // Stop the scheduler before the delayed hardware-off sequence so no
+            // pending animation frame can race the shutdown write.
+            runCatching { ledScheduler.stop(clear = true) }
+            runCatching { ledController.detachFrameSink() }
+
             pendingShutdownRunnable = Runnable {
                 try {
                     clearMediaProjection()
@@ -1838,7 +1892,8 @@ class LEDService : Service() {
                     currentUseCustomSampling,
                     currentUseSingleColor,
                     saturationBoost,
-                    currentAmbientDisplayId
+                    currentAmbientDisplayId,
+                    regionContext = this
                 )
             }
             LedAnimationType.AUDIO_REACTIVE -> {
@@ -1863,7 +1918,8 @@ class LEDService : Service() {
                     profile,
                     currentUseCustomSampling,
                     currentUseSingleColor,
-                    saturationBoost
+                    saturationBoost,
+                    regionContext = this
                 )
             }
             LedAnimationType.BATTERY_INDICATOR -> BatteryIndicatorAnimation(

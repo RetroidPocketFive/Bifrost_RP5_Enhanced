@@ -91,6 +91,7 @@ import java.util.Date
 import java.util.Locale
 import java.io.File
 import com.moonbench.bifrost.plugins.PluginLaunchManager
+import com.moonbench.bifrost.rp5.Rp5CalibrationActivity
 import com.moonbench.bifrost.plugins.PluginStoreActivity
 import com.moonbench.bifrost.schedule.ScheduleActivity
 
@@ -160,6 +161,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var liveWallpaperSettingsScroll: ScrollView
     private lateinit var liveWallpaperVideoPathText: TextView
     private lateinit var liveWallpaperPickVideoButton: MaterialButton
+    private lateinit var liveWallpaperPickImageButton: MaterialButton
     private lateinit var liveWallpaperApplyButton: MaterialButton
     private lateinit var liveWallpaperRemoveButton: MaterialButton
     private lateinit var liveWallpaperPerformanceSpinner: Spinner
@@ -559,6 +561,19 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Live wallpaper video updated", Toast.LENGTH_SHORT).show()
         }
 
+    private val liveWallpaperImagePickerLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            if (setStaticImageWallpaper(uri)) {
+                prefs.edit().putBoolean("static_image_wallpaper_applied", true).apply()
+                refreshLiveWallpaperVideoSummary()
+                refreshLiveWallpaperActionButtons()
+                Toast.makeText(this, "Image wallpaper applied", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Unable to apply that image as wallpaper", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     private val liveWallpaperApplyLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             scheduleLiveWallpaperApplyStateSync(initialDelayMs = 180L)
@@ -615,7 +630,7 @@ class MainActivity : AppCompatActivity() {
             activity = this,
             title = getString(R.string.crash_report_title),
             subtitle = getString(R.string.crash_report_subtitle),
-            body = getString(R.string.crash_report_body),
+            body = getString(R.string.crash_report_body) + "\n\nUse Share the report, then send the text to the Bifrost RP5 Edition GitHub Issues page or directly to the project maintainer. GitHub Issues: https://github.com/RetroidPocketFive/Bifrost_RP5_Enhanced/issues",
             positiveLabelResId = R.string.crash_report_share,
             negativeLabelResId = R.string.crash_report_dismiss,
             cancelable = true,
@@ -630,6 +645,32 @@ class MainActivity : AppCompatActivity() {
             },
             onCancel = { CrashReporter.clear(this) }
         )
+    }
+
+    private fun addMaintenanceControls() {
+        val container = systemStatusContainer as? LinearLayout ?: return
+        val button = MaterialButton(this).apply {
+            text = "CLEAR APP CACHE"
+            setOnClickListener { confirmClearCache() }
+        }
+        container.addView(button, LinearLayout.LayoutParams(-1, 48).apply { topMargin = 12 })
+    }
+
+    private fun confirmClearCache() {
+        AlertDialog.Builder(this)
+            .setTitle("CLEAR APP CACHE?")
+            .setMessage("This removes temporary cached files only. Your presets, calibration and settings are kept.")
+            .setNegativeButton("CANCEL", null)
+            .setPositiveButton("CLEAR") { _, _ ->
+                val cleared = runCatching {
+                    cacheDir.deleteRecursively()
+                    externalCacheDir?.deleteRecursively()
+                    cacheDir.mkdirs()
+                    true
+                }.getOrDefault(false)
+                Toast.makeText(this, if (cleared) "App cache cleared" else "Could not clear all cache files", Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
     private fun handleTileStartIntent(intent: Intent?) {
@@ -670,6 +711,11 @@ class MainActivity : AppCompatActivity() {
         liveWallpaperSettingsScroll = findViewById(R.id.liveWallpaperSettingsScroll)
         liveWallpaperVideoPathText = findViewById(R.id.liveWallpaperVideoPathText)
         liveWallpaperPickVideoButton = findViewById(R.id.liveWallpaperPickVideoButton)
+        liveWallpaperPickImageButton = MaterialButton(this).apply {
+            text = "PICK IMAGE"
+            setOnClickListener { liveWallpaperImagePickerLauncher.launch("image/*") }
+        }
+        (liveWallpaperPickVideoButton.parent as? LinearLayout)?.addView(liveWallpaperPickImageButton, 0, LinearLayout.LayoutParams(0, 40, 1f).apply { marginEnd = 4 })
         liveWallpaperApplyButton = findViewById(R.id.liveWallpaperApplyButton)
         liveWallpaperRemoveButton = findViewById(R.id.liveWallpaperRemoveButton)
         liveWallpaperPerformanceSpinner = findViewById(R.id.liveWallpaperPerformanceSpinner)
@@ -725,6 +771,12 @@ class MainActivity : AppCompatActivity() {
         sensitivitySeekBar = findViewById(R.id.sensitivitySeekBar)
         saturationBoostSeekBar = findViewById(R.id.saturationBoostSeekBar)
         customSamplingSwitch = findViewById(R.id.customSamplingSwitch)
+        findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
+            startActivity(Intent(this, SamplingEditorActivity::class.java))
+        }
+        findViewById<MaterialButton>(R.id.editSamplingAreasButton).setOnClickListener {
+            startActivity(Intent(this, SamplingEditorActivity::class.java))
+        }
         singleColorSwitch = findViewById(R.id.singleColorSwitch)
         ambilightUseMediaProjectionSwitch = findViewById(R.id.ambilightUseMediaProjectionSwitch)
         breatheWhenChargingSwitch = findViewById(R.id.breatheWhenChargingSwitch)
@@ -750,6 +802,7 @@ class MainActivity : AppCompatActivity() {
         themesCard = findViewById(R.id.themesCard)
         settingsSystemStatusCard = findViewById(R.id.settingsSystemStatusCard)
         systemStatusContainer = findViewById(R.id.systemStatusContainer)
+        addMaintenanceControls()
         bifrostLogoView = findViewById(R.id.homeBifrostLogoView)
         bifrostTitleText = findViewById(R.id.homeBifrostTitleText)
         bifrostTitleLabel = bifrostTitleText.text.toString()
@@ -865,6 +918,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupHomeSurface() {
         homeSettingsButton.setOnClickListener { openSettingsOverlay() }
+        findViewById<MaterialButton>(R.id.homeScreenMonitorButton).setOnClickListener {
+            requestScreenCapturePermission()
+        }
+        findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
+            confirmClearCache()
+        }
         closeSettingsButton.setOnClickListener { requestCloseSettingsOverlay() }
         customizePresetArtworkButton.setOnClickListener {
             openSelectedPresetArtworkEditor(it)
@@ -1092,17 +1151,31 @@ class MainActivity : AppCompatActivity() {
     private fun refreshLiveWallpaperActionButtons() {
         val isWallpaperApplied = LiveWallpaperSettingsManager.isWallpaperApplied(prefs) || syncLiveWallpaperAppliedState()
         liveWallpaperPickVideoButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
+        liveWallpaperPickImageButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
         liveWallpaperApplyButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
         liveWallpaperRemoveButton.visibility = if (isWallpaperApplied) View.VISIBLE else View.GONE
     }
 
     private fun refreshLiveWallpaperVideoSummary() {
         val uri = LiveWallpaperSettingsManager.getVideoUri(prefs)
-        liveWallpaperVideoPathText.text = if (uri == null) {
+        val staticApplied = prefs.getBoolean("static_image_wallpaper_applied", false)
+        liveWallpaperVideoPathText.text = if (staticApplied) {
+            "Static image wallpaper applied"
+        } else if (uri == null) {
             "No video selected"
         } else {
             uri.lastPathSegment ?: uri.toString()
         }
+    }
+
+    private fun setStaticImageWallpaper(uri: Uri): Boolean {
+        return runCatching {
+            contentResolver.openInputStream(uri).use { input ->
+                requireNotNull(input) { "Unable to open image" }
+                WallpaperManager.getInstance(this).setStream(input, null, true, WallpaperManager.FLAG_SYSTEM)
+            }
+            true
+        }.getOrDefault(false)
     }
 
     private fun removeLiveWallpaper() {
@@ -1116,6 +1189,7 @@ class MainActivity : AppCompatActivity() {
         LiveWallpaperSettingsManager.clearVideoUri(prefs)
         deleteLocalLiveWallpaperVideoIfExists()
         LiveWallpaperSettingsManager.setWallpaperApplied(prefs, false)
+        prefs.edit().putBoolean("static_image_wallpaper_applied", false).apply()
         prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_APPLY_IN_PROGRESS, false).apply()
         prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_RESTORE_SETTINGS, false).apply()
         refreshLiveWallpaperVideoSummary()
@@ -2591,10 +2665,48 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupAnimationSpinner() {
         val types = LedAnimationType.values().toList()
-        val labels = types.map { it.name.lowercase().replaceFirstChar { c -> c.uppercase() } }
-        val adapter = ArrayAdapter(this, R.layout.item_spinner_bifrost, labels)
-        adapter.setDropDownViewResource(R.layout.item_spinner_dropdown_bifrost)
-        animationSpinner.adapter = adapter
+        val animationDescriptions = mapOf(
+            LedAnimationType.AMBIENT to "Match screen colours on the two thumb-stick LEDs.",
+            LedAnimationType.AUDIO_REACTIVE to "Pulse LED brightness and colour with system audio.",
+            LedAnimationType.AMBIAURORA to "Ambient screen colours combined with audio-reactive brightness.",
+            LedAnimationType.BATTERY_INDICATOR to "Show battery level using a colour-coded LED state.",
+            LedAnimationType.CPU_TEMPERATURE to "Change colour as device CPU temperature rises.",
+            LedAnimationType.STATIC to "Keep the LEDs on one or two selected colours.",
+            LedAnimationType.BREATH to "Smoothly fade the selected colour in and out.",
+            LedAnimationType.RAINBOW to "Continuously cycle through the full colour spectrum.",
+            LedAnimationType.PULSE to "Quickly brighten and dim the selected colour.",
+            LedAnimationType.STROBE to "Fast repeated flashes of the selected colour.",
+            LedAnimationType.SPARKLE to "Create irregular bright sparkle-like LED flashes.",
+            LedAnimationType.FADE_TRANSITION to "Smoothly transition between the selected colours.",
+            LedAnimationType.RAVE to "Fast energetic colour changes for music and games.",
+            LedAnimationType.CHASE to "Move a bright colour pattern around the LED zones.",
+            LedAnimationType.PIPBOY to "Retro green terminal-style pulsing LED effect."
+        )
+        val animationAdapter = object : BaseAdapter() {
+            override fun getCount() = types.size
+            override fun getItem(position: Int) = types[position]
+            override fun getItemId(position: Int) = position.toLong()
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
+                val row = (convertView as? LinearLayout) ?: LinearLayout(this@MainActivity).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(12, 8, 12, 8)
+                }
+                row.removeAllViews()
+                row.addView(TextView(this@MainActivity).apply {
+                    text = types[position].name.lowercase().replaceFirstChar { c -> c.uppercase() }
+                    setTextColor(resources.getColor(R.color.bifrost_text, theme))
+                    textSize = 14f
+                })
+                row.addView(TextView(this@MainActivity).apply {
+                    text = animationDescriptions[types[position]].orEmpty()
+                    setTextColor(resources.getColor(R.color.bifrost_text_secondary, theme))
+                    textSize = 10f
+                    setPadding(0, 2, 0, 0)
+                })
+                return row
+            }
+        }
+        animationSpinner.adapter = animationAdapter
         animationSpinner.setSelection(types.indexOf(selectedAnimationType))
 
         animationSpinner.onItemSelectedListener =
