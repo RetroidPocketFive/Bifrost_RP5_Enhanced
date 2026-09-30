@@ -406,13 +406,9 @@ class ScreenAnalyzer(
             leftColor  = applySaturationBoost(colors.leftColor),
             rightColor = applySaturationBoost(colors.rightColor)
         )
-        val previous = lastEmittedColors
-        val shouldEmit = previous == null ||
-            colorDeltaExceeds(previous.leftColor, boostedColors.leftColor, DEADBAND_THRESHOLD) ||
-            colorDeltaExceeds(previous.rightColor, boostedColors.rightColor, DEADBAND_THRESHOLD)
-        if (shouldEmit) {
-            lastEmittedColors = boostedColors
-            onColorsAnalyzed(boostedColors)
+        stabilityFilter.offer(boostedColors)?.let { stableColors ->
+            lastEmittedColors = stableColors
+            onColorsAnalyzed(stableColors)
         }
     }
 
