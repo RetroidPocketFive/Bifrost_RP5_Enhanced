@@ -29,7 +29,7 @@ class ColorSamplerTest {
     @Test fun edgeRejectedSamplingIgnoresOuterPixels() {
         val pixels = IntArray(5 * 5) { 0x00FF00 }
         pixels[0] = 0xFF0000
-        pixels[24] = 0x0000FF
+        pixels[4 * 5 + 4] = 0x0000FF
         val result = ColorSampler(SamplingMethod.EDGE_REJECTED_WEIGHTED).sample(
             pixels, 5, 5,
             NormalizedRegion(0.5f, 0.5f, 1f),
