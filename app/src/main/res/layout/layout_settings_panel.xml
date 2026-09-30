@@ -244,7 +244,7 @@
                 android:outlineSpotShadowColor="@color/bifrost_glow_purple">
 
                 <LinearLayout
-                    android:id="@+id/settingsSystemStatusContainer"
+                    android:id="@+id/systemStatusContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
