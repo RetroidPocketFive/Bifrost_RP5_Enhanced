@@ -918,6 +918,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupHomeSurface() {
         homeSettingsButton.setOnClickListener { openSettingsOverlay() }
+        findViewById<MaterialButton>(R.id.homeScreenMonitorButton).setOnClickListener {
+            requestScreenCapturePermission()
+        }
+        findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
+            confirmClearCache()
+        }
         closeSettingsButton.setOnClickListener { requestCloseSettingsOverlay() }
         customizePresetArtworkButton.setOnClickListener {
             openSelectedPresetArtworkEditor(it)
