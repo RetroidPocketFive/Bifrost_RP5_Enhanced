@@ -64,6 +64,7 @@ import com.moonbench.bifrost.external.Terminator
 import com.moonbench.bifrost.tools.Crossfade
 import com.moonbench.bifrost.tools.LedController
 import com.moonbench.bifrost.tools.PerformanceProfile
+import com.moonbench.bifrost.rp5.LedOutputGovernor
 import com.moonbench.bifrost.rp5.LedScheduler
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -227,6 +228,7 @@ class LEDService : Service() {
     private var lastProjectionData: Intent? = null
     private var isDevicePluggedIn: Boolean = false
     private var batteryLevelPercent: Int = 100
+    private var batteryTemperatureC: Float? = null
     private var isLowBatteryAlertActive: Boolean = false
     private var batteryReceiverRegistered: Boolean = false
     private var pendingTransitionRunnable: Runnable? = null
@@ -295,8 +297,19 @@ class LEDService : Service() {
             }
             return (255f * capScale * srcScale).roundToInt().coerceIn(0, 255)
         }
-        if (!currentAdaptiveBrightness) return currentBrightness
-        return (currentBrightness * screenBrightnessScale()).toInt().coerceIn(0, 255)
+        val requestedBrightness = if (!currentAdaptiveBrightness) {
+            currentBrightness
+        } else {
+            (currentBrightness * screenBrightnessScale()).toInt().coerceIn(0, 255)
+        }
+        return LedOutputGovernor.evaluate(
+            LedOutputGovernor.Inputs(
+                requestedBrightness = requestedBrightness,
+                batteryPercent = batteryLevelPercent,
+                batteryTemperatureC = batteryTemperatureC,
+                pluggedIn = isDevicePluggedIn,
+            )
+        ).brightness
     }
 
     /** Main system screen brightness as 0..100. */
@@ -995,6 +1008,8 @@ class LEDService : Service() {
         if (level >= 0 && scale > 0) {
             batteryLevelPercent = (level * 100 / scale).coerceIn(0, 100)
         }
+        val tempTenths = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, Int.MIN_VALUE)
+        batteryTemperatureC = if (tempTenths != Int.MIN_VALUE) tempTenths / 10f else batteryTemperatureC
         val active = currentLowBatteryAlertEnabled &&
             batteryLevelPercent < currentLowBatteryAlertThreshold &&
             !(currentDisableLowBatteryAlertWhileCharging && isDevicePluggedIn)
