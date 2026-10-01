@@ -79,12 +79,12 @@ jobs:
           fi
 
           echo "Using APK: $APK"
-          cp "$APK" "release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk"
+          cp "$APK" "release/Bifrost-RP5-Edition-v6-test.apk"
 
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Bifrost-RP5-Edition-${{ github.ref_name }}
+          name: Bifrost-RP5-Edition-v6-test
           path: release/*.apk
           if-no-files-found: error
 
@@ -93,7 +93,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
-          files: release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk
+          files: release/Bifrost-RP5-Edition-v6-test.apk
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
