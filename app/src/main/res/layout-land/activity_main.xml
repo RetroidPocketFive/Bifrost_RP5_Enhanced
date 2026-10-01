@@ -76,7 +76,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="HEIMDALL (SCREEN MONITOR)"
+                            android:text="HEIMDALL"
                             android:textColor="@color/bifrost_text"
                             android:textSize="10sp"
                             android:textStyle="bold"
@@ -85,7 +85,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Screen monitoring service"
+                            android:text="Turns Bifrost LED control on or off"
                             android:textColor="@color/bifrost_text_secondary"
                             android:textSize="8sp" />
                     </LinearLayout>
@@ -175,9 +175,9 @@
             android:insetBottom="0dp"
             android:text="CLEAR CACHE"
             android:textColor="@color/bifrost_text"
-            android:textSize="10sp"
+            android:textSize="9sp"
             android:textStyle="bold"
-            android:letterSpacing="0.05"
+            android:letterSpacing="0.04"
             android:backgroundTint="@color/bifrost_surface"
             app:cornerRadius="11dp"
             app:strokeWidth="1dp"
