@@ -152,6 +152,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var homeContainer: View
     private lateinit var homeSettingsButton: MaterialButton
     private lateinit var homeClearCacheButton: MaterialButton
+    private lateinit var rp5CalibrationButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
     private lateinit var tabUiSettings: MaterialButton
     private lateinit var tabBehaviorSettings: MaterialButton
@@ -663,6 +664,7 @@ class MainActivity : AppCompatActivity() {
         homeContainer = findViewById(R.id.homeContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         homeClearCacheButton = findViewById(R.id.homeClearCacheButton)
+        rp5CalibrationButton = findViewById(R.id.rp5CalibrationButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
         tabUiSettings = findViewById(R.id.tabUiSettings)
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
@@ -868,6 +870,9 @@ class MainActivity : AppCompatActivity() {
     private fun setupHomeSurface() {
         homeSettingsButton.setOnClickListener { openSettingsOverlay() }
         homeClearCacheButton.setOnClickListener { confirmClearCache() }
+        rp5CalibrationButton.setOnClickListener {
+            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+        }
         closeSettingsButton.setOnClickListener { requestCloseSettingsOverlay() }
         customizePresetArtworkButton.setOnClickListener {
             openSelectedPresetArtworkEditor(it)
