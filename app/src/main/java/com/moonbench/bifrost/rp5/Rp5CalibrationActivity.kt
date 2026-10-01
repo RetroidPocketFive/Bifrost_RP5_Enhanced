@@ -21,7 +21,6 @@ import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.moonbench.bifrost.R
@@ -52,34 +51,10 @@ class Rp5CalibrationActivity : Activity() {
     private var lastBitmap: Bitmap? = null
     private val captureHandler = Handler(Looper.getMainLooper())
 
-    private val projectionLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == RESULT_OK && result.data != null) {
-                startLiveCapture(result.data!!)
-            } else {
-                sourceStatus.text = "Screen capture permission required"
-                Toast.makeText(this, "Screen capture permission required", Toast.LENGTH_LONG).show()
-            }
-        }
-
-    private val stillPicker =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
-            runCatching {
-                contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) }
-            }.onSuccess { bitmap ->
-                if (bitmap == null) {
-                    Toast.makeText(this, "Unable to open image", Toast.LENGTH_SHORT).show()
-                } else {
-                    lastBitmap?.recycle()
-                    lastBitmap = bitmap
-                    sourceStatus.text = "Still image loaded. Position the highlighted stick area."
-                    updateTargetFromBitmap(bitmap)
-                }
-            }.onFailure {
-                Toast.makeText(this, "Unable to open image", Toast.LENGTH_SHORT).show()
-            }
-        }
+    companion object {
+        private const val REQUEST_CAPTURE = 4201
+        private const val REQUEST_STILL = 4202
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +64,37 @@ class Rp5CalibrationActivity : Activity() {
         buildUi()
         updatePrimaryTarget()
         loadCurrentPrimary()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            REQUEST_CAPTURE -> {
+                if (resultCode == RESULT_OK && data != null) {
+                    startLiveCapture(data)
+                } else {
+                    sourceStatus.text = "Screen capture permission required"
+                    Toast.makeText(this, "Screen capture permission required", Toast.LENGTH_LONG).show()
+                }
+            }
+            REQUEST_STILL -> {
+                if (resultCode != RESULT_OK || data == null) return
+                runCatching {
+                    contentResolver.openInputStream(data)?.use { BitmapFactory.decodeStream(it) }
+                }.onSuccess { bitmap ->
+                    if (bitmap == null) {
+                        Toast.makeText(this, "Unable to open image", Toast.LENGTH_SHORT).show()
+                    } else {
+                        lastBitmap?.recycle()
+                        lastBitmap = bitmap
+                        sourceStatus.text = "Still image loaded. Position the highlighted stick area."
+                        updateTargetFromBitmap(bitmap)
+                    }
+                }.onFailure {
+                    Toast.makeText(this, "Unable to open image", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -126,7 +132,10 @@ class Rp5CalibrationActivity : Activity() {
             val row = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
             row.addView(button("LIVE GAME SCREEN").apply { setOnClickListener { requestLiveCapture() } },
                 LinearLayout.LayoutParams(0, dp(40), 1f))
-            row.addView(button("STILL IMAGE").apply { setOnClickListener { stillPicker.launch("image/*") } },
+            row.addView(button("STILL IMAGE").apply { setOnClickListener { startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE)
+                        type = "image/*"
+                    }, REQUEST_STILL) } },
                 LinearLayout.LayoutParams(0, dp(40), 1f).apply { marginStart = dp(6) })
             c.addView(row.apply { setPadding(0, dp(8), 0, 0) })
             sourceStatus = text("LIVE waits 5 seconds, then captures the game. STILL lets you choose a screenshot.", 8f, false)
@@ -303,7 +312,7 @@ class Rp5CalibrationActivity : Activity() {
     private fun requestLiveCapture() {
         sourceStatus.text = "Screen capture permission required"
         val manager = getSystemService(MediaProjectionManager::class.java)
-        projectionLauncher.launch(manager.createScreenCaptureIntent())
+        startActivityForResult(manager.createScreenCaptureIntent(), REQUEST_CAPTURE)
     }
 
     private fun startLiveCapture(data: Intent) {
@@ -375,7 +384,7 @@ class Rp5CalibrationActivity : Activity() {
         setCardBackgroundColor(getColor(R.color.bifrost_card))
         radius = dp(14).toFloat()
         strokeWidth = dp(1)
-        strokeColor = getColor(R.color.bifrost_accent)
+        setStrokeColorResource(R.color.bifrost_accent)
     }
 
     private fun button(label: String) = MaterialButton(this).apply {
