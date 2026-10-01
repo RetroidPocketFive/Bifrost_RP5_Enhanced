@@ -244,12 +244,51 @@
                 android:outlineSpotShadowColor="@color/bifrost_glow_purple">
 
                 <LinearLayout
-                    android:id="@+id/settingsSystemStatusContainer"
+                    android:id="@+id/systemStatusContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:padding="@dimen/bifrost_card_padding"
                     android:background="@drawable/card_glow_bg">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="12dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="CALL HEIMDALL"
+                                android:textColor="@color/bifrost_text"
+                                android:textSize="12sp"
+                                android:letterSpacing="0.05"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Start or stop the LED service"
+                                android:textColor="@color/bifrost_text_secondary"
+                                android:textSize="11sp"
+                                android:layout_marginTop="2dp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/serviceToggle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:thumbTint="@color/switch_thumb_tint"
+                            app:trackTint="@color/switch_track_tint" />
+                    </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
