@@ -105,7 +105,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="HEIMDALL (SCREEN MONITOR)"
+                            android:text="HEIMDALL"
                             android:textColor="@color/bifrost_text"
                             android:textSize="10sp"
                             android:textStyle="bold"
@@ -115,7 +115,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
-                            android:text="Screen monitoring service"
+                            android:text="Turns Bifrost LED control on or off"
                             android:textColor="@color/bifrost_text_secondary"
                             android:textSize="8sp" />
                     </LinearLayout>
@@ -184,16 +184,19 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/homeClearCacheButton"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginTop="8dp"
+            android:layout_width="150dp"
+            android:layout_height="34dp"
+            android:layout_gravity="end"
+            android:layout_marginTop="7dp"
             android:insetTop="0dp"
             android:insetBottom="0dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
             android:text="CLEAR CACHE"
             android:textColor="@color/bifrost_text"
-            android:textSize="10sp"
+            android:textSize="9sp"
             android:textStyle="bold"
-            android:letterSpacing="0.05"
+            android:letterSpacing="0.04"
             android:backgroundTint="@color/bifrost_surface"
             app:cornerRadius="11dp"
             app:strokeWidth="1dp"
