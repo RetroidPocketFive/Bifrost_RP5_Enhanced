@@ -1,13 +1,15 @@
 package com.moonbench.bifrost.tools
 
+import android.content.SharedPreferences
 import android.os.IBinder
+import com.moonbench.bifrost.rp5.LedColorCalibration
 import android.os.Parcel
 import android.util.Log
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.roundToInt
 
-class LedController {
+class LedController(private val prefs: SharedPreferences? = null) {
     companion object {
         private const val TAG = "LedController"
     }
@@ -54,11 +56,16 @@ class LedController {
         leftTop: Boolean = true,
         leftBottom: Boolean = true,
         rightTop: Boolean = true,
-        rightBottom: Boolean = true
+        rightBottom: Boolean = true,
+        calibrateStick: LedColorCalibration.Stick? = null
     ) {
-        val r = red.coerceIn(0, 255)
-        val g = green.coerceIn(0, 255)
-        val b = blue.coerceIn(0, 255)
+        val rawColor = android.graphics.Color.rgb(red.coerceIn(0, 255), green.coerceIn(0, 255), blue.coerceIn(0, 255))
+        val calibratedColor = if (calibrateStick != null && prefs != null) {
+            LedColorCalibration.load(prefs).commandFor(calibrateStick, rawColor)
+        } else rawColor
+        val r = android.graphics.Color.red(calibratedColor)
+        val g = android.graphics.Color.green(calibratedColor)
+        val b = android.graphics.Color.blue(calibratedColor)
         val br = brightness.coerceIn(0, 255)
         if (pServerBinder == null) return
 

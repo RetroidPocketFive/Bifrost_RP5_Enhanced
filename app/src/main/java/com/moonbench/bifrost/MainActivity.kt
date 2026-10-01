@@ -66,6 +66,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.moonbench.bifrost.animations.FadeTransitionAnimation
 import com.moonbench.bifrost.animations.LedAnimationType
 import com.moonbench.bifrost.external.ExternalApiGate
+import com.moonbench.bifrost.rp5.Rp5CalibrationActivity
 import com.moonbench.bifrost.services.AppProfileManager
 import com.moonbench.bifrost.services.BifrostAccessibilityService
 import com.moonbench.bifrost.services.HeimdallStartupManager
@@ -151,6 +152,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settingsOverlay: View
     private lateinit var homeContainer: View
     private lateinit var homeSettingsButton: MaterialButton
+    private lateinit var homeClearCacheButton: MaterialButton
+    private lateinit var rp5CalibrationButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
     private lateinit var tabUiSettings: MaterialButton
     private lateinit var tabBehaviorSettings: MaterialButton
@@ -661,6 +664,8 @@ class MainActivity : AppCompatActivity() {
         settingsOverlay = findViewById(R.id.settingsOverlay)
         homeContainer = findViewById(R.id.homeContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
+        homeClearCacheButton = findViewById(R.id.homeClearCacheButton)
+        rp5CalibrationButton = findViewById(R.id.rp5CalibrationButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
         tabUiSettings = findViewById(R.id.tabUiSettings)
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
@@ -865,6 +870,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupHomeSurface() {
         homeSettingsButton.setOnClickListener { openSettingsOverlay() }
+        homeClearCacheButton.setOnClickListener { confirmClearCache() }
+        rp5CalibrationButton.setOnClickListener {
+            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+        }
         closeSettingsButton.setOnClickListener { requestCloseSettingsOverlay() }
         customizePresetArtworkButton.setOnClickListener {
             openSelectedPresetArtworkEditor(it)
@@ -894,6 +903,31 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun confirmClearCache() {
+        BifrostAlertDialog().show(
+            activity = this,
+            title = "CLEAR APP CACHE?",
+            subtitle = "Temporary files only",
+            body = "This removes temporary cached files only. Your presets, calibration and settings are kept.",
+            positiveLabelResId = R.string.action_delete,
+            negativeLabelResId = R.string.action_cancel,
+            cancelable = true,
+            onConfirm = {
+                val cleared = runCatching {
+                    cacheDir.deleteRecursively()
+                    externalCacheDir?.deleteRecursively()
+                    true
+                }.getOrDefault(false)
+                Toast.makeText(
+                    this,
+                    if (cleared) "App cache cleared" else "Could not clear all cache files",
+                    Toast.LENGTH_SHORT
+                ).show()
+            },
+            onCancel = {}
+        )
     }
 
     private fun setupSettingsTabs() {
