@@ -384,7 +384,7 @@ class Rp5CalibrationActivity : Activity() {
         setCardBackgroundColor(getColor(R.color.bifrost_card))
         radius = dp(14).toFloat()
         strokeWidth = dp(1)
-        strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.bifrost_accent))
+        strokeColor = getColor(R.color.bifrost_accent)
     }
 
     private fun button(label: String) = MaterialButton(this).apply {
