@@ -80,7 +80,7 @@ class Rp5CalibrationActivity : Activity() {
             REQUEST_STILL -> {
                 if (resultCode != RESULT_OK || data == null) return
                 runCatching {
-                    contentResolver.openInputStream(data)?.use { BitmapFactory.decodeStream(it) }
+                    contentResolver.openInputStream(data.data!!)?.use { BitmapFactory.decodeStream(it) }
                 }.onSuccess { bitmap ->
                     if (bitmap == null) {
                         Toast.makeText(this, "Unable to open image", Toast.LENGTH_SHORT).show()
@@ -384,7 +384,7 @@ class Rp5CalibrationActivity : Activity() {
         setCardBackgroundColor(getColor(R.color.bifrost_card))
         radius = dp(14).toFloat()
         strokeWidth = dp(1)
-        setStrokeColorResource(R.color.bifrost_accent)
+        strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.bifrost_accent))
     }
 
     private fun button(label: String) = MaterialButton(this).apply {
@@ -393,7 +393,7 @@ class Rp5CalibrationActivity : Activity() {
         setTextColor(getColor(R.color.bifrost_text))
         setBackgroundColor(getColor(R.color.bifrost_surface))
         insetTop = 0; insetBottom = 0
-        cornerRadius = dp(10); strokeWidth = dp(1); strokeColor = getColor(R.color.bifrost_accent)
+        cornerRadius = dp(10); strokeWidth = dp(1); strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.bifrost_accent))
     }
 
     private fun text(value: String, size: Float, bold: Boolean) = TextView(this).apply {
