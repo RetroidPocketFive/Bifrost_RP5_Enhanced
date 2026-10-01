@@ -406,7 +406,7 @@ class LEDService : Service() {
         super.onCreate()
         createNotificationChannel()
         mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
-        ledController = LedController()
+        ledController = LedController(getSharedPreferences("bifrost_prefs", MODE_PRIVATE))
         registerBatteryStateReceiver()
         refreshBatteryStateSnapshot()
         mountScreenBrightnessObserver()
