@@ -144,7 +144,8 @@ class AmbientAnimation(
             leftTop = true,
             leftBottom = true,
             rightTop = false,
-            rightBottom = false
+            rightBottom = false,
+            calibrateStick = com.moonbench.bifrost.rp5.LedColorCalibration.Stick.LEFT
         )
 
         ledController.setLedColor(
@@ -154,7 +155,8 @@ class AmbientAnimation(
             leftTop = false,
             leftBottom = false,
             rightTop = true,
-            rightBottom = true
+            rightBottom = true,
+            calibrateStick = com.moonbench.bifrost.rp5.LedColorCalibration.Stick.RIGHT
         )
     }
 }
