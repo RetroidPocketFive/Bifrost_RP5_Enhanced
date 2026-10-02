@@ -26,7 +26,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply v5 home-screen test patch
-        run: patch -p1 < home-screen-test.patch
+        run: |
+          patch -p1 < home-screen-test.patch
+          find app/src -name '*.orig' -delete
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
