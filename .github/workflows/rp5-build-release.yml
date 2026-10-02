@@ -70,12 +70,12 @@ jobs:
             echo "ERROR: No debug APK was produced."
             exit 1
           fi
-          cp "$APK" "release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk"
+          cp "$APK" "release/Bifrost-RP5-Edition-home-screen-v5.apk"
 
       - name: Upload APK as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Bifrost-RP5-Edition-${{ github.ref_name }}
+          name: Bifrost-RP5-Edition-home-screen-v5
           path: release/*.apk
           if-no-files-found: error
 
@@ -83,8 +83,8 @@ jobs:
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.ref_name }}
-          files: release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk
+          tag_name: home-screen-v5
+          files: release/Bifrost-RP5-Edition-home-screen-v5.apk
           fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
