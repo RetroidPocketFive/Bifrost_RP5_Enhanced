@@ -25,6 +25,9 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Apply v5 home-screen test patch
+        run: patch -p1 < home-screen-test.patch
+
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -43,18 +46,9 @@ jobs:
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          echo
-          echo "SDK contents:"
           ls -la "$ANDROID_HOME"
-          echo
-          echo "Command line tools:"
-          ls -la "$ANDROID_HOME/cmdline-tools" || true
-          echo
-          echo "SDK manager:"
           which sdkmanager || true
           sdkmanager --version || true
-          echo
-          echo "ADB:"
           adb --version || true
 
       - name: Make Gradle executable
@@ -64,21 +58,16 @@ jobs:
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Find APK
-        run: |
-          find app/build/outputs -type f -name "*.apk" -print
+        run: find app/build/outputs -type f -name "*.apk" -print
 
       - name: Prepare release APK
         run: |
           mkdir -p release
-
           APK=$(find app/build/outputs/apk/debug -type f -name "*.apk" | head -n 1)
-
           if [ -z "$APK" ]; then
             echo "ERROR: No debug APK was produced."
             exit 1
           fi
-
-          echo "Using APK: $APK"
           cp "$APK" "release/Bifrost-RP5-Edition-${{ github.ref_name }}.apk"
 
       - name: Upload APK as workflow artifact
