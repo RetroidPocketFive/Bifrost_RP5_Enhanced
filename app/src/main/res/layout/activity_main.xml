@@ -13,10 +13,14 @@
         android:padding="@dimen/bifrost_screen_padding">
 
         <LinearLayout
+            android:id="@+id/homeHeaderContainer"
             android:layout_width="match_parent"
             android:layout_height="54dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -49,7 +53,8 @@
                     android:shadowRadius="20"
                     android:maxLines="1"
                     android:singleLine="true"
-                    android:ellipsize="none" />
+                    android:ellipsize="none"
+                     android:clickable="false" />
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
@@ -85,7 +90,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="LED SERVICE"
+                            android:text="HEIMDALL"
                             android:textColor="@color/bifrost_text"
                             android:textSize="11sp"
                             android:textStyle="bold"
@@ -95,7 +100,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="1dp"
-                            android:text="Turns Bifrost LED control on or off"
+                            android:text="Bifrost LED screen monitoring"
                             android:textColor="@color/bifrost_text_secondary"
                             android:textSize="9sp" />
                     </LinearLayout>
@@ -162,6 +167,27 @@
                 android:textColor="@color/bifrost_text"
                 android:textSize="24sp"
                 android:backgroundTint="@color/bifrost_surface"
+                android:clickable="false"
+                android:focusable="false"
+                android:importantForAccessibility="no"
+                app:cornerRadius="12dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/bifrost_accent" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeExitButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                android:text="EXIT"
+                android:textSize="9sp"
+                android:contentDescription="Close Bifrost"
+                android:tooltipText="Close Bifrost"
+                android:backgroundTint="@color/bifrost_surface"
                 app:cornerRadius="12dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" />
@@ -174,35 +200,6 @@
             android:layout_marginTop="8dp"
             android:orientation="horizontal"
             android:baselineAligned="false">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:orientation="vertical">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/homeScreenMonitorButton"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:minHeight="48dp"
-                    android:text="HEIMDALL"
-                    android:textSize="10sp"
-                    android:contentDescription="HEIMDALL: screen monitoring and Bifrost LED control"
-                    android:tooltipText="Screen monitoring and Bifrost LED control" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:gravity="center"
-                    android:text="Screen monitoring and LED control"
-                    android:textColor="@color/bifrost_text_secondary"
-                    android:textSize="9sp"
-                    android:maxLines="2" />
-            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -228,41 +225,13 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:gravity="center"
-                    android:text="Clear temporary cache"
+                    android:text="Clears temporary Bifrost cache"
                     android:textColor="@color/bifrost_text_secondary"
                     android:textSize="9sp"
                     android:maxLines="2" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:orientation="vertical">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/homeExitButton"
-                    style="@style/Widget.Material3.Button.OutlinedButton"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:minHeight="48dp"
-                    android:text="EXIT"
-                    android:textSize="10sp"
-                    android:contentDescription="Close Bifrost"
-                    android:tooltipText="Close Bifrost" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:gravity="center"
-                    android:text="Close Bifrost"
-                    android:textColor="@color/bifrost_text_secondary"
-                    android:textSize="9sp"
-                    android:maxLines="2" />
-            </LinearLayout>
-        </LinearLayout>
+       </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
