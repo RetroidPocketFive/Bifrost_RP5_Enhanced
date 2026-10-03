@@ -19,7 +19,8 @@ class AmbientAnimation(
     private val useCustomSampling: Boolean,
     private val useSingleColor: Boolean,
     initialSaturationBoost: Float = 0.0f,
-    private val displayId: Int = Display.DEFAULT_DISPLAY
+    private val displayId: Int = Display.DEFAULT_DISPLAY,
+    private val regionContext: android.content.Context? = null
 ) : LedAnimation(ledController) {
 
     override val type: LedAnimationType = LedAnimationType.AMBIENT
@@ -63,7 +64,8 @@ class AmbientAnimation(
             useCustomSampling,
             useSingleColor,
             saturationBoost,
-            displayId = displayId
+            displayId = displayId,
+            regionContext = regionContext
         ) { colors ->
             updateColors(colors)
         }
@@ -137,24 +139,11 @@ class AmbientAnimation(
         lastRightLedColor = newRightLedColor
         lastLedUpdateAt = now
 
-        ledController.setLedColor(
-            leftRed,
-            leftGreen,
-            leftBlue,
-            leftTop = true,
-            leftBottom = true,
-            rightTop = false,
-            rightBottom = false
-        )
-
-        ledController.setLedColor(
-            rightRed,
-            rightGreen,
-            rightBlue,
-            leftTop = false,
-            leftBottom = false,
-            rightTop = true,
-            rightBottom = true
+        ledController.setLedColorDual(
+            leftR = leftRed, leftG = leftGreen, leftB = leftBlue,
+            rightR = rightRed, rightG = rightGreen, rightB = rightBlue,
+            leftTop = true, leftBottom = true,
+            rightTop = true, rightBottom = true
         )
     }
 }

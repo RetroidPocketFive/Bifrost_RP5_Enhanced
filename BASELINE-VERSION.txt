@@ -1,5 +1,0 @@
-version_name=1.7.0-alpha.3
-baseline_status=confirmed
-artifact_sha256=cfc9e5753ded3d4202e62b8e5d70d48bab6ccd5ced56a509397c774a7419e
-artifact_size=32887578
-baseline_branch=baseline/v1.7.0-alpha.3

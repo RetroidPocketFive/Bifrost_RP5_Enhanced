@@ -8,8 +8,8 @@ class ColorSamplerTest {
         val pixels = IntArray(4) { if (it % 2 == 0) 0xFF0000 else 0x0000FF }
         val result = ColorSampler(SamplingMethod.AVERAGE).sample(
             pixels, 4, 1,
-            NormalizedRegion(0.25f, 0.5f, 0.5f),
-            NormalizedRegion(0.75f, 0.5f, 0.5f)
+            NormalizedRegion(0.125f, 0.5f, 0.2f),
+            NormalizedRegion(0.875f, 0.5f, 0.2f)
         )
         assertEquals(0xFF0000, result.left)
         assertEquals(0x0000FF, result.right)

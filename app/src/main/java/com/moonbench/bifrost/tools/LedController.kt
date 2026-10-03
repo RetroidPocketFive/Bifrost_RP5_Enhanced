@@ -1,19 +1,33 @@
 package com.moonbench.bifrost.tools
 
+import android.content.Context
 import android.os.IBinder
 import android.os.Parcel
 import android.util.Log
+import com.moonbench.bifrost.rp5.LedDriver
+import com.moonbench.bifrost.rp5.LedFrame
+import com.moonbench.bifrost.rp5.LedColorCalibration
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.roundToInt
 
-class LedController {
+class LedController(private val context: Context) : LedDriver {
     companion object {
         private const val TAG = "LedController"
     }
 
     private val pServerBinder: IBinder?
     private val lock = ReentrantLock()
+
+    @Volatile
+    private var frameSink: ((LedFrame) -> Unit)? = null
+
+    private var lastLeftR = 0
+    private var lastLeftG = 0
+    private var lastLeftB = 0
+    private var lastRightR = 0
+    private var lastRightG = 0
+    private var lastRightB = 0
 
     private var lastCommand: String? = null
     private var lastExecuteTime = 0L
@@ -46,6 +60,38 @@ class LedController {
         }
     }
 
+    /**
+     * Routes animation frames into the RP5 scheduler when attached. The scheduler
+     * eventually calls [write] on this same controller, which bypasses [frameSink]
+     * and performs the single hardware transaction.
+     */
+    fun attachFrameSink(sink: (LedFrame) -> Unit) {
+        frameSink = sink
+    }
+
+    fun detachFrameSink() {
+        frameSink = null
+    }
+
+    override fun write(frame: LedFrame) {
+        emitFrameDirect(frame)
+    }
+
+    override fun clear() {
+        setLedColorDirect(0, 0, 0, 0, true, true, true, true)
+    }
+
+    private fun submitFrame(frame: LedFrame) {
+        frameSink?.invoke(frame) ?: emitFrameDirect(frame)
+    }
+
+    private fun emitFrameDirect(frame: LedFrame) {
+        setLedColorDualDirect(
+            frame.left, frame.right,
+            frame.leftTop, frame.leftBottom, frame.rightTop, frame.rightBottom
+        )
+    }
+
     fun setLedColor(
         red: Int,
         green: Int,
@@ -64,10 +110,20 @@ class LedController {
 
         lock.withLock {
             lastR = r; lastG = g; lastB = b
+            lastLeftR = r; lastLeftG = g; lastLeftB = b
+            lastRightR = r; lastRightG = g; lastRightB = b
             lastLeftTop = leftTop; lastLeftBottom = leftBottom
             lastRightTop = rightTop; lastRightBottom = rightBottom
         }
-        emit(r, g, b, br, leftTop, leftBottom, rightTop, rightBottom)
+
+        submitFrame(LedFrame(
+            left = (r shl 16) or (g shl 8) or b,
+            right = (r shl 16) or (g shl 8) or b,
+            leftTop = leftTop,
+            leftBottom = leftBottom,
+            rightTop = rightTop,
+            rightBottom = rightBottom
+        ))
     }
 
     /** Apply masterScale to (r,g,b) and write the selected zones. */
@@ -82,22 +138,22 @@ class LedController {
 
         val commandBuilder = StringBuilder(220)
         if (leftTop) {
-            commandBuilder.append("echo 1-").append(sr).append(':').append(sg).append(':').append(sb).append(':').append(br)
+            commandBuilder.append("echo 1-").append(sr).append(':').append(sg).append(':').append(sb)
                 .append(" > /sys/class/sn3112l/led/brightness")
         }
         if (leftBottom) {
-            if (commandBuilder.isNotEmpty()) commandBuilder.append(" && ")
-            commandBuilder.append("echo 2-").append(sr).append(':').append(sg).append(':').append(sb).append(':').append(br)
+            if (commandBuilder.isNotEmpty()) commandBuilder.append(" ; ")
+            commandBuilder.append("echo 2-").append(sr).append(':').append(sg).append(':').append(sb)
                 .append(" > /sys/class/sn3112l/led/brightness")
         }
         if (rightTop) {
-            if (commandBuilder.isNotEmpty()) commandBuilder.append(" && ")
-            commandBuilder.append("echo 1-").append(sr).append(':').append(sg).append(':').append(sb).append(':').append(br)
+            if (commandBuilder.isNotEmpty()) commandBuilder.append(" ; ")
+            commandBuilder.append("echo 1-").append(sr).append(':').append(sg).append(':').append(sb)
                 .append(" > /sys/class/sn3112r/led/brightness")
         }
         if (rightBottom) {
-            if (commandBuilder.isNotEmpty()) commandBuilder.append(" && ")
-            commandBuilder.append("echo 2-").append(sr).append(':').append(sg).append(':').append(sb).append(':').append(br)
+            if (commandBuilder.isNotEmpty()) commandBuilder.append(" ; ")
+            commandBuilder.append("echo 2-").append(sr).append(':').append(sg).append(':').append(sb)
                 .append(" > /sys/class/sn3112r/led/brightness")
         }
 
@@ -125,15 +181,89 @@ class LedController {
         rightBottom: Boolean = true
     ) {
         if (pServerBinder == null) return
-        val lr = leftR.coerceIn(0, 255); val lg = leftG.coerceIn(0, 255); val lb = leftB.coerceIn(0, 255)
-        val rr = rightR.coerceIn(0, 255); val rg = rightG.coerceIn(0, 255); val rb = rightB.coerceIn(0, 255)
-        val br = brightness.coerceIn(0, 255)
+
+        val leftRaw = (leftR.coerceIn(0, 255) shl 16) or
+            (leftG.coerceIn(0, 255) shl 8) or leftB.coerceIn(0, 255)
+        val rightRaw = (rightR.coerceIn(0, 255) shl 16) or
+            (rightG.coerceIn(0, 255) shl 8) or rightB.coerceIn(0, 255)
+
+        // The calibration is applied at the final hardware boundary so Ambient,
+        // AmbiAurora, presets and external API colours all use the same correction.
+        val calibrated = LedColorCalibration.applyDual(context, leftRaw, rightRaw)
+        submitCalibratedFrame(
+            calibrated.first,
+            calibrated.second,
+            leftTop,
+            leftBottom,
+            rightTop,
+            rightBottom
+        )
+    }
+
+    /**
+     * One-shot physical test that deliberately bypasses the saved correction.
+     * The calibration UI uses this while the user is adjusting the raw RGB
+     * command; normal LED output should always use [setLedColorDual].
+     */
+    fun setLedColorDualUncorrected(
+        leftR: Int, leftG: Int, leftB: Int,
+        rightR: Int, rightG: Int, rightB: Int,
+        leftTop: Boolean = true,
+        leftBottom: Boolean = true,
+        rightTop: Boolean = true,
+        rightBottom: Boolean = true
+    ) {
+        if (pServerBinder == null) return
+        val left = (leftR.coerceIn(0, 255) shl 16) or
+            (leftG.coerceIn(0, 255) shl 8) or leftB.coerceIn(0, 255)
+        val right = (rightR.coerceIn(0, 255) shl 16) or
+            (rightG.coerceIn(0, 255) shl 8) or rightB.coerceIn(0, 255)
+        emitFrameDirect(
+            LedFrame(
+                left = left,
+                right = right,
+                leftTop = leftTop,
+                leftBottom = leftBottom,
+                rightTop = rightTop,
+                rightBottom = rightBottom
+            )
+        )
+    }
+
+    private fun submitCalibratedFrame(
+        left: Int,
+        right: Int,
+        leftTop: Boolean,
+        leftBottom: Boolean,
+        rightTop: Boolean,
+        rightBottom: Boolean
+    ) {
         lock.withLock {
-            lastR = lr; lastG = lg; lastB = lb
-            lastLeftTop = leftTop; lastLeftBottom = leftBottom
-            lastRightTop = rightTop; lastRightBottom = rightBottom
+            lastLeftR = (left shr 16) and 0xFF
+            lastLeftG = (left shr 8) and 0xFF
+            lastLeftB = left and 0xFF
+            lastRightR = (right shr 16) and 0xFF
+            lastRightG = (right shr 8) and 0xFF
+            lastRightB = right and 0xFF
+            lastR = lastLeftR
+            lastG = lastLeftG
+            lastB = lastLeftB
+            lastLeftTop = leftTop
+            lastLeftBottom = leftBottom
+            lastRightTop = rightTop
+            lastRightBottom = rightBottom
         }
-        emitDual(lr, lg, lb, rr, rg, rb, br, leftTop, leftBottom, rightTop, rightBottom)
+
+        submitFrame(
+            LedFrame(
+                left = left,
+                right = right,
+                leftTop = leftTop,
+                leftBottom = leftBottom,
+                rightTop = rightTop,
+                rightBottom = rightBottom
+            )
+        )
     }
 
     /** Build one &&-joined command covering all selected zones (left zones use the
@@ -150,13 +280,13 @@ class LedController {
         val srg = (rg * s).roundToInt().coerceIn(0, 255)
         val srb = (rb * s).roundToInt().coerceIn(0, 255)
         val cmd = StringBuilder(220)
-        if (leftTop) cmd.append("echo 1-").append(slr).append(':').append(slg).append(':').append(slb).append(':').append(br)
+        if (leftTop) cmd.append("echo 1-").append(slr).append(':').append(slg).append(':').append(slb)
             .append(" > /sys/class/sn3112l/led/brightness")
-        if (leftBottom) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 2-").append(slr).append(':').append(slg).append(':').append(slb).append(':').append(br)
+        if (leftBottom) { if (cmd.isNotEmpty()) cmd.append(" ; "); cmd.append("echo 2-").append(slr).append(':').append(slg).append(':').append(slb)
             .append(" > /sys/class/sn3112l/led/brightness") }
-        if (rightTop) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 1-").append(srr).append(':').append(srg).append(':').append(srb).append(':').append(br)
+        if (rightTop) { if (cmd.isNotEmpty()) cmd.append(" ; "); cmd.append("echo 1-").append(srr).append(':').append(srg).append(':').append(srb)
             .append(" > /sys/class/sn3112r/led/brightness") }
-        if (rightBottom) { if (cmd.isNotEmpty()) cmd.append(" && "); cmd.append("echo 2-").append(srr).append(':').append(srg).append(':').append(srb).append(':').append(br)
+        if (rightBottom) { if (cmd.isNotEmpty()) cmd.append(" ; "); cmd.append("echo 2-").append(srr).append(':').append(srg).append(':').append(srb)
             .append(" > /sys/class/sn3112r/led/brightness") }
         if (cmd.isNotEmpty()) executeCommandDirect(cmd.toString())
     }
@@ -169,13 +299,25 @@ class LedController {
      */
     fun setMasterScale(scale: Float) {
         masterScale = scale.coerceIn(0f, 1f)
-        val r: Int; val g: Int; val b: Int
         val lt: Boolean; val lb: Boolean; val rt: Boolean; val rb: Boolean
+        val lr: Int; val lg: Int; val lbv: Int
+        val rr: Int; val rg: Int; val rbv: Int
         lock.withLock {
-            r = lastR; g = lastG; b = lastB
             lt = lastLeftTop; lb = lastLeftBottom; rt = lastRightTop; rb = lastRightBottom
+            lr = (lastLeftR * masterScale).roundToInt().coerceIn(0, 255)
+            lg = (lastLeftG * masterScale).roundToInt().coerceIn(0, 255)
+            lbv = (lastLeftB * masterScale).roundToInt().coerceIn(0, 255)
+            rr = (lastRightR * masterScale).roundToInt().coerceIn(0, 255)
+            rg = (lastRightG * masterScale).roundToInt().coerceIn(0, 255)
+            rbv = (lastRightB * masterScale).roundToInt().coerceIn(0, 255)
         }
-        if (lt || lb || rt || rb) emit(r, g, b, 255, lt, lb, rt, rb)
+        if (lt || lb || rt || rb) submitFrame(
+            LedFrame(
+                left = (lr shl 16) or (lg shl 8) or lbv,
+                right = (rr shl 16) or (rg shl 8) or rbv,
+                leftTop = lt, leftBottom = lb, rightTop = rt, rightBottom = rb
+            )
+        )
     }
 
     /**
@@ -184,16 +326,39 @@ class LedController {
      * re-showing the outgoing colour before the incoming animation's first frame.
      */
     fun resetFadeBaseline() {
-        lock.withLock { lastR = 0; lastG = 0; lastB = 0 }
+        lock.withLock {
+            lastR = 0; lastG = 0; lastB = 0
+            lastLeftR = 0; lastLeftG = 0; lastLeftB = 0
+            lastRightR = 0; lastRightG = 0; lastRightB = 0
+        }
+    }
+
+    private fun setLedColorDirect(
+        red: Int, green: Int, blue: Int, brightness: Int,
+        leftTop: Boolean, leftBottom: Boolean, rightTop: Boolean, rightBottom: Boolean
+    ) {
+        emit(red.coerceIn(0, 255), green.coerceIn(0, 255), blue.coerceIn(0, 255),
+            brightness.coerceIn(0, 255), leftTop, leftBottom, rightTop, rightBottom)
+    }
+
+    private fun setLedColorDualDirect(
+        left: Int, right: Int,
+        leftTop: Boolean, leftBottom: Boolean, rightTop: Boolean, rightBottom: Boolean
+    ) {
+        emitDual(
+            (left shr 16) and 0xFF, (left shr 8) and 0xFF, left and 0xFF,
+            (right shr 16) and 0xFF, (right shr 8) and 0xFF, right and 0xFF,
+            255, leftTop, leftBottom, rightTop, rightBottom
+        )
     }
 
     fun setBrightness(brightness: Int) {
         val b = brightness.coerceIn(0, 255)
         val commands = listOf(
-            "echo 1-0:0:0:$b > /sys/class/sn3112l/led/brightness",
-            "echo 2-0:0:0:$b > /sys/class/sn3112l/led/brightness",
-            "echo 1-0:0:0:$b > /sys/class/sn3112r/led/brightness",
-            "echo 2-0:0:0:$b > /sys/class/sn3112r/led/brightness"
+            "echo 1-0:0:0 > /sys/class/sn3112l/led/brightness",
+            "echo 2-0:0:0 > /sys/class/sn3112l/led/brightness",
+            "echo 1-0:0:0 > /sys/class/sn3112r/led/brightness",
+            "echo 2-0:0:0 > /sys/class/sn3112r/led/brightness"
         )
         val command = commands.joinToString(" && ")
         executeCommandDirect(command)
