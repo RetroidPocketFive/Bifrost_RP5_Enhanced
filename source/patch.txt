@@ -2221,3 +2221,17 @@ Subject: [PATCH 14/14] Complete Phase 1 default home UI refinements
          </LinearLayout>
  
          <TextView
+
+# PATCH — HOME HEADER RESPONSIVE FIX (2026-10-03)
+# Root cause of previous visual mismatch:
+# The header used fixed 250dp / 340dp / 250dp / 84dp widths. On the RP5 display density this consumed more physical width than the available screen, causing HEIMDALL text and EXIT to be pushed/clipped off-screen.
+# Fix:
+# - default + landscape header cards now use weighted 0dp widths so all four controls always fit the available width.
+# - BIFROST + settings gear remain one card.
+# - HEIMDALL (SCREEN MONITOR) remains one card with the switch and visible title.
+# - APP PROFILES remains one card with title/subtitle and switch.
+# - EXIT remains in the same top row and receives a weighted width with a minimum width.
+# - portrait uses the same four-control responsive header rather than separate rows.
+# - removed the obsolete hidden duplicate portrait controls.
+# - no MainActivity functionality or V5 feature code was changed.
+
