@@ -80,7 +80,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="LED SERVICE"
+                            android:text="HEIMDALL"
                             android:textColor="@color/bifrost_text"
                             android:textSize="11sp"
                             android:textStyle="bold"
@@ -89,7 +89,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Turns Bifrost LED control on or off"
+                            android:text="Bifrost LED screen monitoring"
                             android:textColor="@color/bifrost_text_secondary"
                             android:textSize="9sp" />
                     </LinearLayout>
@@ -168,34 +168,60 @@
                 app:cornerRadius="10dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeExitButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="72dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="8dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                android:text="EXIT"
+                android:textSize="9sp"
+                android:contentDescription="Close Bifrost"
+                android:tooltipText="Close Bifrost"
+                android:backgroundTint="@color/bifrost_surface"
+                app:cornerRadius="12dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/bifrost_accent" />
         </LinearLayout>
 
         <LinearLayout
             android:id="@+id/homeMaintenanceRow"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
+            android:layout_height="68dp"
             android:layout_marginTop="2dp"
             android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/homeScreenMonitorButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:text="SCREEN MONITOR"
-                android:textSize="10sp" />
+            
 
-            <com.google.android.material.button.MaterialButton
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="64dp"
+                android:orientation="vertical">
+
+                <com.google.android.material.button.MaterialButton
                 android:id="@+id/homeClearCacheButton"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                
+                
                 android:text="CLEAR CACHE"
-                android:textSize="10sp" />
+                android:textSize="10sp"
+                android:contentDescription="Clear temporary Bifrost cache"
+                android:tooltipText="Clear temporary Bifrost cache" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Clears temporary Bifrost cache"
+                    android:textColor="@color/bifrost_text_secondary"
+                    android:textSize="8sp" />
+            </LinearLayout>
         </LinearLayout>
 
         <LinearLayout
