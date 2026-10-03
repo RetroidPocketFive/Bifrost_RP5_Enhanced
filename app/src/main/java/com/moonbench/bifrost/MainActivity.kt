@@ -704,7 +704,34 @@ class MainActivity : AppCompatActivity() {
         homeContainer = findViewById(R.id.homeContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
-        homeExitButton = findViewById(R.id.homeExitButton)
+        homeExitButton = findViewById<MaterialButton?>(R.id.homeExitButton)
+            ?: MaterialButton(this).apply {
+                id = R.id.homeExitButton
+                text = "EXIT"
+                contentDescription = "Close Bifrost"
+                tooltipText = "Close Bifrost"
+                minHeight = 48
+                setOnClickListener { finishAndRemoveTask() }
+            }.also { fallbackButton ->
+                val maintenanceRow = findViewById<LinearLayout?>(R.id.homeMaintenanceRow)
+                if (maintenanceRow != null) {
+                    val wrapper = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                            marginStart = 4
+                        }
+                    }
+                    wrapper.addView(fallbackButton, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 48))
+                    wrapper.addView(TextView(this).apply {
+                        text = "Close Bifrost"
+                        gravity = Gravity.CENTER
+                        textSize = 9f
+                        setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text_secondary))
+                        setPadding(0, 2, 0, 0)
+                    }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+                    maintenanceRow.addView(wrapper)
+                }
+            }
         tabUiSettings = findViewById(R.id.tabUiSettings)
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
         tabThemesSettings = findViewById(R.id.tabThemesSettings)
