@@ -153,7 +153,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settingsOverlay: View
     private lateinit var homeContainer: View
     private lateinit var homeSettingsButton: MaterialButton
-    private lateinit var homeHeaderContainer: View
     private lateinit var closeSettingsButton: MaterialButton
     private lateinit var homeExitButton: MaterialButton
     private lateinit var tabUiSettings: MaterialButton
@@ -705,7 +704,6 @@ class MainActivity : AppCompatActivity() {
         settingsOverlay = findViewById(R.id.settingsOverlay)
         homeContainer = findViewById(R.id.homeContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
-        homeHeaderContainer = findViewById(R.id.homeHeaderContainer)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
         homeExitButton = findViewById<MaterialButton?>(R.id.homeExitButton)
             ?: MaterialButton(this).apply {
@@ -949,7 +947,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupHomeSurface() {
-        homeHeaderContainer.setOnClickListener { openSettingsOverlay() }
+        bifrostLogoView.setOnClickListener { openSettingsOverlay() }
+        bifrostTitleText.setOnClickListener { openSettingsOverlay() }
+        homeSettingsButton.setOnClickListener { openSettingsOverlay() }
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
         }
