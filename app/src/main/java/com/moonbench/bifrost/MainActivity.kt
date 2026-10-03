@@ -30,6 +30,7 @@ import android.view.DragEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.Gravity
 import android.view.ViewGroup
 import android.view.ViewConfiguration
 import android.widget.AdapterView
