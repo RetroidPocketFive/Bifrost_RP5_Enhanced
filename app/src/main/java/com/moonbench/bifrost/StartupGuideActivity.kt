@@ -62,13 +62,15 @@ class StartupGuideActivity : AppCompatActivity() {
 
         buttonSkip.setOnClickListener {
             markGuideDone()
-            startActivity(Intent(this, MainActivity::class.java))
+            // MainActivity launched this guide on top of itself. Return to that
+            // existing activity instead of creating a duplicate MainActivity.
             finish()
         }
 
         buttonCompleteSetup.setOnClickListener {
             markGuideDone()
-            startActivity(Intent(this, MainActivity::class.java))
+            // Returning to the existing MainActivity avoids a second concurrent
+            // initialization pass during first-run setup.
             finish()
         }
 
