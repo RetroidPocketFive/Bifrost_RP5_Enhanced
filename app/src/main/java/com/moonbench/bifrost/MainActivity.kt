@@ -153,6 +153,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var homeContainer: View
     private lateinit var homeSettingsButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
+    private lateinit var homeExitButton: MaterialButton
     private lateinit var tabUiSettings: MaterialButton
     private lateinit var tabBehaviorSettings: MaterialButton
     private lateinit var tabThemesSettings: MaterialButton
@@ -703,6 +704,7 @@ class MainActivity : AppCompatActivity() {
         homeContainer = findViewById(R.id.homeContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
+        homeExitButton = findViewById(R.id.homeExitButton)
         tabUiSettings = findViewById(R.id.tabUiSettings)
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
         tabThemesSettings = findViewById(R.id.tabThemesSettings)
@@ -925,6 +927,7 @@ class MainActivity : AppCompatActivity() {
             confirmClearCache()
         }
         closeSettingsButton.setOnClickListener { requestCloseSettingsOverlay() }
+        homeExitButton.setOnClickListener { finishAndRemoveTask() }
         customizePresetArtworkButton.setOnClickListener {
             openSelectedPresetArtworkEditor(it)
         }
