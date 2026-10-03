@@ -30,6 +30,7 @@ import android.view.DragEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.Gravity
 import android.view.ViewGroup
 import android.view.ViewConfiguration
 import android.widget.AdapterView
@@ -153,6 +154,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var homeContainer: View
     private lateinit var homeSettingsButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
+    private lateinit var homeExitButton: MaterialButton
     private lateinit var tabUiSettings: MaterialButton
     private lateinit var tabBehaviorSettings: MaterialButton
     private lateinit var tabThemesSettings: MaterialButton
@@ -703,6 +705,34 @@ class MainActivity : AppCompatActivity() {
         homeContainer = findViewById(R.id.homeContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
+        homeExitButton = findViewById<MaterialButton?>(R.id.homeExitButton)
+            ?: MaterialButton(this).apply {
+                id = R.id.homeExitButton
+                text = "EXIT"
+                contentDescription = "Close Bifrost"
+                tooltipText = "Close Bifrost"
+                minHeight = 48
+                setOnClickListener { finishAndRemoveTask() }
+            }.also { fallbackButton ->
+                val maintenanceRow = findViewById<LinearLayout?>(R.id.homeMaintenanceRow)
+                if (maintenanceRow != null) {
+                    val wrapper = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                            marginStart = 4
+                        }
+                    }
+                    wrapper.addView(fallbackButton, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 48))
+                    wrapper.addView(TextView(this).apply {
+                        text = "Close Bifrost"
+                        gravity = Gravity.CENTER
+                        textSize = 9f
+                        setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text_secondary))
+                        setPadding(0, 2, 0, 0)
+                    }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+                    maintenanceRow.addView(wrapper)
+                }
+            }
         tabUiSettings = findViewById(R.id.tabUiSettings)
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
         tabThemesSettings = findViewById(R.id.tabThemesSettings)
@@ -917,14 +947,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupHomeSurface() {
+        bifrostLogoView.setOnClickListener { openSettingsOverlay() }
+        bifrostTitleText.setOnClickListener { openSettingsOverlay() }
         homeSettingsButton.setOnClickListener { openSettingsOverlay() }
-        findViewById<MaterialButton>(R.id.homeScreenMonitorButton).setOnClickListener {
-            requestScreenCapturePermission()
-        }
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
         }
         closeSettingsButton.setOnClickListener { requestCloseSettingsOverlay() }
+        homeExitButton.setOnClickListener { finishAndRemoveTask() }
         customizePresetArtworkButton.setOnClickListener {
             openSelectedPresetArtworkEditor(it)
         }

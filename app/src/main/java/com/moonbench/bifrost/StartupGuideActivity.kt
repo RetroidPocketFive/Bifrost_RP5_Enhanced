@@ -10,11 +10,13 @@ import android.view.View
 import android.widget.Button
 import com.google.android.material.button.MaterialButton
 import android.widget.TextView
+import android.app.AlertDialog
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.moonbench.bifrost.services.AppProfileManager
 import com.moonbench.bifrost.services.BifrostAccessibilityService
+import com.moonbench.bifrost.tools.CrashReporter
 
 class StartupGuideActivity : AppCompatActivity() {
 
@@ -41,6 +43,8 @@ class StartupGuideActivity : AppCompatActivity() {
         setContentView(R.layout.activity_startup_guide)
         appProfileManager = AppProfileManager(getSharedPreferences("bifrost_prefs", MODE_PRIVATE))
 
+        showPreviousCrashReport()
+
         pageNotification = findViewById(R.id.pageNotification)
         pageAccessibility = findViewById(R.id.pageAccessibility)
         pageUsage = findViewById(R.id.pageUsage)
@@ -62,13 +66,15 @@ class StartupGuideActivity : AppCompatActivity() {
 
         buttonSkip.setOnClickListener {
             markGuideDone()
-            startActivity(Intent(this, MainActivity::class.java))
+            // MainActivity launched this guide on top of itself. Return to that
+            // existing activity instead of creating a duplicate MainActivity.
             finish()
         }
 
         buttonCompleteSetup.setOnClickListener {
             markGuideDone()
-            startActivity(Intent(this, MainActivity::class.java))
+            // Returning to the existing MainActivity avoids a second concurrent
+            // initialization pass during first-run setup.
             finish()
         }
 
@@ -78,6 +84,27 @@ class StartupGuideActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshPages()
+    }
+
+    private fun showPreviousCrashReport() {
+        val report = runCatching { CrashReporter.existingReport(this) }.getOrNull() ?: return
+        val body = runCatching { report.readText() }.getOrNull()?.take(12000) ?: return
+
+        AlertDialog.Builder(this)
+            .setTitle("BIFROST CRASHED LAST TIME")
+            .setMessage("A crash report was saved on this device. Please share it before repeating the setup test.\\n\\n$body")
+            .setNegativeButton("DISMISS") { _, _ -> CrashReporter.clear(this) }
+            .setPositiveButton("SHARE") { _, _ ->
+                CrashReporter.clear(this)
+                val share = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "Bifrost crash report")
+                    putExtra(Intent.EXTRA_TEXT, body)
+                }
+                runCatching { startActivity(Intent.createChooser(share, "Send crash report")) }
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun refreshPages() {
