@@ -141,6 +141,7 @@
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/homeAppProfileSwitch"
+                    android:contentDescription="Enable app based profiles"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"
@@ -150,6 +151,8 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/homeSettingsButton"
+                android:contentDescription="Open Bifrost settings"
+                android:tooltipText="Open settings"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:insetTop="0dp"
@@ -167,29 +170,98 @@
         <LinearLayout
             android:id="@+id/homeMaintenanceRow"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:baselineAligned="false">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/homeScreenMonitorButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+            <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:text="SCREEN MONITOR"
-                android:textSize="10sp" />
+                android:orientation="vertical">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/homeClearCacheButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/homeScreenMonitorButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:minHeight="48dp"
+                    android:text="HEIMDALL"
+                    android:textSize="10sp"
+                    android:contentDescription="HEIMDALL: screen monitoring and Bifrost LED control"
+                    android:tooltipText="Screen monitoring and Bifrost LED control" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:text="Screen monitoring and LED control"
+                    android:textColor="@color/bifrost_text_secondary"
+                    android:textSize="9sp"
+                    android:maxLines="2" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:text="CLEAR CACHE"
-                android:textSize="10sp" />
+                android:layout_marginEnd="4dp"
+                android:orientation="vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/homeClearCacheButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:minHeight="48dp"
+                    android:text="CLEAR CACHE"
+                    android:textSize="10sp"
+                    android:contentDescription="Clear temporary Bifrost cache"
+                    android:tooltipText="Clear temporary Bifrost cache" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:text="Clear temporary cache"
+                    android:textColor="@color/bifrost_text_secondary"
+                    android:textSize="9sp"
+                    android:maxLines="2" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:orientation="vertical">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/homeExitButton"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:minHeight="48dp"
+                    android:text="EXIT"
+                    android:textSize="10sp"
+                    android:contentDescription="Close Bifrost"
+                    android:tooltipText="Close Bifrost" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:gravity="center"
+                    android:text="Close Bifrost"
+                    android:textColor="@color/bifrost_text_secondary"
+                    android:textSize="9sp"
+                    android:maxLines="2" />
+            </LinearLayout>
         </LinearLayout>
 
         <TextView
