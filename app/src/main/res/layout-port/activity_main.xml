@@ -20,10 +20,10 @@
             android:layout_height="52dp"
             android:gravity="center_vertical"
             android:orientation="horizontal">
+
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+                android:layout_width="250dp"
                 android:layout_height="50dp"
-                android:layout_weight="2.6"
                 android:layout_marginEnd="4dp"
                 app:cardBackgroundColor="@color/bifrost_card"
                 app:cardCornerRadius="12dp"
@@ -74,18 +74,47 @@
                         app:strokeColor="@color/bifrost_accent" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-            
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeExitButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="64dp"
+                android:layout_height="44dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:padding="0dp"
+                android:text="EXIT"
+                android:textSize="8sp"
+                android:contentDescription="Close Bifrost"
+                android:tooltipText="Close Bifrost"
+                android:backgroundTint="@color/bifrost_surface"
+                app:cornerRadius="11dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/bifrost_accent" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/homeMaintenanceRow"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal">
+
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="50dp"
-                android:layout_weight="3.2"
+                android:layout_weight="1.8"
                 android:layout_marginEnd="4dp"
                 app:cardBackgroundColor="@color/bifrost_card"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
                 app:strokeColor="@color/bifrost_accent"
                 app:strokeWidth="1dp">
-
                 <LinearLayout
                     android:id="@+id/systemStatusContainer"
                     android:layout_width="match_parent"
@@ -93,8 +122,7 @@
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
                     android:paddingStart="8dp"
-                    android:paddingEnd="6dp">
-
+                    android:paddingEnd="5dp">
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
@@ -105,7 +133,6 @@
                             android:id="@+id/homeHeimdallTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
                             android:includeFontPadding="false"
                             android:maxLines="1"
                             android:singleLine="true"
@@ -123,12 +150,11 @@
                             android:textColor="@color/bifrost_text_secondary"
                             android:textSize="6sp" />
                     </LinearLayout>
-
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/serviceToggle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
+                        android:layout_marginStart="6dp"
                         android:contentDescription="Bifrost LED screen monitoring"
                         android:focusable="true"
                         android:minWidth="48dp"
@@ -136,10 +162,11 @@
                         app:trackTint="@color/switch_track_tint" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="50dp"
-                android:layout_weight="2.7"
+                android:layout_weight="1.5"
                 android:layout_marginEnd="4dp"
                 app:cardBackgroundColor="@color/bifrost_card"
                 app:cardCornerRadius="12dp"
@@ -183,38 +210,17 @@
                         app:trackTint="@color/switch_track_tint" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/homeExitButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_weight="0.85"
-                android:minWidth="54dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:padding="0dp"
-                android:text="EXIT"
-                android:textSize="8sp"
-                android:contentDescription="Close Bifrost"
-                android:tooltipText="Close Bifrost"
-                android:backgroundTint="@color/bifrost_surface"
-                app:cornerRadius="11dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/bifrost_accent" />
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/homeMaintenanceRow"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/homeClearCacheButton"
                 style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="112dp"
+                android:layout_width="0dp"
                 android:layout_height="48dp"
+                android:layout_weight="1"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:minHeight="48dp"
+                android:padding="0dp"
                 android:text="CLEAR CACHE"
                 android:textSize="10sp"
                 android:contentDescription="Clear temporary Bifrost cache"
