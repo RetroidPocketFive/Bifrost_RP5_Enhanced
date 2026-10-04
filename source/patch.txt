@@ -2264,3 +2264,12 @@ Subject: [PATCH 14/14] Complete Phase 1 default home UI refinements
 # - The existing serviceToggle ID and service behaviour are unchanged.
 # - Applied consistently to default, landscape and portrait activity_main layouts.
 # - Protected V5 baseline remains unchanged; this is still a Phase 1 test-branch change.
+
+
+# PATCH — PORTRAIT HOME HEADER REFINEMENT (2026-10-04)
+# Portrait now follows the supplied target composition:
+#   Row 1: [ BIFROST + settings ]                         [ EXIT ]
+#   Row 2: [ Heimdall + switch ] [ App Profiles + switch ] [ CLEAR CACHE ]
+# - homeMaintenanceRow is retained as the second control row for MainActivity compatibility.
+# - Heimdall uses the same "Heimdall" title and "Bifrost LED screen monitoring" description.
+# - No service logic or advanced V5 feature implementation was changed.
