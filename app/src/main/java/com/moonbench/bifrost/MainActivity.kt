@@ -649,15 +649,6 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun addMaintenanceControls() {
-        val container = systemStatusContainer as? LinearLayout ?: return
-        val button = MaterialButton(this).apply {
-            text = "CLEAR APP CACHE"
-            setOnClickListener { confirmClearCache() }
-        }
-        container.addView(button, LinearLayout.LayoutParams(-1, 48).apply { topMargin = 12 })
-    }
-
     private fun confirmClearCache() {
         AlertDialog.Builder(this)
             .setTitle("CLEAR APP CACHE?")
@@ -832,7 +823,6 @@ class MainActivity : AppCompatActivity() {
         themesCard = findViewById(R.id.themesCard)
         settingsSystemStatusCard = findViewById(R.id.settingsSystemStatusCard)
         systemStatusContainer = findViewById(R.id.systemStatusContainer)
-        addMaintenanceControls()
         bifrostLogoView = findViewById(R.id.homeBifrostLogoView)
         bifrostTitleText = findViewById(R.id.homeBifrostTitleText)
         bifrostTitleLabel = bifrostTitleText.text.toString()
