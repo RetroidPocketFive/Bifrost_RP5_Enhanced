@@ -99,20 +99,34 @@
                     android:paddingStart="12dp"
                     android:paddingEnd="8dp">
 
-                    <TextView
-                        android:id="@+id/homeHeimdallTitle"
+                    <LinearLayout
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:gravity="center"
-                        android:ellipsize="none"
-                        android:includeFontPadding="false"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:text="HEIMDALL (SCREEN MONITOR)"
-                        android:textColor="@color/bifrost_text"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:orientation="vertical"
+                        android:gravity="center_vertical">
+                        <TextView
+                            android:id="@+id/homeHeimdallTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:includeFontPadding="false"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:text="Heimdall"
+                            android:textColor="@color/bifrost_text"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="1dp"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:text="Bifrost LED screen monitoring"
+                            android:textColor="@color/bifrost_text_secondary"
+                            android:textSize="7sp" />
+                    </LinearLayout>
 
                     <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/serviceToggle"
