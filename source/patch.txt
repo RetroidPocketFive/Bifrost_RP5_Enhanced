@@ -2255,3 +2255,12 @@ Subject: [PATCH 14/14] Complete Phase 1 default home UI refinements
 # - Removed the obsolete addMaintenanceControls() method.
 # - Dedicated homeClearCacheButton remains the only home-screen cache control.
 # - Heimdall serviceToggle and service logic remain unchanged.
+
+
+# PATCH — HEIMDALL LABEL + DESCRIPTION REFINEMENT (2026-10-04)
+# Updated the working home-screen Heimdall control after functional verification.
+# - Visible title is now exactly: "Heimdall"
+# - Visible description is now exactly: "Bifrost LED screen monitoring"
+# - The existing serviceToggle ID and service behaviour are unchanged.
+# - Applied consistently to default, landscape and portrait activity_main layouts.
+# - Protected V5 baseline remains unchanged; this is still a Phase 1 test-branch change.
