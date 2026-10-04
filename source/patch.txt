@@ -2243,3 +2243,15 @@ Subject: [PATCH 14/14] Complete Phase 1 default home UI refinements
 # The existing serviceToggle ID and MainActivity service logic are intentionally preserved.
 # A dedicated homeHeimdallTitle TextView is used so the label is not affected by the previous nested layout.
 # Applied consistently to default, landscape and portrait activity_main layouts.
+
+# PATCH — ROOT CAUSE FIX: LEGACY MAINTENANCE INJECTION REMOVED (2026-10-04)
+# Root cause identified:
+# MainActivity.initializeApp() called addMaintenanceControls(), which dynamically inserted a
+# "CLEAR APP CACHE" MaterialButton into systemStatusContainer. systemStatusContainer is the
+# Heimdall home-screen container, so the legacy runtime injection consumed its horizontal space
+# and caused the recreated HEIMDALL title to be blank/clipped.
+# Fix:
+# - Removed the addMaintenanceControls() call.
+# - Removed the obsolete addMaintenanceControls() method.
+# - Dedicated homeClearCacheButton remains the only home-screen cache control.
+# - Heimdall serviceToggle and service logic remain unchanged.
