@@ -1223,6 +1223,16 @@
                         android:textSize="12sp" 
                 android:contentDescription="Edit sampling areas"
                 android:tooltipText="Edit sampling areas" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/fineTuneViewAreaButton"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/bifrost_spacing_md"
+                        android:text="VIEW AREA FINE TUNING"
+                        android:textSize="12sp"
+                        android:contentDescription="View Area Fine Tuning"
+                        android:tooltipText="View Area Fine Tuning" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
