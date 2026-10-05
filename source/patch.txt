@@ -2273,3 +2273,19 @@ Subject: [PATCH 14/14] Complete Phase 1 default home UI refinements
 # - homeMaintenanceRow is retained as the second control row for MainActivity compatibility.
 # - Heimdall uses the same "Heimdall" title and "Bifrost LED screen monitoring" description.
 # - No service logic or advanced V5 feature implementation was changed.
+
+
+# PATCH — FINE TUNE / VIEW AREA INTEGRATION (2026-10-05)
+# Built on the approved 1.7.0-alpha.4 Home Screen commit; the protected V5 baseline is untouched.
+# Sources incorporated from Fine Tune Phases 1-8:
+# - named Fine Tune data model and persistent store
+# - movable left/right View Area editor
+# - live accessibility image sampling + physical LED preview
+# - Fine Tune profile manager and preset bindings
+# - five colour modes including Dominant Prime Colour
+# - LED calibration entry with brightness test and capture-display selection foundation
+# - calibration suppression/restore hooks in LEDService
+# - runtime profile-bound Fine Tune sampling
+# - deterministic Phase 8 RGB metrics / dominant-primary validation helpers
+# The existing Ambient, Audio Reactive, Ambi Aurora, presets, app profiles and other V5 LED architecture remain in place.
+# This branch is a TEST BUILD only and is not a new baseline/release.

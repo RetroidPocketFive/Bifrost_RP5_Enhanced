@@ -156,6 +156,8 @@ class LEDService : Service() {
         private const val EXTRA_CPU_COOL_COLOR_OVERRIDE = "cpuCoolColorOverride"
         private const val EXTRA_CPU_WARM_COLOR_OVERRIDE = "cpuWarmColorOverride"
         private const val EXTRA_CPU_HOT_COLOR_OVERRIDE = "cpuHotColorOverride"
+        const val ACTION_CALIBRATION_ENTER = "com.moonbench.bifrost.CALIBRATION_ENTER"
+        const val ACTION_CALIBRATION_EXIT = "com.moonbench.bifrost.CALIBRATION_EXIT"
         const val EXTRA_FADE_END_COLOR = "fadeEndColor"
         const val EXTRA_FADE_END_RIGHT_COLOR = "fadeEndRightColor"
         private const val COLOR_OVERRIDE_UNSET = Int.MIN_VALUE
@@ -235,6 +237,9 @@ class LEDService : Service() {
     private var pendingProjectionRunnable: Runnable? = null
     private var pendingShutdownRunnable: Runnable? = null
     private var isAppProfileSuppressed: Boolean = false
+    private var calibrationSuppressed: Boolean = false
+    private var fineTuneRuntime: com.moonbench.bifrost.rp5.FineTuneRuntime? = null
+    private var activeFineTuneName: String? = null
 
     private var activeExternalOverride: ExternalOverrideState? = null
     private var externalOverrideLastSeenMs: Long = 0L   // lease renewal timestamp
@@ -414,6 +419,7 @@ class LEDService : Service() {
                     revertExternalOverride()
                 }
                 checkAutoProfileSwitch()
+                syncFineTuneRuntime()
                 val nextDelay = when {
                     // A live override is polled tightly so a stale lease is caught
                     // within ~one heartbeat, not the multi-second idle cadence.
@@ -460,6 +466,19 @@ class LEDService : Service() {
 
         if (intent.action == ACTION_UPDATE_PARAMS) {
             handleUpdateParams(intent)
+            return START_NOT_STICKY
+        }
+
+        if (intent.action == ACTION_CALIBRATION_ENTER) {
+            calibrationSuppressed = true
+            fineTuneRuntime?.stop(); fineTuneRuntime = null; activeFineTuneName = null
+            stopCurrentAnimation()
+            return START_NOT_STICKY
+        }
+        if (intent.action == ACTION_CALIBRATION_EXIT) {
+            calibrationSuppressed = false
+            restartAnimationForCurrentState(force = true)
+            syncFineTuneRuntime()
             return START_NOT_STICKY
         }
 
@@ -890,6 +909,33 @@ class LEDService : Service() {
         }
     }
 
+    private fun syncFineTuneRuntime() {
+        if (!isRunning || isStopping.get() || calibrationSuppressed || isAppProfileSuppressed || activeExternalOverride != null || isLowBatteryAlertActive) {
+            if (activeFineTuneName != null) stopFineTuneRuntime()
+            return
+        }
+        val presetName = prefs.getString(PREF_KEY_LAST_PRESET, null)
+        val profile = presetName?.let { com.moonbench.bifrost.rp5.FineTuneStore(this).fineTuneForProfile(it) }
+        val wanted = profile?.name
+        if (wanted == activeFineTuneName) return
+        stopFineTuneRuntime()
+        if (profile != null) {
+            stopCurrentAnimation()
+            activeFineTuneName = profile.name
+            fineTuneRuntime = com.moonbench.bifrost.rp5.FineTuneRuntime(this, profile, currentAmbientDisplayId) { effectiveBrightness() }
+            fineTuneRuntime?.start()
+        }
+    }
+
+    private fun stopFineTuneRuntime() {
+        fineTuneRuntime?.stop()
+        fineTuneRuntime = null
+        activeFineTuneName = null
+        if (isRunning && !isStopping.get() && !isAppProfileSuppressed && !calibrationSuppressed) {
+            restartAnimationForCurrentState(force = true)
+        }
+    }
+
     private fun restartAnimationForCurrentState(force: Boolean = false) {
         if (!isRunning || isStopping.get()) {
             Log.d(TAG, "restartAnimationForCurrentState: skipping — isRunning=$isRunning, isStopping=${isStopping.get()}")
@@ -1292,6 +1338,7 @@ class LEDService : Service() {
             mirrorRunningDisplayId = Display.INVALID_DISPLAY
             releasePipboyWakeLock()
 
+            stopFineTuneRuntime()
             stopCurrentAnimation()
 
             // Stop the scheduler before the delayed hardware-off sequence so no
