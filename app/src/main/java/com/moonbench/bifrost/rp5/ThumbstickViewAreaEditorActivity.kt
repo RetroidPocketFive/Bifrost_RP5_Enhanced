@@ -1,0 +1,14 @@
+package com.moonbench.bifrost.rp5
+import android.app.AlertDialog
+import android.os.Bundle
+import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+class ThumbstickViewAreaEditorActivity:AppCompatActivity(){
+ private lateinit var editor:ThumbstickViewAreaEditorView;private lateinit var preview:ThumbstickLivePreview;private lateinit var store:FineTuneStore;private var name:String?=null;private var mode=ThumbstickColourMode.AVERAGE
+ override fun onCreate(b:Bundle?){super.onCreate(b);store=FineTuneStore(this);name=intent.getStringExtra(EXTRA_PROFILE_NAME);preview=ThumbstickLivePreview(this,{editor.setPreviewFrame(it)},{l,r->editor.setSampledColors(l,r)});setContentView(build());store.find(name.orEmpty())?.let{mode=it.colourMode;editor.setRegions(it.leftViewArea,it.rightViewArea)};editor.onPreviewRequested={l,r->preview.preview(l,r,mode)}}
+ private fun build()=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setBackgroundColor(0xFF000000.toInt());editor=ThumbstickViewAreaEditorView(this@ThumbstickViewAreaEditorActivity);addView(editor,LinearLayout.LayoutParams(-1,0,1f));addView(LinearLayout(this@ThumbstickViewAreaEditorActivity).apply{addView(Button(this@ThumbstickViewAreaEditorActivity).apply{text="SAVE";setOnClickListener{save()}});addView(Button(this@ThumbstickViewAreaEditorActivity).apply{text="RESET";setOnClickListener{editor.reset()}});addView(Button(this@ThumbstickViewAreaEditorActivity).apply{text="EXIT";setOnClickListener{finish()}})})}
+ override fun onResume(){super.onResume();preview.start();preview.preview(editor.leftRegion,editor.rightRegion,mode)}
+ override fun onPause(){preview.stop();super.onPause()}
+ private fun save(){val input=EditText(this).apply{hint="Fine Tune name";setText(name.orEmpty())};val modes=listOf(ThumbstickColourMode.FIFTY_FIFTY to "50/50",ThumbstickColourMode.AVERAGE to "Average Colour",ThumbstickColourMode.CLOSE_MATCH to "Close Match Colour",ThumbstickColourMode.MOST_DOMINANT to "Most Dominant Colour",ThumbstickColourMode.DOMINANT_PRIME to "Dominant Prime Colour");val group=RadioGroup(this).apply{modes.forEach{(m,label)->addView(RadioButton(this@ThumbstickViewAreaEditorActivity).apply{text=label;isChecked=m==mode;setOnClickListener{mode=m;preview.preview(editor.leftRegion,editor.rightRegion,mode)}})}};val box=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(32,8,32,0);addView(input);addView(TextView(this@ThumbstickViewAreaEditorActivity).apply{text="Colour processing";setPadding(0,12,0,4)});addView(group)};AlertDialog.Builder(this).setTitle("Save Fine Tune").setView(box).setNegativeButton("CANCEL",null).setPositiveButton("SAVE"){_,_->val n=input.text.toString().trim();if(n.isNotEmpty()){store.save(FineTuneProfile(n,editor.leftRegion,editor.rightRegion,mode));name=n;finish()}}.show()}
+ companion object{const val EXTRA_PROFILE_NAME="fine_tune_profile_name"}
+}
