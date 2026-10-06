@@ -9,15 +9,17 @@ import android.view.Display
 import com.moonbench.bifrost.services.BifrostAccessibilityService
 import com.moonbench.bifrost.tools.LedController
 import java.util.concurrent.Executor
+
 class ThumbstickLivePreview(private val context:Context, private val onFrame:(Bitmap?)->Unit, private val onColors:(Int,Int)->Unit, private val displayId:Int=Display.DEFAULT_DISPLAY, private val brightness:()->Int={255}) {
- private val h=Handler(Looper.getMainLooper()); private val led=LedController(context); private var running=false; private var bitmap:Bitmap?=null
+ private val h=Handler(Looper.getMainLooper()); private val led=LedController(context); private var running=false; private var singleFrame=false; private var bitmap:Bitmap?=null
  private var left=NormalizedRegion(.25f,.78f,.18f); private var right=NormalizedRegion(.75f,.78f,.18f); private var mode=ThumbstickColourMode.AVERAGE
  private val capture=object:AccessibilityService.TakeScreenshotCallback{
-  override fun onSuccess(s:AccessibilityService.ScreenshotResult){try{val hw=Bitmap.wrapHardwareBuffer(s.hardwareBuffer,s.colorSpace);val sw=hw?.copy(Bitmap.Config.ARGB_8888,false);hw?.recycle();if(sw!=null){bitmap=sw;onFrame(sw);sample(sw)}}finally{s.hardwareBuffer.close();schedule()}}
-  override fun onFailure(errorCode:Int){schedule(400L)}
+  override fun onSuccess(s:AccessibilityService.ScreenshotResult){try{val hw=Bitmap.wrapHardwareBuffer(s.hardwareBuffer,s.colorSpace);val sw=hw?.copy(Bitmap.Config.ARGB_8888,false);hw?.recycle();if(sw!=null){bitmap=sw;onFrame(sw);sample(sw);if(singleFrame){running=false;singleFrame=false}}}finally{s.hardwareBuffer.close();if(running)schedule()}}
+  override fun onFailure(errorCode:Int){if(running)schedule(400L)}
  }
- fun start(){if(!running){running=true;request()}}
- fun stop(){running=false;h.removeCallbacksAndMessages(null);bitmap=null}
+ fun start(single:Boolean=false){singleFrame=single;if(!running){running=true;request()}}
+ fun captureOnce(){start(true)}
+ fun stop(){running=false;singleFrame=false;h.removeCallbacksAndMessages(null);bitmap=null}
  fun preview(l:NormalizedRegion,r:NormalizedRegion,m:ThumbstickColourMode=mode){left=l;right=r;mode=m;bitmap?.let(::sample)}
  private fun request(){if(!running)return;val s=BifrostAccessibilityService.instance;if(s==null||!BifrostAccessibilityService.isEnabled(s)){schedule(400L);return};runCatching{s.takeScreenshot(displayId,Executor{q->h.post(q)},capture)}.onFailure{schedule(400L)}}
  private fun schedule(delay:Long=160L){if(running)h.postDelayed(::request,delay)}
