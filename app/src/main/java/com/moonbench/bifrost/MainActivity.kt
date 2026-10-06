@@ -794,10 +794,10 @@ class MainActivity : AppCompatActivity() {
         saturationBoostSeekBar = findViewById(R.id.saturationBoostSeekBar)
         customSamplingSwitch = findViewById(R.id.customSamplingSwitch)
         findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
-            startActivity(Intent(this, SamplingEditorActivity::class.java))
+            startActivity(Intent(this, com.moonbench.bifrost.rp5.LedCalibrationActivity::class.java))
         }
         findViewById<MaterialButton>(R.id.editSamplingAreasButton).setOnClickListener {
-            startActivity(Intent(this, SamplingEditorActivity::class.java))
+            startActivity(Intent(this, FineTuneManagerActivity::class.java))
         }
         findViewById<MaterialButton>(R.id.fineTuneViewAreaButton).setOnClickListener {
             startActivity(Intent(this, FineTuneManagerActivity::class.java))
