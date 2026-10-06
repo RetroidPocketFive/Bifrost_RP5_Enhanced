@@ -8,23 +8,49 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+
 class FineTuneManagerActivity:AppCompatActivity(){
- private lateinit var store:FineTuneStore;private lateinit var list:LinearLayout
+ private lateinit var store:FineTuneStore
+ private lateinit var list:LinearLayout
  override fun onCreate(b:Bundle?){super.onCreate(b);store=FineTuneStore(this);setContentView(build());refresh()}
  override fun onResume(){super.onResume();if(::list.isInitialized)refresh()}
- private fun build()=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(24,24,24,24);setBackgroundColor(0xFF101010.toInt());
+ private fun build()=LinearLayout(this).apply{
+  orientation=LinearLayout.VERTICAL;setPadding(24,24,24,24);setBackgroundColor(0xFF101010.toInt())
   addView(TextView(this@FineTuneManagerActivity).apply{text="AMBIENT VIEWING PROFILES";textSize=22f;setTextColor(0xFFFFFFFF.toInt())})
-  addView(TextView(this@FineTuneManagerActivity).apply{text="Create reusable screen viewing profiles for Ambient screen matching. Fine Tune selects which profile Ambient uses when Heimdall is on.";setTextColor(0xFFCCCCCC.toInt());setPadding(0,8,0,16)})
-  addView(Button(this@FineTuneManagerActivity).apply{text="CREATE VIEWING PROFILE";setOnClickListener{openEditor(null)}})
+  addView(TextView(this@FineTuneManagerActivity).apply{text="Create reusable Sample Area profiles for Ambient screen matching. Fine Tune selects which Viewing Profile Ambient uses when Heimdall is on. Rainbow and other non-screen-matching animations do not need Fine Tune.";setTextColor(0xFFCCCCCC.toInt());setPadding(0,8,0,16)})
+  addView(Button(this@FineTuneManagerActivity).apply{text="CREATE SAMPLE AREA / VIEWING PROFILE";setOnClickListener{openEditor(null)}})
   addView(Button(this@FineTuneManagerActivity).apply{text="CALIBRATION / LED TEST";setOnClickListener{startActivity(Intent(this@FineTuneManagerActivity,LedCalibrationActivity::class.java))}})
-  list=LinearLayout(this@FineTuneManagerActivity).apply{orientation=LinearLayout.VERTICAL};addView(list,LinearLayout.LayoutParams(-1,0,1f))
+  list=LinearLayout(this@FineTuneManagerActivity).apply{orientation=LinearLayout.VERTICAL}
+  addView(list,LinearLayout.LayoutParams(-1,0,1f))
   addView(Button(this@FineTuneManagerActivity).apply{text="EXIT";setOnClickListener{finish()}})
  }
- private fun refresh(){list.removeAllViews();val ps=store.list();if(ps.isEmpty()){list.addView(TextView(this).apply{text="No viewing profiles saved yet.";gravity=Gravity.CENTER;setTextColor(0xFFCCCCCC.toInt());textSize=16f});return};ps.forEach{p->val row=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(12,12,12,12);setBackgroundColor(0xFF202020.toInt());addView(TextView(this@FineTuneManagerActivity).apply{text=p.name+"  •  "+mode(p.colourMode);setTextColor(0xFFFFFFFF.toInt());textSize=17f});val a=LinearLayout(this@FineTuneManagerActivity).apply{addView(btn("USE"){store.setCurrent(p.name);refresh()});addView(btn("PREVIEW"){startActivity(Intent(this@FineTuneManagerActivity,FineTunePreviewActivity::class.java).putExtra(FineTunePreviewActivity.EXTRA_PROFILE_NAME,p.name))});addView(btn("EDIT"){openEditor(p.name)});addView(btn("FINE TUNE / PROFILE"){bind(p)});addView(btn("DELETE"){confirmDelete(p.name)})};addView(a)};list.addView(row,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=8})}}
+ private fun refresh(){
+  list.removeAllViews();val ps=store.list()
+  if(ps.isEmpty()){list.addView(TextView(this).apply{text="No Ambient Viewing Profiles saved yet.";gravity=Gravity.CENTER;setTextColor(0xFFCCCCCC.toInt());textSize=16f});return}
+  ps.forEach{p->
+   val row=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL;setPadding(12,12,12,12);setBackgroundColor(0xFF202020.toInt())
+    addView(TextView(this@FineTuneManagerActivity).apply{text=p.name+"  •  "+mode(p.colourMode);setTextColor(0xFFFFFFFF.toInt());textSize=17f})
+    addView(TextView(this@FineTuneManagerActivity).apply{text="Sample Area saved for Ambient screen matching";setTextColor(0xFFAAAAAA.toInt());textSize=11f})
+    val a=LinearLayout(this@FineTuneManagerActivity).apply{
+     addView(btn("EDIT SAMPLE AREA"){openEditor(p.name)})
+     addView(btn("PREVIEW"){startActivity(Intent(this@FineTuneManagerActivity,FineTunePreviewActivity::class.java).putExtra(FineTunePreviewActivity.EXTRA_PROFILE_NAME,p.name))})
+     addView(btn("FINE TUNE — ASSIGN"){bind(p)})
+     addView(btn("DELETE"){confirmDelete(p.name)})
+    };addView(a)
+   };list.addView(row,LinearLayout.LayoutParams(-1,-2).apply{bottomMargin=8})
+  }
+ }
  private fun btn(s:String,a:()->Unit)=Button(this).apply{text=s;textSize=10f;setOnClickListener{a()};layoutParams=LinearLayout.LayoutParams(0,-2,1f)}
  private fun mode(m:ThumbstickColourMode)=when(m){ThumbstickColourMode.FIFTY_FIFTY->"50/50";ThumbstickColourMode.AVERAGE->"Average Colour";ThumbstickColourMode.CLOSE_MATCH->"Close Match Colour";ThumbstickColourMode.MOST_DOMINANT->"Most Dominant Colour";ThumbstickColourMode.DOMINANT_PRIME->"Dominant Prime Colour"}
  private fun openEditor(n:String?){startActivity(Intent(this,ThumbstickViewAreaEditorActivity::class.java).putExtra(ThumbstickViewAreaEditorActivity.EXTRA_PROFILE_NAME,n))}
  private fun loadPresetNames():List<String>{val raw=getSharedPreferences("bifrost_prefs",MODE_PRIVATE).getString("presets_json",null)?:return emptyList();return runCatching{val a=org.json.JSONArray(raw);buildList{for(i in 0 until a.length())a.optJSONObject(i)?.optString("name")?.takeIf{it.isNotBlank()}?.let(::add)}}.getOrDefault(emptyList())}
- private fun bind(p:FineTuneProfile){val names=loadPresetNames();if(names.isEmpty()){Toast.makeText(this,"No Bifrost profiles found",Toast.LENGTH_SHORT).show();return};val map=store.getProfileBindings().toMutableMap();val checks=names.map{map[it]?.equals(p.name,true)==true}.toBooleanArray();AlertDialog.Builder(this).setTitle("Fine Tune — Select Ambient Viewing Profile").setMessage("Select which Bifrost profiles should use this Viewing Profile for Ambient screen matching. Fine Tune is only used by Ambient; animations such as Rainbow do not require a Viewing Profile.").setMultiChoiceItems(names.toTypedArray(),checks){_,i,c->checks[i]=c}.setNegativeButton("CANCEL",null).setPositiveButton("SAVE"){_,_->names.forEachIndexed{i,n->if(checks[i])map[n]=p.name else if(map[n]?.equals(p.name,true)==true)map.remove(n)};names.forEach{store.setProfileBinding(it,map[it])};refresh()}.show()}
+ private fun bind(p:FineTuneProfile){
+  val names=loadPresetNames();if(names.isEmpty()){Toast.makeText(this,"No Bifrost profiles found",Toast.LENGTH_SHORT).show();return}
+  val map=store.getProfileBindings().toMutableMap();val checks=names.map{map[it]?.equals(p.name,true)==true}.toBooleanArray()
+  AlertDialog.Builder(this).setTitle("FINE TUNE — AMBIENT VIEWING PROFILE")
+   .setMessage("Fine Tune tells Ambient which saved Viewing Profile / Sample Area to use for screen-to-thumb-stick matching. This setting is only used when the selected Bifrost animation is Ambient with Heimdall screen monitoring enabled.")
+   .setMultiChoiceItems(names.toTypedArray(),checks){_,i,c->checks[i]=c}
+   .setNegativeButton("CANCEL",null).setPositiveButton("SAVE"){_,_->names.forEachIndexed{i,n->if(checks[i])map[n]=p.name else if(map[n]?.equals(p.name,true)==true)map.remove(n)};names.forEach{store.setProfileBinding(it,map[it])};refresh()}.show()
+ }
  private fun confirmDelete(n:String){AlertDialog.Builder(this).setTitle("Delete Viewing Profile?").setMessage(n).setNegativeButton("CANCEL",null).setPositiveButton("DELETE"){_,_->store.delete(n);refresh()}.show()}
 }
