@@ -1223,11 +1223,21 @@
                         android:textSize="12sp" 
                 android:contentDescription="Edit sampling areas"
                 android:tooltipText="Edit sampling areas" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/fineTuneViewAreaButton"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/bifrost_spacing_md"
+                        android:text="AMBIENT VIEWING PROFILES"
+                        android:textSize="12sp"
+                        android:contentDescription="Ambient Viewing Profiles"
+                        android:tooltipText="Create viewing profiles and select them for Ambient screen matching" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Position and resize the screen area each stick samples for Ambient / Ambi Aurora."
+                        android:text="Create reusable viewing areas for Ambient. Fine Tune selects which viewing profile Ambient uses when Heimdall is on."
                         android:textColor="@color/bifrost_text_secondary"
                         android:textSize="8sp" />
 
