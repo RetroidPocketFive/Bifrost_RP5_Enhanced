@@ -1,8 +1,10 @@
-# PATCH — PHASE 3: CALIBRATION / VIEWING PROFILE WORDING AND FUNCTION CLARIFICATION (2026-10-06)
-# Calibration is explicitly a hardware/function test. It does not create viewing profiles.
-# Viewing Profiles (Sample Area) define the reusable left/right screen regions and colour sampling method.
-# Fine Tune is the profile-level selection/binding that tells Ambient screen matching which Viewing Profile to use.
-# Non-screen-matching animations such as Rainbow do not require Fine Tune.
-# Calibration retains capture-display selection and LED brightness test (OFF/25/50/75/100).
-# Viewing Profile editor now presents colour mode as a dropdown and labels SAVE/RESET/EXIT around the viewing-area editor.
-# Protected V5 and approved Home Screen references remain untouched; this branch is TEST ONLY.
+# PATCH — PHASE 3: CALIBRATION / VIEWING PROFILE FUNCTIONAL TEST (2026-10-06)
+# Calibration is a hardware/function test only. It does not create or modify viewing profiles.
+# Calibration uses separate BLUE left and ORANGE right viewing areas and keeps both LED channels active during colour matching.
+# Calibration includes LED brightness test: OFF / 25% / 50% / 75% / 100%.
+# Sample Area / Viewing Profile creates reusable screen viewing areas using Live Capture or Still Capture.
+# Sample Area supports: 50/50, Average Colour, Close Match Colour, Most Dominant Colour, Dominant Prime Colour.
+# Fine Tune assigns a saved Viewing Profile to Bifrost profiles for Ambient screen matching with Heimdall.
+# Rainbow and other non-screen-matching animations do not require Fine Tune.
+# This branch is TEST ONLY. Protected V5 and approved Home Screen references remain untouched.
+
