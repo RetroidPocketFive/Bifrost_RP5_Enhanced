@@ -19,3 +19,13 @@
 # Fixed ThumbstickViewAreaEditorActivity spinner/preview initialization crash reported at runtime.
 # Fine Tune remains profile-level selection of a saved Sample Area for Ambient + Heimdall screen matching.
 # TEST ONLY. Protected V5 and approved Home Screen references remain untouched.
+
+# PATCH — CALIBRATION-ONLY TEST (2026-10-07)
+# Calibration rebuilt as three independent checks:
+# 1) Screen Colour Check — Live Game Screen / Still Image.
+# 2) LED Thumb Stick Check — independent left/right/both/off hardware tests.
+# 3) LED Brightness Check — OFF / 25% / 50% / 75% / 100%.
+# Calibration does not create Sample Area profiles and does not modify Fine Tune/profile bindings.
+# Screen capture temporarily hides the calibration UI while the display is sampled.
+# Brightness test uses explicit RGB scaling so the five levels are physically distinct.
+# TEST ONLY. Protected V5 and approved Home Screen references remain untouched.
