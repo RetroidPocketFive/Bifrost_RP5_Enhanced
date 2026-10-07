@@ -173,8 +173,14 @@ class LedCalibrationActivity : AppCompatActivity() {
             { frame -> screenPreview.setImageBitmap(frame) },
             { _, _ -> },
             brightness = { brightness },
-            beforeCapture = { screenPreview.alpha = 0f },
-            afterCapture = { screenPreview.alpha = 1f },
+            beforeCapture = {
+                window.decorView.alpha = 0f
+                supportActionBar?.hide()
+            },
+            afterCapture = {
+                window.decorView.alpha = 1f
+                supportActionBar?.show()
+            },
         )
     }
 
@@ -219,10 +225,19 @@ class LedCalibrationActivity : AppCompatActivity() {
             led.clear()
             return
         }
-        led.setLedColorDual(
-            leftBlue.red(), leftBlue.green(), leftBlue.blue(),
-            rightOrange.red(), rightOrange.green(), rightOrange.blue(),
-            brightness
+        val l = Color.rgb(
+            leftBlue.red() * percent / 100,
+            leftBlue.green() * percent / 100,
+            leftBlue.blue() * percent / 100
+        )
+        val r = Color.rgb(
+            rightOrange.red() * percent / 100,
+            rightOrange.green() * percent / 100,
+            rightOrange.blue() * percent / 100
+        )
+        led.setLedColorDualUncorrected(
+            l.red(), l.green(), l.blue(),
+            r.red(), r.green(), r.blue()
         )
     }
 
