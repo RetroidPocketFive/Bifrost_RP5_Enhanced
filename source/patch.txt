@@ -8,3 +8,14 @@
 # Rainbow and other non-screen-matching animations do not require Fine Tune.
 # This branch is TEST ONLY. Protected V5 and approved Home Screen references remain untouched.
 
+
+# PATCH — PHASE 3 FEEDBACK FIX (2026-10-07)
+# Calibration renamed/structured as COLOUR CHECK / LED TEST with explicit LIVE IMAGE and STILL IMAGE modes.
+# Calibration capture temporarily hides the Bifrost UI while taking a screen sample to prevent recursive self-capture.
+# Screen preview bitmaps are downscaled for stable RP5 rendering and the calibration canvas preserves image aspect ratio.
+# Sample Area / Ambient Viewing Profiles remain one workflow; the manager page wording now makes this relationship explicit.
+# Sample Area now asks for LIVE IMAGE or STILL IMAGE first, then opens the editor after OK.
+# Capture-source dialog now has OK and EXIT controls.
+# Fixed ThumbstickViewAreaEditorActivity spinner/preview initialization crash reported at runtime.
+# Fine Tune remains profile-level selection of a saved Sample Area for Ambient + Heimdall screen matching.
+# TEST ONLY. Protected V5 and approved Home Screen references remain untouched.
