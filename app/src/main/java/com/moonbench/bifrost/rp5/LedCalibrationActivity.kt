@@ -1,32 +1,22 @@
 package com.moonbench.bifrost.rp5
 
-import android.app.AlertDialog
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.button.MaterialButton
 import com.moonbench.bifrost.services.LEDService
 import com.moonbench.bifrost.tools.LedController
 
-/**
- * Calibration-only test page.
- *
- * Deliberately separated into three independent checks:
- * 1. Screen Colour Check
- * 2. LED Thumb Stick Check
- * 3. LED Brightness Check
- *
- * This activity does not create or modify viewing profiles and does not touch
- * Fine Tune/profile bindings.
- */
 class LedCalibrationActivity : AppCompatActivity() {
     private lateinit var screenPreview: ImageView
+    private lateinit var status: TextView
     private var preview: ThumbstickLivePreview? = null
     private val led by lazy { LedController(this) }
-    private var captureMode = 0 // 0 = live, 1 = still
     private var brightness = 255
     private var serviceWasRunning = false
 
@@ -49,17 +39,21 @@ class LedCalibrationActivity : AppCompatActivity() {
 
         root.addView(screenTitle("CALIBRATION"))
         root.addView(description("Check screen colour capture, thumb-stick LED operation and LED brightness."))
+        status = description("READY — select a test below.")
+        status.setTextColor(Color.rgb(242, 244, 255))
+        status.setPadding(0, 0, 0, 8)
+        root.addView(status)
 
         root.addView(sectionHeading("SCREEN COLOUR CHECK"))
-        root.addView(description("Check how Bifrost captures the game screen. Choose a live screen or a single still image."))
+        root.addView(description("Choose a live screen capture or a single still image for colour checking."))
 
-        root.addView(uiCard("LIVE GAME SCREEN", "Continuously capture the current game screen.") {
-            captureMode = 0
+        root.addView(testButton("LIVE GAME SCREEN", "Continuously capture the current game screen.") {
+            status.text = "LIVE SCREEN — starting capture…"
             startLiveScreenCheck()
         })
         root.addView(space(12))
-        root.addView(uiCard("STILL IMAGE", "Capture one fixed screen image for colour checking.") {
-            captureMode = 1
+        root.addView(testButton("STILL IMAGE", "Capture one fixed screen image for colour checking.") {
+            status.text = "STILL IMAGE — capturing…"
             startStillScreenCheck()
         })
 
@@ -74,18 +68,30 @@ class LedCalibrationActivity : AppCompatActivity() {
         })
 
         root.addView(sectionHeading("LED THUMB STICK CHECK"))
-        root.addView(description("Check the left and right thumb-stick LEDs independently, then together."))
+        root.addView(description("Test the left and right thumb-stick LEDs independently, together, or off."))
 
         val leftRight = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(uiCard("LEFT LED", "Test the left thumb-stick LED in blue.", { testLeft() }), weightParams())
-            addView(uiCard("RIGHT LED", "Test the right thumb-stick LED in orange.", { testRight() }), weightParams())
+            addView(testButton("LEFT LED", "Blue left channel.") {
+                status.text = "LEFT LED — blue"
+                testLeft()
+            }, LinearLayout.LayoutParams(0, 64, 1f).apply { marginEnd = 12 })
+            addView(testButton("RIGHT LED", "Orange right channel.") {
+                status.text = "RIGHT LED — orange"
+                testRight()
+            }, LinearLayout.LayoutParams(0, 64, 1f))
         }
         root.addView(leftRight)
         root.addView(space(12))
-        root.addView(uiCard("BOTH LEDs", "Test both thumb-stick LED channels together.", { testBoth() }))
+        root.addView(testButton("BOTH LEDs", "Blue left + orange right.") {
+            status.text = "BOTH LEDs — active"
+            testBoth()
+        })
         root.addView(space(12))
-        root.addView(uiCard("LED OFF", "Turn both thumb-stick LEDs off.", { allOff() }))
+        root.addView(testButton("LED OFF", "Turn both thumb-stick LEDs off.") {
+            status.text = "LEDs — off"
+            allOff()
+        })
 
         root.addView(sectionHeading("LED BRIGHTNESS CHECK"))
         root.addView(description("Check LED output at five fixed brightness levels."))
@@ -95,7 +101,10 @@ class LedCalibrationActivity : AppCompatActivity() {
             val values = listOf(0, 25, 50, 75, 100)
             values.forEachIndexed { index, value ->
                 addView(
-                    actionButton(if (value == 0) "OFF" else "$value%") { setBrightness(value) },
+                    actionButton(if (value == 0) "OFF" else "$value%") {
+                        status.text = "BRIGHTNESS — " + if (value == 0) "OFF" else "$value%"
+                        setBrightness(value)
+                    },
                     LinearLayout.LayoutParams(0, 52, 1f).apply {
                         if (index < values.lastIndex) marginEnd = 8
                     }
@@ -110,8 +119,10 @@ class LedCalibrationActivity : AppCompatActivity() {
         }, LinearLayout.LayoutParams(-1, 56))
 
         return ScrollView(this).apply {
+            isFillViewport = true
+            isClickable = false
             setBackgroundColor(Color.rgb(8, 12, 24))
-            addView(root)
+            addView(root, ScrollView.LayoutParams(-1, -2))
         }
     }
 
@@ -138,97 +149,91 @@ class LedCalibrationActivity : AppCompatActivity() {
         setPadding(0, 0, 0, 12)
     }
 
-    private fun uiCard(title: String, subtitle: String, action: () -> Unit): View {
-        val card = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(20, 14, 20, 14)
-            background = roundedBackground(Color.rgb(16, 22, 41), Color.rgb(104, 101, 242), 20f)
-            isClickable = true
-            isFocusable = true
-            setOnClickListener { action() }
-        }
-        card.addView(TextView(this).apply {
-            text = title
-            textSize = 16f
+    private fun testButton(title: String, subtitle: String, action: () -> Unit): MaterialButton =
+        MaterialButton(this).apply {
+            text = title + "\n" + subtitle
+            textSize = 14f
             setTextColor(Color.rgb(242, 244, 255))
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-        })
-        card.addView(TextView(this).apply {
-            text = subtitle
-            textSize = 13f
-            setTextColor(Color.rgb(137, 146, 173))
-            setPadding(0, 4, 0, 0)
-        })
-        return card.apply {
-            layoutParams = LinearLayout.LayoutParams(-1, 76)
-        }
-    }
-
-    private fun actionButton(text: String, action: () -> Unit): Button = Button(this).apply {
-        this.text = text
-        textSize = 15f
-        setTextColor(Color.rgb(242, 244, 255))
-        setTypeface(typeface, android.graphics.Typeface.BOLD)
-        isAllCaps = false
-        background = roundedBackground(Color.rgb(16, 22, 41), Color.rgb(104, 101, 242), 14f)
-        minHeight = 52
-        setPadding(20, 0, 20, 0)
-        setOnClickListener { action() }
-    }
-
-    private fun roundedBackground(fill: Int, stroke: Int, radius: Float): android.graphics.drawable.GradientDrawable =
-        android.graphics.drawable.GradientDrawable().apply {
-            setColor(fill)
-            setStroke(1, stroke)
-            cornerRadius = radius
+            isAllCaps = false
+            isEnabled = true
+            isClickable = true
+            isFocusable = true
+            gravity = Gravity.CENTER_VERTICAL or Gravity.START
+            insetTop = 0
+            insetBottom = 0
+            setPadding(20, 0, 20, 0)
+            cornerRadius = 20
+            strokeWidth = 1
+            strokeColor = ColorStateList.valueOf(Color.rgb(104, 101, 242))
+            backgroundTintList = ColorStateList.valueOf(Color.rgb(16, 22, 41))
+            minHeight = 64
+            setOnClickListener { action() }
         }
 
-    private fun weightParams() = LinearLayout.LayoutParams(0, 76, 1f).apply {
-        marginEnd = 12
-    }
+    private fun actionButton(text: String, action: () -> Unit): MaterialButton =
+        MaterialButton(this).apply {
+            this.text = text
+            textSize = 15f
+            setTextColor(Color.rgb(242, 244, 255))
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            isAllCaps = false
+            isEnabled = true
+            isClickable = true
+            isFocusable = true
+            cornerRadius = 14
+            strokeWidth = 1
+            strokeColor = ColorStateList.valueOf(Color.rgb(104, 101, 242))
+            backgroundTintList = ColorStateList.valueOf(Color.rgb(16, 22, 41))
+            minHeight = 52
+            setOnClickListener { action() }
+        }
 
     private fun space(height: Int): Space =
         Space(this).apply { layoutParams = LinearLayout.LayoutParams(1, height) }
 
     private fun startLiveScreenCheck() {
         stopScreenCheck()
-        captureMode = 0
         preview = makePreview()
-        preview?.preview(
-            NormalizedRegion(.25f, .50f, .30f),
-            NormalizedRegion(.75f, .50f, .30f),
-            ThumbstickColourMode.FIFTY_FIFTY
-        )
-        preview?.start()
+        runCatching {
+            preview?.preview(
+                NormalizedRegion(.25f, .50f, .30f),
+                NormalizedRegion(.75f, .50f, .30f),
+                ThumbstickColourMode.FIFTY_FIFTY
+            )
+            preview?.start()
+            status.text = "LIVE SCREEN — running"
+        }.onFailure {
+            status.text = "LIVE SCREEN — failed: " + (it.message ?: "unknown error")
+            stopScreenCheck()
+        }
     }
 
     private fun startStillScreenCheck() {
         stopScreenCheck()
-        captureMode = 1
         preview = makePreview()
-        preview?.preview(
-            NormalizedRegion(.25f, .50f, .30f),
-            NormalizedRegion(.75f, .50f, .30f),
-            ThumbstickColourMode.FIFTY_FIFTY
-        )
-        preview?.captureOnce()
+        runCatching {
+            preview?.preview(
+                NormalizedRegion(.25f, .50f, .30f),
+                NormalizedRegion(.75f, .50f, .30f),
+                ThumbstickColourMode.FIFTY_FIFTY
+            )
+            preview?.captureOnce()
+            status.text = "STILL IMAGE — captured"
+        }.onFailure {
+            status.text = "STILL IMAGE — failed: " + (it.message ?: "unknown error")
+            stopScreenCheck()
+        }
     }
 
     private fun makePreview(): ThumbstickLivePreview {
         return ThumbstickLivePreview(
             this,
-            { frame -> screenPreview.setImageBitmap(frame) },
+            { frame -> runOnUiThread { screenPreview.setImageBitmap(frame) } },
             { _, _ -> },
             brightness = { brightness },
-            beforeCapture = {
-                window.decorView.alpha = 0f
-                supportActionBar?.hide()
-            },
-            afterCapture = {
-                window.decorView.alpha = 1f
-                supportActionBar?.show()
-            },
+            beforeCapture = { },
+            afterCapture = { },
         )
     }
 
@@ -241,8 +246,7 @@ class LedCalibrationActivity : AppCompatActivity() {
     private fun testLeft() {
         led.setLedColorDualUncorrected(
             leftBlue.red(), leftBlue.green(), leftBlue.blue(),
-            0, 0, 0,
-            true, true, false, false
+            0, 0, 0, true, true, false, false
         )
     }
 
@@ -273,20 +277,9 @@ class LedCalibrationActivity : AppCompatActivity() {
             led.clear()
             return
         }
-        val l = Color.rgb(
-            leftBlue.red() * percent / 100,
-            leftBlue.green() * percent / 100,
-            leftBlue.blue() * percent / 100
-        )
-        val r = Color.rgb(
-            rightOrange.red() * percent / 100,
-            rightOrange.green() * percent / 100,
-            rightOrange.blue() * percent / 100
-        )
-        led.setLedColorDualUncorrected(
-            l.red(), l.green(), l.blue(),
-            r.red(), r.green(), r.blue()
-        )
+        val l = Color.rgb(leftBlue.red() * percent / 100, leftBlue.green() * percent / 100, leftBlue.blue() * percent / 100)
+        val r = Color.rgb(rightOrange.red() * percent / 100, rightOrange.green() * percent / 100, rightOrange.blue() * percent / 100)
+        led.setLedColorDualUncorrected(l.red(), l.green(), l.blue(), r.red(), r.green(), r.blue())
     }
 
     override fun onPause() {
@@ -304,9 +297,7 @@ class LedCalibrationActivity : AppCompatActivity() {
 
     private fun send(action: String) {
         if (!serviceWasRunning) return
-        runCatching {
-            startService(Intent(this, LEDService::class.java).setAction(action))
-        }
+        runCatching { startService(Intent(this, LEDService::class.java).setAction(action)) }
     }
 
     private fun Int.red() = Color.red(this)
