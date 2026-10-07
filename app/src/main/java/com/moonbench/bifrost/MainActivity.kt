@@ -93,6 +93,7 @@ import java.util.Locale
 import java.io.File
 import com.moonbench.bifrost.plugins.PluginLaunchManager
 import com.moonbench.bifrost.rp5.Rp5CalibrationActivity
+import com.moonbench.bifrost.rp5.FineTuneManagerActivity
 import com.moonbench.bifrost.plugins.PluginStoreActivity
 import com.moonbench.bifrost.schedule.ScheduleActivity
 
@@ -793,10 +794,13 @@ class MainActivity : AppCompatActivity() {
         saturationBoostSeekBar = findViewById(R.id.saturationBoostSeekBar)
         customSamplingSwitch = findViewById(R.id.customSamplingSwitch)
         findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
-            startActivity(Intent(this, SamplingEditorActivity::class.java))
+            startActivity(Intent(this, com.moonbench.bifrost.rp5.LedCalibrationActivity::class.java))
         }
         findViewById<MaterialButton>(R.id.editSamplingAreasButton).setOnClickListener {
-            startActivity(Intent(this, SamplingEditorActivity::class.java))
+            startActivity(Intent(this, FineTuneManagerActivity::class.java))
+        }
+        findViewById<MaterialButton>(R.id.fineTuneViewAreaButton).setOnClickListener {
+            startActivity(Intent(this, FineTuneManagerActivity::class.java))
         }
         singleColorSwitch = findViewById(R.id.singleColorSwitch)
         ambilightUseMediaProjectionSwitch = findViewById(R.id.ambilightUseMediaProjectionSwitch)
