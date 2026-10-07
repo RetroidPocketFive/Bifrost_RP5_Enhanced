@@ -122,14 +122,14 @@ class LedCalibrationActivity : AppCompatActivity() {
         textSize = 30f
         setTextColor(Color.WHITE)
         setTypeface(typeface, android.graphics.Typeface.BOLD)
-        setPadding(8, 18, 8, 8.dp)
+        setPadding(8, 18, 8, 8)
     }
 
     private fun description(text: String): TextView = TextView(this).apply {
         this.text = text
         textSize = 14f
         setTextColor(0xFFBDBDBD.toInt())
-        setPadding(8, 0, 8, 12.dp)
+        setPadding(8, 0, 8, 12)
     }
 
     private fun actionButton(text: String, action: () -> Unit): Button = Button(this).apply {
