@@ -43,105 +43,153 @@ class LedCalibrationActivity : AppCompatActivity() {
     private fun buildPage(): ScrollView {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(20, 12, 20, 24)
-            setBackgroundColor(Color.BLACK)
+            setPadding(24, 20, 24, 24)
+            setBackgroundColor(Color.rgb(8, 12, 24))
         }
 
-        root.addView(heading("Screen Colour Check"))
-        root.addView(description("Check that Bifrost can capture the game screen correctly. Choose a live game screen or a single still image."))
+        root.addView(screenTitle("CALIBRATION"))
+        root.addView(description("Check screen colour capture, thumb-stick LED operation and LED brightness."))
 
-        val captureButtons = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            addView(actionButton("LIVE GAME SCREEN") {
-                captureMode = 0
-                startLiveScreenCheck()
-            }, LinearLayout.LayoutParams(0, 58, 1f).apply { rightMargin = 8 })
-            addView(actionButton("STILL IMAGE") {
-                captureMode = 1
-                startStillScreenCheck()
-            }, LinearLayout.LayoutParams(0, 58, 1f))
-        }
-        root.addView(captureButtons)
+        root.addView(sectionHeading("SCREEN COLOUR CHECK"))
+        root.addView(description("Check how Bifrost captures the game screen. Choose a live screen or a single still image."))
+
+        root.addView(uiCard("LIVE GAME SCREEN", "Continuously capture the current game screen.") {
+            captureMode = 0
+            startLiveScreenCheck()
+        })
+        root.addView(space(12))
+        root.addView(uiCard("STILL IMAGE", "Capture one fixed screen image for colour checking.") {
+            captureMode = 1
+            startStillScreenCheck()
+        })
 
         screenPreview = ImageView(this).apply {
-            setBackgroundColor(0xFF151515.toInt())
+            setBackgroundColor(Color.rgb(21, 29, 51))
             scaleType = ImageView.ScaleType.FIT_CENTER
             contentDescription = "Captured game screen preview"
         }
         root.addView(screenPreview, LinearLayout.LayoutParams(-1, 230).apply {
-            topMargin = 10
-            bottomMargin = 18
+            topMargin = 16
+            bottomMargin = 24
         })
 
-        root.addView(heading("LED Thumb Stick Check"))
-        root.addView(description("Check the two thumb-stick LEDs independently. BLUE tests the left stick and ORANGE tests the right stick. BOTH checks both sides together."))
+        root.addView(sectionHeading("LED THUMB STICK CHECK"))
+        root.addView(description("Check the left and right thumb-stick LEDs independently, then together."))
 
-        val ledRow1 = LinearLayout(this).apply {
+        val leftRight = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            addView(actionButton("LEFT — BLUE") { testLeft() }, weightParams())
-            addView(actionButton("RIGHT — ORANGE") { testRight() }, weightParams())
+            addView(uiCard("LEFT LED", "Test the left thumb-stick LED in blue.", { testLeft() }), weightParams())
+            addView(uiCard("RIGHT LED", "Test the right thumb-stick LED in orange.", { testRight() }), weightParams())
         }
-        val ledRow2 = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            addView(actionButton("BOTH — LEFT / RIGHT") { testBoth() }, weightParams())
-            addView(actionButton("LED OFF") { allOff() }, weightParams())
-        }
-        root.addView(ledRow1)
-        root.addView(ledRow2)
+        root.addView(leftRight)
+        root.addView(space(12))
+        root.addView(uiCard("BOTH LEDs", "Test both thumb-stick LED channels together.", { testBoth() }))
+        root.addView(space(12))
+        root.addView(uiCard("LED OFF", "Turn both thumb-stick LEDs off.", { allOff() }))
 
-        root.addView(heading("LED Brightness Check"))
-        root.addView(description("Check LED output at five fixed brightness levels. These controls affect both thumb sticks."))
+        root.addView(sectionHeading("LED BRIGHTNESS CHECK"))
+        root.addView(description("Check LED output at five fixed brightness levels."))
 
         val brightnessRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             val values = listOf(0, 25, 50, 75, 100)
-            values.forEach { value ->
-                addView(actionButton(if (value == 0) "OFF" else "LED $value%") {
-                    setBrightness(value)
-                }, LinearLayout.LayoutParams(0, 62, 1f).apply {
-                    marginEnd = 4
-                })
+            values.forEachIndexed { index, value ->
+                addView(
+                    actionButton(if (value == 0) "OFF" else "$value%") { setBrightness(value) },
+                    LinearLayout.LayoutParams(0, 52, 1f).apply {
+                        if (index < values.lastIndex) marginEnd = 8
+                    }
+                )
             }
         }
         root.addView(brightnessRow)
 
-        root.addView(Space(this), LinearLayout.LayoutParams(1, 18))
+        root.addView(space(32))
         root.addView(actionButton("EXIT / RESTORE NORMAL LED CONTROL") {
             finish()
-        }, LinearLayout.LayoutParams(-1, 58))
+        }, LinearLayout.LayoutParams(-1, 56))
 
         return ScrollView(this).apply {
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(Color.rgb(8, 12, 24))
             addView(root)
         }
     }
 
-    private fun heading(text: String): TextView = TextView(this).apply {
+    private fun screenTitle(text: String): TextView = TextView(this).apply {
         this.text = text
-        textSize = 30f
-        setTextColor(Color.WHITE)
+        textSize = 28f
+        setTextColor(Color.rgb(242, 244, 255))
         setTypeface(typeface, android.graphics.Typeface.BOLD)
-        setPadding(8, 18, 8, 8)
+        setPadding(0, 0, 0, 8)
+    }
+
+    private fun sectionHeading(text: String): TextView = TextView(this).apply {
+        this.text = text
+        textSize = 18f
+        setTextColor(Color.rgb(242, 244, 255))
+        setTypeface(typeface, android.graphics.Typeface.BOLD)
+        setPadding(0, 24, 0, 8)
     }
 
     private fun description(text: String): TextView = TextView(this).apply {
         this.text = text
-        textSize = 14f
-        setTextColor(0xFFBDBDBD.toInt())
-        setPadding(8, 0, 8, 12)
+        textSize = 13f
+        setTextColor(Color.rgb(137, 146, 173))
+        setPadding(0, 0, 0, 12)
+    }
+
+    private fun uiCard(title: String, subtitle: String, action: () -> Unit): View {
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(20, 14, 20, 14)
+            background = roundedBackground(Color.rgb(16, 22, 41), Color.rgb(104, 101, 242), 20f)
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { action() }
+        }
+        card.addView(TextView(this).apply {
+            text = title
+            textSize = 16f
+            setTextColor(Color.rgb(242, 244, 255))
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        })
+        card.addView(TextView(this).apply {
+            text = subtitle
+            textSize = 13f
+            setTextColor(Color.rgb(137, 146, 173))
+            setPadding(0, 4, 0, 0)
+        })
+        return card.apply {
+            layoutParams = LinearLayout.LayoutParams(-1, 76)
+        }
     }
 
     private fun actionButton(text: String, action: () -> Unit): Button = Button(this).apply {
         this.text = text
-        textSize = 13f
-        setOnClickListener { action() }
+        textSize = 15f
+        setTextColor(Color.rgb(242, 244, 255))
+        setTypeface(typeface, android.graphics.Typeface.BOLD)
         isAllCaps = false
+        background = roundedBackground(Color.rgb(16, 22, 41), Color.rgb(104, 101, 242), 14f)
+        minHeight = 52
+        setPadding(20, 0, 20, 0)
+        setOnClickListener { action() }
     }
 
-    private fun weightParams() = LinearLayout.LayoutParams(0, 58, 1f).apply {
-        marginEnd = 8
+    private fun roundedBackground(fill: Int, stroke: Int, radius: Float): android.graphics.drawable.GradientDrawable =
+        android.graphics.drawable.GradientDrawable().apply {
+            setColor(fill)
+            setStroke(1, stroke)
+            cornerRadius = radius
+        }
+
+    private fun weightParams() = LinearLayout.LayoutParams(0, 76, 1f).apply {
+        marginEnd = 12
     }
+
+    private fun space(height: Int): Space =
+        Space(this).apply { layoutParams = LinearLayout.LayoutParams(1, height) }
 
     private fun startLiveScreenCheck() {
         stopScreenCheck()
