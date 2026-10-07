@@ -56,11 +56,11 @@ class LedCalibrationActivity : AppCompatActivity() {
             addView(actionButton("LIVE GAME SCREEN") {
                 captureMode = 0
                 startLiveScreenCheck()
-            }, LinearLayout.LayoutParams(0, 58.dp(), 1f).apply { rightMargin = 8.dp() })
+            }, LinearLayout.LayoutParams(0, dp(58), 1f).apply { rightMargin = dp(8) })
             addView(actionButton("STILL IMAGE") {
                 captureMode = 1
                 startStillScreenCheck()
-            }, LinearLayout.LayoutParams(0, 58.dp(), 1f))
+            }, LinearLayout.LayoutParams(0, dp(58), 1f))
         }
         root.addView(captureButtons)
 
@@ -69,9 +69,9 @@ class LedCalibrationActivity : AppCompatActivity() {
             scaleType = ImageView.ScaleType.FIT_CENTER
             contentDescription = "Captured game screen preview"
         }
-        root.addView(screenPreview, LinearLayout.LayoutParams(-1, 230.dp()).apply {
-            topMargin = 10.dp()
-            bottomMargin = 18.dp()
+        root.addView(screenPreview, LinearLayout.LayoutParams(-1, dp(230)).apply {
+            topMargin = dp(10)
+            bottomMargin = dp(18)
         })
 
         root.addView(heading("LED Thumb Stick Check"))
@@ -99,17 +99,17 @@ class LedCalibrationActivity : AppCompatActivity() {
             values.forEach { value ->
                 addView(actionButton(if (value == 0) "OFF" else "LED $value%") {
                     setBrightness(value)
-                }, LinearLayout.LayoutParams(0, 62.dp(), 1f).apply {
-                    marginEnd = 4.dp()
+                }, LinearLayout.LayoutParams(0, dp(62), 1f).apply {
+                    marginEnd = dp(4)
                 })
             }
         }
         root.addView(brightnessRow)
 
-        root.addView(Space(this), LinearLayout.LayoutParams(1, 18.dp()))
+        root.addView(Space(this), LinearLayout.LayoutParams(1, dp(18)))
         root.addView(actionButton("EXIT / RESTORE NORMAL LED CONTROL") {
             finish()
-        }, LinearLayout.LayoutParams(-1, 58.dp()))
+        }, LinearLayout.LayoutParams(-1, dp(58)))
 
         return ScrollView(this).apply {
             setBackgroundColor(Color.BLACK)
@@ -122,14 +122,14 @@ class LedCalibrationActivity : AppCompatActivity() {
         textSize = 30f
         setTextColor(Color.WHITE)
         setTypeface(typeface, android.graphics.Typeface.BOLD)
-        setPadding(8.dp(), 18.dp(), 8.dp(), 8.dp)
+        setPadding(dp(8), dp(18), dp(8), 8.dp)
     }
 
     private fun description(text: String): TextView = TextView(this).apply {
         this.text = text
         textSize = 14f
         setTextColor(0xFFBDBDBD.toInt())
-        setPadding(8.dp(), 0, 8.dp(), 12.dp)
+        setPadding(dp(8), 0, dp(8), 12.dp)
     }
 
     private fun actionButton(text: String, action: () -> Unit): Button = Button(this).apply {
@@ -139,8 +139,8 @@ class LedCalibrationActivity : AppCompatActivity() {
         isAllCaps = false
     }
 
-    private fun weightParams() = LinearLayout.LayoutParams(0, 58.dp(), 1f).apply {
-        marginEnd = 8.dp()
+    private fun weightParams() = LinearLayout.LayoutParams(0, dp(58), 1f).apply {
+        marginEnd = dp(8)
     }
 
     private fun startLiveScreenCheck() {
@@ -261,7 +261,7 @@ class LedCalibrationActivity : AppCompatActivity() {
         }
     }
 
-    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
     private fun Int.red() = Color.red(this)
     private fun Int.green() = Color.green(this)
     private fun Int.blue() = Color.blue(this)
