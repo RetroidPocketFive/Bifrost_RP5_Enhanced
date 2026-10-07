@@ -122,7 +122,7 @@ class LedCalibrationActivity : AppCompatActivity() {
             isFillViewport = true
             isClickable = false
             setBackgroundColor(Color.rgb(8, 12, 24))
-            addView(root, ScrollView.LayoutParams(-1, -2))
+            addView(root, android.widget.FrameLayout.LayoutParams(-1, -2))
         }
     }
 
