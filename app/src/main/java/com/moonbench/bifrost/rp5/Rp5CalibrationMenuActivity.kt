@@ -20,6 +20,7 @@ import com.moonbench.bifrost.MainActivity
  * This screen is intentionally only a menu. The existing calibration activity is
  * left untouched so each option can be reviewed and improved independently later.
  */
+// V5.1 home-screen baseline + menu-only calibration test.
 class Rp5CalibrationMenuActivity : AppCompatActivity() {
 
     private val bg = Color.rgb(8, 12, 24)
