@@ -97,10 +97,10 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         content.addView(menuCard(
             "▣", "SCREEN COLOUR CHECK",
             "Choose the game-screen source used by the original calibration.",
-            listOf("LIVE GAME SCREEN", "STILL IMAGE")
-        ) {
-            // Keep original live-capture and still-image flow, sampler and thumb-stick regions.
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+            listOf("LIVE IMAGE", "STILL IMAGE")
+        ) { which ->
+            val source = if (which == 0) Rp5CalibrationActivity.SOURCE_LIVE else Rp5CalibrationActivity.SOURCE_STILL
+            startActivity(Intent(this, Rp5CalibrationActivity::class.java).putExtra(Rp5CalibrationActivity.EXTRA_SOURCE_MODE, source))
         })
         content.addView(menuCard(
             "●", "LED THUMB-STICK COLOUR MATCH",
@@ -108,7 +108,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             listOf("OPEN CALIBRATION")
         ) {
             // Reuse original V5.1 implementation; do not replace its calibration logic.
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+            startActivity(Intent(this, com.moonbench.bifrost.SamplingEditorActivity::class.java))
         })
         content.addView(menuCard(
             "☼", "LED BRIGHTNESS TEST",
