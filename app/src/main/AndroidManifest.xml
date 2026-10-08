@@ -57,6 +57,89 @@
              declared or R8 (minifyEnabled) renames the class and startActivity
              fails with ActivityNotFoundException, crashing app launch. -->
         <activity
+            android:name=".rp5.Rp5CalibrationMenuActivity"
+            android:exported="false"
+            android:label="RP5 Calibration" />
+
+        <activity
+            android:name=".rp5.Rp5CalibrationActivity"
+            android:exported="false"
+            android:label="RP5 Screen Color Match" />
+
+        <activity
+            android:name=".rp5.Rp5CaptureDisplaySelectionActivity"
+            android:exported="false"
+            android:label="Capture-display Selection" />
+
+        <activity
+            android:name=".rp5.Rp5LedColorMatchActivity"
+            android:exported="false"
+            android:label="LED Color Match" />
+
+        <activity
+            android:name=".rp5.Rp5LedBrightnessActivity"
+            android:exported="false"
+            android:label="LED Brightness" />
+
+" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <!-- Keep the LED pipeline warm while a PIPBOY override is active so the
+         first action after idle isn't delayed by CPU power-down. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    <!-- Plugin store: fetch the catalogue + download bundles. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <permission
+        android:name="${applicationId}.permission.CONTROL_LEDS"
+        android:label="@string/perm_control_leds_label"
+        android:description="@string/perm_control_leds_desc"
+        android:protectionLevel="normal" />
+
+    <uses-permission android:name="${applicationId}.permission.CONTROL_LEDS" />
+
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".BifrostApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:theme="@style/Theme.Bifrost">
+        <activity
+            android:name=".MainActivity"
+            android:launchMode="singleTop"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- First-run guide launched from MainActivity.onCreate. Must be
+             declared or R8 (minifyEnabled) renames the class and startActivity
+             fails with ActivityNotFoundException, crashing app launch. -->
+        <activity
             android:name=".rp5.Rp5CalibrationActivity"
             android:exported="false"
             android:label="RP5 Live Calibration" />
