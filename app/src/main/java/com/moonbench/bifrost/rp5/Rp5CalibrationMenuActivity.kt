@@ -26,7 +26,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
     private val bg = Color.rgb(8, 12, 24)
     private val panel = Color.rgb(16, 22, 41)
     private val accent = Color.rgb(104, 101, 242)
-    private val text = Color.rgb(242, 244, 255)
+    private val primaryTextColor = Color.rgb(242, 244, 255)
     private val secondary = Color.rgb(145, 154, 190)
 
     override fun onCreate(state: Bundle?) {
@@ -57,7 +57,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         val back = MaterialButton(this).apply {
             text = "‹"
             textSize = 34f
-            setTextColor(text)
+            setTextColor(primaryTextColor)
             minWidth = dp(58)
             minHeight = dp(52)
             insetTop = 0
