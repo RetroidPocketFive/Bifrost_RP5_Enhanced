@@ -3,7 +3,9 @@ package com.moonbench.bifrost.rp5
 enum class SamplingMethod {
     AVERAGE,
     CENTER_WEIGHTED,
-    DOMINANT
+    DOMINANT,
+    EDGE_REJECTED_WEIGHTED,
+    BUCKET
 }
 
 data class SampledColors(val left: Int, val right: Int)
@@ -42,6 +44,16 @@ class ColorSampler(
             SamplingMethod.AVERAGE -> average(pixels, width, x0, x1, y0, y1)
             SamplingMethod.CENTER_WEIGHTED -> weighted(pixels, width, x0, x1, y0, y1)
             SamplingMethod.DOMINANT -> dominant(pixels, width, x0, x1, y0, y1)
+            SamplingMethod.EDGE_REJECTED_WEIGHTED -> {
+                val dx = if (x1 - x0 > 2) kotlin.math.ceil((x1 - x0) * 0.15f).toInt() else 0
+                val dy = if (y1 - y0 > 2) kotlin.math.ceil((y1 - y0) * 0.15f).toInt() else 0
+                val ex0 = (x0 + dx).coerceAtMost(x1 - 1)
+                val ex1 = (x1 - dx).coerceAtLeast(ex0 + 1)
+                val ey0 = (y0 + dy).coerceAtMost(y1 - 1)
+                val ey1 = (y1 - dy).coerceAtLeast(ey0 + 1)
+                weighted(pixels, width, ex0, ex1, ey0, ey1)
+            }
+            SamplingMethod.BUCKET -> bucket(pixels, width, x0, x1, y0, y1)
         }
     }
 
@@ -67,6 +79,40 @@ class ColorSampler(
         }
         return (r / total).toInt().coerceIn(0,255) shl 16 or
             ((g / total).toInt().coerceIn(0,255) shl 8) or (b / total).toInt().coerceIn(0,255)
+    }
+
+    /**
+     * Divides the region into a 3x3 grid, averages each non-empty bucket, then
+     * averages those bucket colours equally. This prevents a dense/high-detail
+     * corner from dominating a region merely because it contains more pixels.
+     */
+    private fun bucket(p: IntArray, w: Int, x0: Int, x1: Int, y0: Int, y1: Int): Int {
+        var r = 0L; var g = 0L; var b = 0L; var buckets = 0
+        for (by in 0 until 3) {
+            val sy = y0 + ((y1 - y0) * by) / 3
+            val ey = y0 + ((y1 - y0) * (by + 1)) / 3
+            if (ey <= sy) continue
+            for (bx in 0 until 3) {
+                val sx = x0 + ((x1 - x0) * bx) / 3
+                val ex = x0 + ((x1 - x0) * (bx + 1)) / 3
+                if (ex <= sx) continue
+                var br = 0L; var bg = 0L; var bb = 0L; var n = 0L
+                for (y in sy until ey) for (x in sx until ex) {
+                    val c = p[y * w + x]
+                    br += c shr 16 and 0xFF
+                    bg += c shr 8 and 0xFF
+                    bb += c and 0xFF
+                    n++
+                }
+                if (n > 0) {
+                    r += br / n; g += bg / n; b += bb / n; buckets++
+                }
+            }
+        }
+        if (buckets == 0) return 0
+        return ((r / buckets).toInt().coerceIn(0, 255) shl 16) or
+            ((g / buckets).toInt().coerceIn(0, 255) shl 8) or
+            (b / buckets).toInt().coerceIn(0, 255)
     }
 
     private fun dominant(p: IntArray, w: Int, x0: Int, x1: Int, y0: Int, y1: Int): Int {

@@ -57,9 +57,29 @@
              declared or R8 (minifyEnabled) renames the class and startActivity
              fails with ActivityNotFoundException, crashing app launch. -->
         <activity
+            android:name=".rp5.Rp5CalibrationMenuActivity"
+            android:exported="false"
+            android:label="RP5 Calibration" />
+
+        <activity
             android:name=".rp5.Rp5CalibrationActivity"
             android:exported="false"
-            android:label="RP5 Live Calibration" />
+            android:label="RP5 Screen Color Match" />
+
+        <activity
+            android:name=".rp5.Rp5CaptureDisplaySelectionActivity"
+            android:exported="false"
+            android:label="Capture-display Selection" />
+
+        <activity
+            android:name=".rp5.Rp5LedColorMatchActivity"
+            android:exported="false"
+            android:label="LED Color Match" />
+
+        <activity
+            android:name=".rp5.Rp5LedBrightnessActivity"
+            android:exported="false"
+            android:label="LED Brightness" />
 
         <activity
             android:name=".SamplingEditorActivity"
