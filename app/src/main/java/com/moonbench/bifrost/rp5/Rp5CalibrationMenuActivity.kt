@@ -7,239 +7,189 @@ import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
-import kotlin.math.roundToInt
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
-import com.moonbench.bifrost.MainActivity
+import kotlin.math.roundToInt
 
-/**
- * Calibration menu test built directly on the approved V5.1 home-screen baseline.
- *
- * This screen is intentionally only a menu. The existing calibration activity is
- * left untouched so each option can be reviewed and improved independently later.
- */
-// V5.1 home-screen baseline + menu-only calibration test.
+/** V5.1 baseline calibration menu. Existing calibration engine is intentionally reused. */
 class Rp5CalibrationMenuActivity : AppCompatActivity() {
-
     private val bg = Color.rgb(8, 12, 24)
     private val panel = Color.rgb(16, 22, 41)
     private val accent = Color.rgb(104, 101, 242)
-    private val primaryTextColor = Color.rgb(242, 244, 255)
+    private val primary = Color.rgb(242, 244, 255)
     private val secondary = Color.rgb(145, 154, 190)
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
-
         window.statusBarColor = bg
         window.navigationBarColor = bg
 
-        val root = LinearLayout(this).apply {
+        val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(bg)
-            setPadding(dp(18), dp(12), dp(18), dp(18))
+            setPadding(dp(12), dp(10), dp(12), dp(12))
+        }
+        val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, 0, 0, dp(8))
         }
 
         val header = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
+            radius = dp(16).toFloat()
             setCardBackgroundColor(panel)
             strokeWidth = dp(1)
             strokeColor = accent
-            setContentPadding(dp(12), dp(10), dp(18), dp(10))
+            setContentPadding(dp(10), dp(8), dp(12), dp(8))
         }
-
         val headerRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-
         val back = MaterialButton(this).apply {
             text = "‹"
-            textSize = 34f
-            setTextColor(primaryTextColor)
-            minWidth = dp(58)
-            minHeight = dp(52)
-            insetTop = 0
-            insetBottom = 0
-            setOnClickListener { finish() }
-            background = roundedDrawable(Color.TRANSPARENT, accent, 18)
-            contentDescription = "Back"
-        }
-        headerRow.addView(back, LinearLayout.LayoutParams(dp(62), dp(56)))
-
-        val brand = TextView(this).apply {
-            this.text = "◉  BIFROST"
-            textSize = 20f
-            setTextColor(primaryTextColor)
-            gravity = Gravity.CENTER_VERTICAL
-            letterSpacing = 0.18f
-            setPadding(dp(14), 0, dp(18), 0)
-        }
-        headerRow.addView(brand, LinearLayout.LayoutParams(dp(205), dp(56)))
-
-        val divider = View(this).apply { setBackgroundColor(accent) }
-        headerRow.addView(divider, LinearLayout.LayoutParams(dp(1), dp(38)))
-
-        val titleBox = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), 0, 0, 0)
-        }
-        titleBox.addView(TextView(this).apply {
-            text = "Calibration"
             textSize = 28f
-            setTextColor(primaryTextColor)
+            setTextColor(primary)
+            minWidth = dp(48); minHeight = dp(48)
+            insetTop = 0; insetBottom = 0
+            cornerRadius = dp(12)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(bg)
+            strokeWidth = dp(1)
+            strokeColor = android.content.res.ColorStateList.valueOf(accent)
+            contentDescription = "Back"
+            setOnClickListener { finish() }
+        }
+        headerRow.addView(back, LinearLayout.LayoutParams(dp(52), dp(48)))
+        val brand = TextView(this).apply {
+            text = "◉  BIFROST"
+            textSize = 16f
+            setTextColor(primary)
+            letterSpacing = .12f
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(10), 0, dp(10), 0)
+        }
+        headerRow.addView(brand, LinearLayout.LayoutParams(dp(150), dp(48)))
+        headerRow.addView(View(this).apply { setBackgroundColor(accent) }, LinearLayout.LayoutParams(dp(1), dp(34)))
+        val heading = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(12), 0, 0, 0)
+        }
+        heading.addView(TextView(this).apply {
+            text = "Calibration"
+            textSize = 22f
+            maxLines = 1
+            setTextColor(primary)
         })
-        titleBox.addView(TextView(this).apply {
+        heading.addView(TextView(this).apply {
             text = "Adjust your device for the best visual performance."
-            textSize = 13f
+            textSize = 12f
+            maxLines = 2
             setTextColor(secondary)
         })
-        headerRow.addView(titleBox, LinearLayout.LayoutParams(0, dp(56), 1f))
+        headerRow.addView(heading, LinearLayout.LayoutParams(0, dp(48), 1f))
         header.addView(headerRow)
+        content.addView(header, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
 
-        root.addView(header, LinearLayout.LayoutParams(-1, dp(100)).apply {
-            bottomMargin = dp(22)
-        })
-
-        root.addView(card(
-            "▣",
-            "SCREEN COLOUR CHECK",
-            "Choose how to get the game screen used for calibration.",
-            "LIVE GAME SCREEN waits 5 seconds, then captures the game.",
-            "STILL IMAGE lets you choose a screenshot.",
+        content.addView(menuCard(
+            "▣", "SCREEN COLOUR CHECK",
+            "Choose the game-screen source used by the original calibration.",
             listOf("LIVE GAME SCREEN", "STILL IMAGE")
-        ) { which ->
-            // The existing V5.1 calibration screen remains the implementation.
-            // The two source choices are deliberately not changed yet.
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
-        })
-
-        root.addView(card(
-            "💡",
-            "LED COLOUR MATCH",
-            "Matches the LED colours to the game screen for accurate colour reproduction.",
-            "",
-            "",
-            listOf("START")
         ) {
-            // Placeholder for the next reviewed implementation.
+            // Keep original live-capture and still-image flow, sampler and thumb-stick regions.
             startActivity(Intent(this, Rp5CalibrationActivity::class.java))
         })
-
-        root.addView(card(
-            "☼",
-            "LED BRIGHTNESS TEST",
-            "Checks the LED brightness levels and uniformity.",
-            "Adjust if needed for even lighting.",
-            "",
-            listOf("START")
+        content.addView(menuCard(
+            "●", "LED THUMB-STICK COLOUR MATCH",
+            "Uses the original left/right thumb-stick colour sampling and LED test.",
+            listOf("OPEN CALIBRATION")
         ) {
-            // Placeholder for the next reviewed implementation.
+            // Reuse original V5.1 implementation; do not replace its calibration logic.
             startActivity(Intent(this, Rp5CalibrationActivity::class.java))
         })
-
-        setContentView(root)
+        content.addView(menuCard(
+            "☼", "LED BRIGHTNESS TEST",
+            "Brightness testing will be refined separately after this menu is approved.",
+            listOf("NOT CONFIGURED")
+        ) { })
+        scroll.addView(content)
+        page.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        setContentView(page)
     }
 
-    private fun card(
-        icon: String,
-        title: String,
-        description: String,
-        line2: String,
-        line3: String,
-        actions: List<String>,
-        onAction: (Int) -> Unit
-    ): View {
+    private fun menuCard(icon: String, title: String, description: String, actions: List<String>, onAction: (Int) -> Unit): View {
         val card = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
+            radius = dp(16).toFloat()
             setCardBackgroundColor(panel)
             strokeWidth = dp(1)
             strokeColor = accent
-            setContentPadding(dp(32), dp(24), dp(24), dp(24))
+            setContentPadding(dp(14), dp(12), dp(14), dp(12))
         }
-
-        val row = LinearLayout(this).apply {
+        val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val top = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-
-        val iconBox = TextView(this).apply {
-            this.text = icon
-            textSize = 28f
+        val iconView = TextView(this).apply {
+            text = icon
+            textSize = 25f
             gravity = Gravity.CENTER
             setTextColor(accent)
-            background = roundedDrawable(Color.TRANSPARENT, accent, 14)
+            background = rounded(Color.TRANSPARENT, accent, 12)
         }
-        row.addView(iconBox, LinearLayout.LayoutParams(dp(92), dp(90)))
-
-        val textBox = LinearLayout(this).apply {
+        top.addView(iconView, LinearLayout.LayoutParams(dp(54), dp(54)))
+        val copy = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(28), 0, dp(18), 0)
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(12), 0, 0, 0)
         }
-        textBox.addView(TextView(this).apply {
+        copy.addView(TextView(this).apply {
             text = title
-            textSize = 19f
-            setTextColor(primaryTextColor)
+            textSize = 15f
+            maxLines = 2
+            setTextColor(primary)
         })
-        if (description.isNotEmpty()) textBox.addView(TextView(this).apply {
+        copy.addView(TextView(this).apply {
             text = description
-            textSize = 14f
-            setTextColor(secondary)
-            setPadding(0, dp(8), 0, 0)
-        })
-        if (line2.isNotEmpty()) textBox.addView(TextView(this).apply {
-            text = line2
-            textSize = 14f
+            textSize = 12f
             setTextColor(secondary)
             setPadding(0, dp(4), 0, 0)
         })
-        if (line3.isNotEmpty()) textBox.addView(TextView(this).apply {
-            text = line3
-            textSize = 14f
-            setTextColor(secondary)
-            setPadding(0, dp(4), 0, 0)
-        })
-        row.addView(textBox, LinearLayout.LayoutParams(0, -2, 1f))
-
-        val actionBox = LinearLayout(this).apply {
+        top.addView(copy, LinearLayout.LayoutParams(0, -2, 1f))
+        column.addView(top)
+        val actionsRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(66), dp(10), 0, 0)
         }
         actions.forEachIndexed { index, label ->
             val b = MaterialButton(this).apply {
                 text = label
-                textSize = 14f
-                setTextColor(primaryTextColor)
-                minHeight = dp(56)
-                insetTop = 0
-                insetBottom = 0
-                cornerRadius = dp(28)
-                backgroundTintList = android.content.res.ColorStateList.valueOf(if (index == 0) accent else Color.TRANSPARENT)
-                strokeWidth = if (index == 0) 0 else dp(1)
-                strokeColor = android.content.res.ColorStateList.valueOf(accent)
-                setOnClickListener { onAction(index) }
+                textSize = 12f
+                maxLines = 1
+                minHeight = dp(48)
+                insetTop = 0; insetBottom = 0
+                cornerRadius = dp(24)
+                setTextColor(primary)
+                backgroundTintList = android.content.res.ColorStateList.valueOf(if (label == "NOT CONFIGURED") Color.rgb(45, 49, 75) else accent)
+                setOnClickListener { if (label != "NOT CONFIGURED") onAction(index) }
             }
-            actionBox.addView(b, LinearLayout.LayoutParams(dp(if (actions.size == 1) 300 else 270), dp(56)).apply {
-                if (index > 0) marginStart = dp(18)
+            actionsRow.addView(b, LinearLayout.LayoutParams(0, dp(48), 1f).apply {
+                if (index > 0) marginStart = dp(8)
             })
         }
-        row.addView(actionBox)
-
-        card.addView(row)
+        column.addView(actionsRow)
+        card.addView(column)
         return card.apply {
-            layoutParams = LinearLayout.LayoutParams(-1, dp(if (actions.size == 2) 196 else 180)).apply {
-                bottomMargin = dp(22)
-            }
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) }
         }
     }
 
-    private fun roundedDrawable(fill: Int, stroke: Int, radius: Int): GradientDrawable =
-        GradientDrawable().apply {
-            setColor(fill)
-            setStroke(dp(1), stroke)
-            cornerRadius = dp(radius).toFloat()
-        }
-
+    private fun rounded(fill: Int, stroke: Int, radius: Int) = GradientDrawable().apply {
+        setColor(fill); setStroke(dp(1), stroke); cornerRadius = dp(radius).toFloat()
+    }
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
 }
