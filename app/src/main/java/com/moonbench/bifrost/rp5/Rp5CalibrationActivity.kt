@@ -25,6 +25,11 @@ import com.moonbench.bifrost.MainActivity
 import com.moonbench.bifrost.services.LEDService
 
 class Rp5CalibrationActivity : AppCompatActivity() {
+    companion object {
+        const val EXTRA_SOURCE_MODE = "source_mode"
+        const val SOURCE_LIVE = "live"
+        const val SOURCE_STILL = "still"
+    }
     private lateinit var view: Rp5CalibrationView
     private lateinit var status: TextView
     private lateinit var testButton: MaterialButton
@@ -50,6 +55,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         val cal=load()
         view=Rp5CalibrationView(this) { l,r -> save(l,r); resampleCurrentFrame() }
         view.leftRegion=cal.left; view.rightRegion=cal.right
+        val sourceMode = intent.getStringExtra(EXTRA_SOURCE_MODE)
         val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setBackgroundColor(Color.BLACK) }
         val head=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(24,18,24,8) }
         status=TextView(this).apply { text="RP5 LED CALIBRATION"; setTextColor(Color.WHITE); textSize=18f }
@@ -77,16 +83,22 @@ class Rp5CalibrationActivity : AppCompatActivity() {
             setOnClickListener { save(view.leftRegion,view.rightRegion); finish() }
         },LinearLayout.LayoutParams(0,56,1f))
         root.addView(head)
-        val sources=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        sources.addView(MaterialButton(this).apply { text="LIVE CALIBRATION"; setOnClickListener { chooseLive() } },LinearLayout.LayoutParams(0,56,1f))
-        sources.addView(MaterialButton(this).apply { text="STILL IMAGE"; setOnClickListener { stillPicker.launch("image/*") } },LinearLayout.LayoutParams(0,56,1f))
-        root.addView(sources)
+        if (sourceMode == null) {
+            val sources=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
+            sources.addView(MaterialButton(this).apply { text="LIVE IMAGE"; setOnClickListener { chooseLive() } },LinearLayout.LayoutParams(0,56,1f))
+            sources.addView(MaterialButton(this).apply { text="STILL IMAGE"; setOnClickListener { stillPicker.launch("image/*") } },LinearLayout.LayoutParams(0,56,1f))
+            root.addView(sources)
+        }
         root.addView(view,LinearLayout.LayoutParams(-1,0,1f))
         root.addView(buttons)
         testButton.isEnabled=false
         setContentView(root)
 
-        status.text="Choose LIVE CALIBRATION or STILL IMAGE to begin."
+        status.text = if (sourceMode == null) "Choose LIVE IMAGE or STILL IMAGE to begin." else "Preparing calibration source…"
+        when (sourceMode) {
+            SOURCE_LIVE -> root.post { chooseLive() }
+            SOURCE_STILL -> root.post { stillPicker.launch("image/*") }
+        }
     }
 
     private val stillPicker=registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
