@@ -56,6 +56,11 @@
         <!-- First-run guide launched from MainActivity.onCreate. Must be
              declared or R8 (minifyEnabled) renames the class and startActivity
              fails with ActivityNotFoundException, crashing app launch. -->
+        <activity android:name=".rp5.FineTuneManagerActivity" android:exported="false" android:label="Thumbstick Fine Tune" />
+        <activity android:name=".rp5.FineTunePreviewActivity" android:exported="false" android:label="Fine Tune Preview" />
+        <activity android:name=".rp5.ThumbstickViewAreaEditorActivity" android:exported="false" android:label="View Area Fine Tuning" />
+        <activity android:name=".rp5.LedCalibrationActivity" android:exported="false" android:label="LED Calibration" />
+
         <activity
             android:name=".rp5.Rp5CalibrationActivity"
             android:exported="false"

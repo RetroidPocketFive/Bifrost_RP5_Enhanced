@@ -1197,13 +1197,13 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="LIVE RP5 CALIBRATION"
+                            android:text="CALIBRATION / LED TEST"
                             android:textColor="@color/bifrost_text"
                             app:cornerRadius="10dp"
                             app:strokeColor="@color/bifrost_accent"
                             app:strokeWidth="1dp" 
-                android:contentDescription="Live rp5 calibration"
-                android:tooltipText="Live rp5 calibration" />
+                android:contentDescription="Calibration and LED test"
+                android:tooltipText="Check LED hardware and colour response" />
 
                         <com.google.android.material.switchmaterial.SwitchMaterial
                             android:id="@+id/customSamplingSwitch"
@@ -1219,15 +1219,25 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/bifrost_spacing_md"
-                        android:text="EDIT SAMPLING AREAS"
+                        android:text="SAMPLE AREA / VIEWING PROFILE"
                         android:textSize="12sp" 
-                android:contentDescription="Edit sampling areas"
-                android:tooltipText="Edit sampling areas" />
+                android:contentDescription="Create and edit Ambient viewing profiles"
+                android:tooltipText="Create reusable Sample Area viewing profiles" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/fineTuneViewAreaButton"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/bifrost_spacing_md"
+                        android:text="AMBIENT VIEWING PROFILES"
+                        android:textSize="12sp"
+                        android:contentDescription="Ambient Viewing Profiles"
+                        android:tooltipText="Create viewing profiles and select them for Ambient screen matching" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Position and resize the screen area each stick samples for Ambient / Ambi Aurora."
+                        android:text="Create reusable viewing areas for Ambient. Fine Tune selects which viewing profile Ambient uses when Heimdall is on."
                         android:textColor="@color/bifrost_text_secondary"
                         android:textSize="8sp" />
 
