@@ -71,6 +71,8 @@ class LedCalibrationActivity : AppCompatActivity() {
         stopPreview()
         content = pageRoot()
         content.addView(header("Calibration", "LED brightness test"))
+        status = label("Choose a brightness level to test both LEDs.", text, 13f)
+        content.addView(status)
         content.addView(sectionCard("LED BRIGHTNESS TEST",
             "Select a level and check the output of both thumb-stick LEDs.",
             emptyList()) {})
