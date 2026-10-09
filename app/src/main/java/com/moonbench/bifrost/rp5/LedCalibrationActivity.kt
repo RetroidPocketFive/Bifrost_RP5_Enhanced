@@ -153,7 +153,7 @@ class LedCalibrationActivity : AppCompatActivity() {
         val mark = TextView(this).apply {
             text = "‹"
             textSize = 28f
-            setTextColor(text)
+            setTextColor(Color.rgb(242, 244, 255))
             gravity = Gravity.CENTER
             background = rounded(secondary, accent, 12)
         }
