@@ -129,8 +129,8 @@ class LedCalibrationActivity : AppCompatActivity() {
                 }
             },
             brightness = { brightness },
-            beforeCapture = { },
-            afterCapture = { },
+            beforeCapture = { runOnUiThread { window.decorView.alpha = 0f } },
+            afterCapture = { runOnUiThread { window.decorView.alpha = 1f } },
         ).also {
             it.preview(NormalizedRegion(.25f, .78f, .18f), NormalizedRegion(.75f, .78f, .18f), ThumbstickColourMode.FIFTY_FIFTY)
             it.start(single = still)
@@ -263,6 +263,7 @@ class LedCalibrationActivity : AppCompatActivity() {
     }
 
     private fun stopPreview() {
+        window.decorView.alpha = 1f
         preview?.stop()
         preview = null
     }
