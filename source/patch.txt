@@ -29,3 +29,12 @@
 # Screen capture temporarily hides the calibration UI while the display is sampled.
 # Brightness test uses explicit RGB scaling so the five levels are physically distinct.
 # TEST ONLY. Protected V5 and approved Home Screen references remain untouched.
+
+# PATCH — CALIBRATION MENU FEEDBACK REVISION (2026-10-09)
+# Calibration hub restyled to the supplied BIFROST screen reference: dark navy panels, violet accent, rounded cards and concise descriptions.
+# SCREEN COLOUR CHECK buttons now read LIVE IMAGE and STILL IMAGE (replacing LIVE GAME SCREEN / STILL IMAGE wording).
+# LED THUMB-STICK COLOUR MATCH -> OPEN CALIBRATION routes to the existing RP5 colour-match calibration editor (Rp5CalibrationActivity); do not replace this with the unrelated preview screen.
+# LED BRIGHTNESS TEST -> START opens a dedicated brightness page with OFF / 25% / 50% / 75% / 100% controls and return/exit actions.
+# Calibration remains hardware/function testing only. It does not create or modify Sample Area / Viewing Profile data or Fine Tune bindings.
+# Logo/header uses a temporary text BIFROST mark pending use of the approved native app logo asset; verify appearance on-device.
+# TEST ONLY. Do not merge into main or replace protected V5 / approved Home Screen baselines without explicit user approval.
