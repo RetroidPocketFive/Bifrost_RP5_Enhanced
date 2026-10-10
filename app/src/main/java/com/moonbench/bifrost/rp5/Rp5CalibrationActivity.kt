@@ -16,7 +16,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import android.view.Gravity
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -51,20 +53,39 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         val cal=load()
         view=Rp5CalibrationView(this) { l,r -> save(l,r); resampleCurrentFrame() }
         view.leftRegion=cal.left; view.rightRegion=cal.right
-        val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setBackgroundColor(Color.BLACK) }
-        val head=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(24,18,24,8) }
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setBackgroundColor(Color.BLACK)
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+        }
+        val head=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            gravity=Gravity.CENTER_VERTICAL
+            setPadding(dp(8), dp(6), dp(8), dp(10))
+        }
+        val logo=ImageView(this).apply {
+            setImageResource(com.moonbench.bifrost.R.mipmap.ic_launcher_foreground)
+            contentDescription="Bifrost logo"
+            scaleType=ImageView.ScaleType.FIT_CENTER
+        }
+        head.addView(logo, LinearLayout.LayoutParams(dp(52), dp(52)))
+        val heading=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(10), 0, 0, 0)
+        }
         status=TextView(this).apply { text="RP5 LED CALIBRATION"; setTextColor(Color.WHITE); textSize=18f }
-        head.addView(status)
-        head.addView(TextView(this).apply {
+        heading.addView(status)
+        heading.addView(TextView(this).apply {
             text="Place the squares over the physical thumb-stick areas. Move or resize them until the sampled colours look right."
             setTextColor(Color.LTGRAY); textSize=13f
         })
+        head.addView(heading, LinearLayout.LayoutParams(0, -2, 1f))
         val buttons=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
         testButton=MaterialButton(this).apply {
             text="Test LEDs"
             setOnClickListener { testPhysicalLeds() }
         }
-        buttons.addView(testButton,LinearLayout.LayoutParams(0,56,1f))
+        buttons.addView(testButton,LinearLayout.LayoutParams(0,dp(48),1f))
         buttons.addView(MaterialButton(this).apply {
             text="Reset"
             setOnClickListener {
@@ -207,6 +228,8 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         stopCapture()
         super.onDestroy()
     }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     companion object {
         const val EXTRA_SOURCE = "com.moonbench.bifrost.rp5.CALIBRATION_SOURCE"
