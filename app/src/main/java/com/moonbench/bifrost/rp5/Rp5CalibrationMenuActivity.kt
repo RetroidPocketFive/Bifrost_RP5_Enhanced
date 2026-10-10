@@ -107,11 +107,10 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             "Choose how to get the game screen used for calibration.",
             "LIVE GAME SCREEN waits 5 seconds, then captures the game.",
             "STILL IMAGE lets you choose a screenshot.",
-            listOf("LIVE GAME SCREEN", "STILL IMAGE")
+            listOf("LIVE IMAGE", "STILL IMAGE")
         ) { which ->
-            // The existing V5.1 calibration screen remains the implementation.
-            // The two source choices are deliberately not changed yet.
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+            val source = if (which == 0) Rp5CalibrationActivity.SOURCE_LIVE else Rp5CalibrationActivity.SOURCE_STILL
+            startActivity(Intent(this, Rp5CalibrationActivity::class.java).putExtra(Rp5CalibrationActivity.EXTRA_SOURCE, source))
         })
 
         root.addView(card(
