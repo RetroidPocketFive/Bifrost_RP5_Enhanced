@@ -8,11 +8,13 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.ImageView
 import kotlin.math.roundToInt
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
-import com.moonbench.bifrost.MainActivity
+import com.moonbench.bifrost.R
+import com.moonbench.bifrost.services.LEDService
 
 /**
  * Calibration menu test built directly on the approved V5.1 home-screen baseline.
@@ -67,15 +69,23 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         }
         headerRow.addView(back, LinearLayout.LayoutParams(dp(62), dp(56)))
 
+        val logo = ImageView(this).apply {
+            setImageResource(R.mipmap.ic_launcher_foreground)
+            contentDescription = "Bifrost logo"
+            scaleType = ImageView.ScaleType.FIT_CENTER
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+        }
+        headerRow.addView(logo, LinearLayout.LayoutParams(dp(52), dp(52)))
+
         val brand = TextView(this).apply {
-            this.text = "◉  BIFROST"
+            this.text = "BIFROST"
             textSize = 20f
             setTextColor(this@Rp5CalibrationMenuActivity.text)
             gravity = Gravity.CENTER_VERTICAL
             letterSpacing = 0.18f
-            setPadding(dp(14), 0, dp(18), 0)
+            setPadding(dp(8), 0, dp(12), 0)
         }
-        headerRow.addView(brand, LinearLayout.LayoutParams(dp(205), dp(56)))
+        headerRow.addView(brand, LinearLayout.LayoutParams(dp(128), dp(56)))
 
         val divider = View(this).apply { setBackgroundColor(accent) }
         headerRow.addView(divider, LinearLayout.LayoutParams(dp(1), dp(38)))
@@ -121,8 +131,9 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             "",
             listOf("START")
         ) {
-            // Placeholder for the next reviewed implementation.
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+            // Open the calibration workspace without automatically starting live capture.
+            startActivity(Intent(this, Rp5CalibrationActivity::class.java)
+                .putExtra(Rp5CalibrationActivity.EXTRA_MODE, Rp5CalibrationActivity.MODE_COLOUR_MATCH))
         })
 
         root.addView(card(
@@ -133,8 +144,16 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             "",
             listOf("START")
         ) {
-            // Placeholder for the next reviewed implementation.
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java))
+            // Run a short neutral-white LED test directly; do not navigate to calibration.
+            val test = Intent(this, LEDService::class.java).apply {
+                action = LEDService.ACTION_RP5_LED_TEST
+                putExtra(LEDService.EXTRA_RP5_LEFT_COLOR, Color.WHITE)
+                putExtra(LEDService.EXTRA_RP5_RIGHT_COLOR, Color.WHITE)
+                putExtra(LEDService.EXTRA_RP5_TEST_DURATION_MS, 1500L)
+            }
+            runCatching { startService(test) }.onFailure {
+                android.widget.Toast.makeText(this, "Could not start LED brightness test", android.widget.Toast.LENGTH_LONG).show()
+            }
         })
 
         setContentView(root)
