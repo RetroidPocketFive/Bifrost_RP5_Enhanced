@@ -36,12 +36,13 @@ class Rp5CalibrationActivity : AppCompatActivity() {
     private var display:VirtualDisplay?=null
     private var reader:ImageReader?=null
     private var liveMode=false
+    private var pendingLiveCapture: Runnable? = null
 
     private val permission=registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if(r.resultCode==Activity.RESULT_OK && r.data!=null) {
             MainActivity.mediaProjectionResultCode=r.resultCode
             MainActivity.mediaProjectionData=r.data
-            startLiveCapture(r.resultCode,r.data!!)
+            scheduleLiveCapture(r.resultCode,r.data!!)
         } else status.text="Screen capture permission is required for live calibration."
     }
 
@@ -78,7 +79,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         },LinearLayout.LayoutParams(0,56,1f))
         root.addView(head)
         val sources=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        sources.addView(MaterialButton(this).apply { text="LIVE CALIBRATION"; setOnClickListener { chooseLive() } },LinearLayout.LayoutParams(0,56,1f))
+        sources.addView(MaterialButton(this).apply { text="LIVE GAME SCREEN"; setOnClickListener { chooseLive() } },LinearLayout.LayoutParams(0,56,1f))
         sources.addView(MaterialButton(this).apply { text="STILL IMAGE"; setOnClickListener { stillPicker.launch("image/*") } },LinearLayout.LayoutParams(0,56,1f))
         root.addView(sources)
         root.addView(view,LinearLayout.LayoutParams(-1,0,1f))
@@ -86,14 +87,20 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         testButton.isEnabled=false
         setContentView(root)
 
-        status.text="Choose LIVE CALIBRATION or STILL IMAGE to begin."
+        status.text="CALIBRATION"
+        root.post {
+            when (intent.getStringExtra(EXTRA_SOURCE)) {
+                SOURCE_LIVE -> chooseLive()
+                SOURCE_STILL -> stillPicker.launch("image/*")
+            }
+        }
     }
 
     private val stillPicker=registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if(uri==null)return@registerForActivityResult
         val bitmap=runCatching { contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } }.getOrNull()
         if(bitmap==null){ status.text="Could not open that image."; return@registerForActivityResult }
-        stopCapture(); liveMode=false; view.setFrame(bitmap); sampleBitmap(bitmap)
+        cancelPendingLiveCapture(); stopCapture(); liveMode=false; view.setFrame(bitmap); sampleBitmap(bitmap)
         status.text="STILL IMAGE CALIBRATION   LEFT #%06X   RIGHT #%06X".format(view.leftColor and 0xffffff,view.rightColor and 0xffffff)
     }
 
@@ -101,7 +108,26 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         liveMode=true
         val code=MainActivity.mediaProjectionResultCode
         val data=MainActivity.mediaProjectionData
-        if(code!=null && data!=null) runCatching { startLiveCapture(code,data) }.onFailure { requestLivePermission() } else requestLivePermission()
+        if(code!=null && data!=null) runCatching { scheduleLiveCapture(code,data) }.onFailure { requestLivePermission() } else requestLivePermission()
+    }
+
+    private fun scheduleLiveCapture(code: Int, data: Intent) {
+        cancelPendingLiveCapture()
+        status.text = "LIVE GAME SCREEN — capturing in 5 seconds…"
+        val task = Runnable {
+            pendingLiveCapture = null
+            if (!isFinishing && !isDestroyed) {
+                runCatching { startLiveCapture(code, data) }
+                    .onFailure { status.text = "Live capture failed: ${it.message ?: "unknown error"}" }
+            }
+        }
+        pendingLiveCapture = task
+        handler.postDelayed(task, 5_000L)
+    }
+
+    private fun cancelPendingLiveCapture() {
+        pendingLiveCapture?.let(handler::removeCallbacks)
+        pendingLiveCapture = null
     }
 
     private fun requestLivePermission(){
@@ -176,5 +202,15 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         .putFloat("rx",r.centerX).putFloat("ry",r.centerY).putFloat("rs",r.size).apply()
 
     private fun stopCapture(){ display?.release();display=null;reader?.close();reader=null;projection?.stop();projection=null }
-    override fun onDestroy(){stopCapture();super.onDestroy()}
+    override fun onDestroy(){
+        cancelPendingLiveCapture()
+        stopCapture()
+        super.onDestroy()
+    }
+
+    companion object {
+        const val EXTRA_SOURCE = "com.moonbench.bifrost.rp5.CALIBRATION_SOURCE"
+        const val SOURCE_LIVE = "live"
+        const val SOURCE_STILL = "still"
+    }
 }
