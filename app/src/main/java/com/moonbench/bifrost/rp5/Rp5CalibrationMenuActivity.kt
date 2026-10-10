@@ -56,7 +56,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         val back = MaterialButton(this).apply {
             text = "‹"
             textSize = 34f
-            setTextColor(text)
+            setTextColor(this@Rp5CalibrationMenuActivity.text)
             minWidth = dp(58)
             minHeight = dp(52)
             insetTop = 0
@@ -70,7 +70,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         val brand = TextView(this).apply {
             this.text = "◉  BIFROST"
             textSize = 20f
-            setTextColor(text)
+            setTextColor(this@Rp5CalibrationMenuActivity.text)
             gravity = Gravity.CENTER_VERTICAL
             letterSpacing = 0.18f
             setPadding(dp(14), 0, dp(18), 0)
@@ -87,7 +87,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         titleBox.addView(TextView(this).apply {
             text = "Calibration"
             textSize = 28f
-            setTextColor(text)
+            setTextColor(this@Rp5CalibrationMenuActivity.text)
         })
         titleBox.addView(TextView(this).apply {
             text = "Adjust your device for the best visual performance."
@@ -178,7 +178,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         textBox.addView(TextView(this).apply {
             text = title
             textSize = 19f
-            setTextColor(text)
+            setTextColor(this@Rp5CalibrationMenuActivity.text)
         })
         if (description.isNotEmpty()) textBox.addView(TextView(this).apply {
             text = description
@@ -208,7 +208,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             val b = MaterialButton(this).apply {
                 text = label
                 textSize = 14f
-                setTextColor(text)
+                setTextColor(this@Rp5CalibrationMenuActivity.text)
                 minHeight = dp(56)
                 insetTop = 0
                 insetBottom = 0
