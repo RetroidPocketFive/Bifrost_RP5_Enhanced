@@ -16,7 +16,9 @@ import android.os.Handler
 import android.os.Looper
 import android.util.DisplayMetrics
 import android.view.WindowManager
+import android.view.Gravity
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -36,12 +38,13 @@ class Rp5CalibrationActivity : AppCompatActivity() {
     private var display:VirtualDisplay?=null
     private var reader:ImageReader?=null
     private var liveMode=false
+    private var pendingLiveCapture: Runnable? = null
 
     private val permission=registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { r ->
         if(r.resultCode==Activity.RESULT_OK && r.data!=null) {
             MainActivity.mediaProjectionResultCode=r.resultCode
             MainActivity.mediaProjectionData=r.data
-            startLiveCapture(r.resultCode,r.data!!)
+            scheduleLiveCapture(r.resultCode,r.data!!)
         } else status.text="Screen capture permission is required for live calibration."
     }
 
@@ -50,20 +53,39 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         val cal=load()
         view=Rp5CalibrationView(this) { l,r -> save(l,r); resampleCurrentFrame() }
         view.leftRegion=cal.left; view.rightRegion=cal.right
-        val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setBackgroundColor(Color.BLACK) }
-        val head=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(24,18,24,8) }
+        val root=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setBackgroundColor(Color.BLACK)
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+        }
+        val head=LinearLayout(this).apply {
+            orientation=LinearLayout.HORIZONTAL
+            gravity=Gravity.CENTER_VERTICAL
+            setPadding(dp(8), dp(6), dp(8), dp(10))
+        }
+        val logo=ImageView(this).apply {
+            setImageResource(com.moonbench.bifrost.R.mipmap.ic_launcher_foreground)
+            contentDescription="Bifrost logo"
+            scaleType=ImageView.ScaleType.FIT_CENTER
+        }
+        head.addView(logo, LinearLayout.LayoutParams(dp(52), dp(52)))
+        val heading=LinearLayout(this).apply {
+            orientation=LinearLayout.VERTICAL
+            setPadding(dp(10), 0, 0, 0)
+        }
         status=TextView(this).apply { text="RP5 LED CALIBRATION"; setTextColor(Color.WHITE); textSize=18f }
-        head.addView(status)
-        head.addView(TextView(this).apply {
+        heading.addView(status)
+        heading.addView(TextView(this).apply {
             text="Place the squares over the physical thumb-stick areas. Move or resize them until the sampled colours look right."
             setTextColor(Color.LTGRAY); textSize=13f
         })
+        head.addView(heading, LinearLayout.LayoutParams(0, -2, 1f))
         val buttons=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
         testButton=MaterialButton(this).apply {
             text="Test LEDs"
             setOnClickListener { testPhysicalLeds() }
         }
-        buttons.addView(testButton,LinearLayout.LayoutParams(0,56,1f))
+        buttons.addView(testButton,LinearLayout.LayoutParams(0,dp(48),1f))
         buttons.addView(MaterialButton(this).apply {
             text="Reset"
             setOnClickListener {
@@ -78,7 +100,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         },LinearLayout.LayoutParams(0,56,1f))
         root.addView(head)
         val sources=LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        sources.addView(MaterialButton(this).apply { text="LIVE CALIBRATION"; setOnClickListener { chooseLive() } },LinearLayout.LayoutParams(0,56,1f))
+        sources.addView(MaterialButton(this).apply { text="LIVE GAME SCREEN"; setOnClickListener { chooseLive() } },LinearLayout.LayoutParams(0,56,1f))
         sources.addView(MaterialButton(this).apply { text="STILL IMAGE"; setOnClickListener { stillPicker.launch("image/*") } },LinearLayout.LayoutParams(0,56,1f))
         root.addView(sources)
         root.addView(view,LinearLayout.LayoutParams(-1,0,1f))
@@ -86,14 +108,20 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         testButton.isEnabled=false
         setContentView(root)
 
-        status.text="Choose LIVE CALIBRATION or STILL IMAGE to begin."
+        status.text="CALIBRATION"
+        root.post {
+            when (intent.getStringExtra(EXTRA_SOURCE)) {
+                SOURCE_LIVE -> chooseLive()
+                SOURCE_STILL -> stillPicker.launch("image/*")
+            }
+        }
     }
 
     private val stillPicker=registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if(uri==null)return@registerForActivityResult
         val bitmap=runCatching { contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it) } }.getOrNull()
         if(bitmap==null){ status.text="Could not open that image."; return@registerForActivityResult }
-        stopCapture(); liveMode=false; view.setFrame(bitmap); sampleBitmap(bitmap)
+        cancelPendingLiveCapture(); stopCapture(); liveMode=false; view.setFrame(bitmap); sampleBitmap(bitmap)
         status.text="STILL IMAGE CALIBRATION   LEFT #%06X   RIGHT #%06X".format(view.leftColor and 0xffffff,view.rightColor and 0xffffff)
     }
 
@@ -101,7 +129,26 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         liveMode=true
         val code=MainActivity.mediaProjectionResultCode
         val data=MainActivity.mediaProjectionData
-        if(code!=null && data!=null) runCatching { startLiveCapture(code,data) }.onFailure { requestLivePermission() } else requestLivePermission()
+        if(code!=null && data!=null) runCatching { scheduleLiveCapture(code,data) }.onFailure { requestLivePermission() } else requestLivePermission()
+    }
+
+    private fun scheduleLiveCapture(code: Int, data: Intent) {
+        cancelPendingLiveCapture()
+        status.text = "LIVE GAME SCREEN — capturing in 5 seconds…"
+        val task = Runnable {
+            pendingLiveCapture = null
+            if (!isFinishing && !isDestroyed) {
+                runCatching { startLiveCapture(code, data) }
+                    .onFailure { status.text = "Live capture failed: ${it.message ?: "unknown error"}" }
+            }
+        }
+        pendingLiveCapture = task
+        handler.postDelayed(task, 5_000L)
+    }
+
+    private fun cancelPendingLiveCapture() {
+        pendingLiveCapture?.let(handler::removeCallbacks)
+        pendingLiveCapture = null
     }
 
     private fun requestLivePermission(){
@@ -176,5 +223,19 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         .putFloat("rx",r.centerX).putFloat("ry",r.centerY).putFloat("rs",r.size).apply()
 
     private fun stopCapture(){ display?.release();display=null;reader?.close();reader=null;projection?.stop();projection=null }
-    override fun onDestroy(){stopCapture();super.onDestroy()}
+    override fun onDestroy(){
+        cancelPendingLiveCapture()
+        stopCapture()
+        super.onDestroy()
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    companion object {
+        const val EXTRA_SOURCE = "com.moonbench.bifrost.rp5.CALIBRATION_SOURCE"
+        const val SOURCE_LIVE = "live"
+        const val SOURCE_STILL = "still"
+        const val EXTRA_MODE = "com.moonbench.bifrost.rp5.CALIBRATION_MODE"
+        const val MODE_COLOUR_MATCH = "colour_match"
+    }
 }
