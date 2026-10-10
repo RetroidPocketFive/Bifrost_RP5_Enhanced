@@ -212,5 +212,7 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         const val EXTRA_SOURCE = "com.moonbench.bifrost.rp5.CALIBRATION_SOURCE"
         const val SOURCE_LIVE = "live"
         const val SOURCE_STILL = "still"
+        const val EXTRA_MODE = "com.moonbench.bifrost.rp5.CALIBRATION_MODE"
+        const val MODE_COLOUR_MATCH = "colour_match"
     }
 }
