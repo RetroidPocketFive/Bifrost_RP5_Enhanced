@@ -30,6 +30,13 @@ import java.util.concurrent.Executor
 
 class SamplingEditorActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_START_MODE = "com.moonbench.bifrost.sampling.START_MODE"
+        const val MODE_COLOUR_MATCH = "colour_match"
+        const val SOURCE_LIVE = "live"
+        const val SOURCE_STILL = "still"
+    }
+
     private enum class Page { CHOOSER, EDITOR, COLOR_TEST }
     private var page = Page.CHOOSER
     private var activeStick = 0
@@ -235,6 +242,20 @@ class SamplingEditorActivity : AppCompatActivity() {
 
         updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
         showChooser()
+        when (intent.getStringExtra(EXTRA_START_MODE)) {
+            MODE_COLOUR_MATCH -> {
+                showEditor(1)
+                showColorTest()
+            }
+            SOURCE_LIVE -> {
+                showEditor(0)
+                startDelayedCapture()
+            }
+            SOURCE_STILL -> {
+                showEditor(0)
+                importImageLauncher.launch("image/*")
+            }
+        }
     }
 
     private fun showChooser() {
