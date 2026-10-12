@@ -9,6 +9,7 @@ import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.ImageView
 import kotlin.math.roundToInt
@@ -39,10 +40,15 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         window.statusBarColor = bg
         window.navigationBarColor = bg
 
-        val root = LinearLayout(this).apply {
+        val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(bg)
             setPadding(dp(18), dp(12), dp(18), dp(18))
+        }
+        val root = ScrollView(this).apply {
+            isFillViewport = true
+            setBackgroundColor(bg)
+            addView(content, android.view.ViewGroup.LayoutParams(-1, -2))
         }
 
         val header = MaterialCardView(this).apply {
@@ -110,11 +116,11 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         headerRow.addView(titleBox, LinearLayout.LayoutParams(0, dp(56), 1f))
         header.addView(headerRow)
 
-        root.addView(header, LinearLayout.LayoutParams(-1, dp(100)).apply {
+        content.addView(header, LinearLayout.LayoutParams(-1, dp(100)).apply {
             bottomMargin = dp(22)
         })
 
-        root.addView(card(
+        content.addView(card(
             "▣",
             "SCREEN COLOUR CHECK",
             "Choose how to get the game screen used for calibration.",
@@ -212,9 +218,11 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             setContentPadding(dp(32), dp(24), dp(24), dp(24))
         }
 
+        val compact = resources.configuration.smallestScreenWidthDp < 720 ||
+            resources.configuration.screenWidthDp < 720
         val row = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
+            orientation = if (compact) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+            gravity = if (compact) Gravity.CENTER_HORIZONTAL else Gravity.CENTER_VERTICAL
         }
 
         val iconBox = TextView(this).apply {
@@ -224,20 +232,25 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             setTextColor(accent)
             background = roundedDrawable(Color.TRANSPARENT, accent, 14)
         }
-        row.addView(iconBox, LinearLayout.LayoutParams(dp(92), dp(90)))
+        row.addView(iconBox, LinearLayout.LayoutParams(if (compact) dp(64) else dp(92), if (compact) dp(64) else dp(90)).apply {
+            if (compact) bottomMargin = dp(12)
+        })
 
         val textBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(28), 0, dp(18), 0)
+            setPadding(if (compact) 0 else dp(28), 0, if (compact) 0 else dp(18), 0)
+            gravity = if (compact) Gravity.CENTER_HORIZONTAL else Gravity.START
         }
         textBox.addView(TextView(this).apply {
             text = title
-            textSize = 19f
+            textSize = if (compact) 16f else 19f
+            gravity = if (compact) Gravity.CENTER else Gravity.START
             setTextColor(this@Rp5CalibrationMenuActivity.text)
         })
         if (description.isNotEmpty()) textBox.addView(TextView(this).apply {
             text = description
-            textSize = 14f
+            textSize = if (compact) 12f else 14f
+            gravity = if (compact) Gravity.CENTER else Gravity.START
             setTextColor(secondary)
             setPadding(0, dp(8), 0, 0)
         })
@@ -253,7 +266,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             setTextColor(secondary)
             setPadding(0, dp(4), 0, 0)
         })
-        row.addView(textBox, LinearLayout.LayoutParams(0, -2, 1f))
+        row.addView(textBox, if (compact) LinearLayout.LayoutParams(-1, -2) else LinearLayout.LayoutParams(0, -2, 1f))
 
         val actionBox = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -273,16 +286,20 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
                 strokeColor = android.content.res.ColorStateList.valueOf(accent)
                 setOnClickListener { onAction(index) }
             }
-            actionBox.addView(b, LinearLayout.LayoutParams(dp(if (actions.size == 1) 300 else 270), dp(56)).apply {
-                if (index > 0) marginStart = dp(18)
+            actionBox.addView(b, LinearLayout.LayoutParams(if (compact) -1 else dp(if (actions.size == 1) 300 else 270), dp(48)).apply {
+                if (compact) topMargin = dp(8) else if (index > 0) marginStart = dp(18)
             })
         }
-        row.addView(actionBox)
+        if (compact) {
+            actionBox.orientation = LinearLayout.VERTICAL
+            actionBox.layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) }
+        }
+        row.addView(actionBox, if (compact) LinearLayout.LayoutParams(-1, -2) else LinearLayout.LayoutParams(-2, -2))
 
         card.addView(row)
         return card.apply {
-            layoutParams = LinearLayout.LayoutParams(-1, dp(if (actions.size == 2) 196 else 180)).apply {
-                bottomMargin = dp(22)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply {
+                bottomMargin = dp(16)
             }
         }
     }
