@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.moonbench.bifrost.R
+import com.moonbench.bifrost.SamplingEditorActivity
 import com.moonbench.bifrost.services.LEDService
 
 /**
@@ -119,8 +120,9 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             "STILL IMAGE lets you choose a screenshot.",
             listOf("LIVE IMAGE", "STILL IMAGE")
         ) { which ->
-            val source = if (which == 0) Rp5CalibrationActivity.SOURCE_LIVE else Rp5CalibrationActivity.SOURCE_STILL
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java).putExtra(Rp5CalibrationActivity.EXTRA_SOURCE, source))
+            val source = if (which == 0) SamplingEditorActivity.SOURCE_LIVE else SamplingEditorActivity.SOURCE_STILL
+            startActivity(Intent(this, SamplingEditorActivity::class.java)
+                .putExtra(SamplingEditorActivity.EXTRA_START_MODE, source))
         })
 
         root.addView(card(
@@ -131,9 +133,9 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             "",
             listOf("START")
         ) {
-            // Open the calibration workspace without automatically starting live capture.
-            startActivity(Intent(this, Rp5CalibrationActivity::class.java)
-                .putExtra(Rp5CalibrationActivity.EXTRA_MODE, Rp5CalibrationActivity.MODE_COLOUR_MATCH))
+            // Open the established RGB colour-match panel, not the separate RP5 capture UI.
+            startActivity(Intent(this, SamplingEditorActivity::class.java)
+                .putExtra(SamplingEditorActivity.EXTRA_START_MODE, SamplingEditorActivity.MODE_COLOUR_MATCH))
         })
 
         root.addView(card(
