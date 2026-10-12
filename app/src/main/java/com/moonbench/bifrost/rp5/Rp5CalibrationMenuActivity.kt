@@ -133,7 +133,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
                 .putExtra(SamplingEditorActivity.EXTRA_START_MODE, source))
         })
 
-        root.addView(card(
+        content.addView(card(
             "💡",
             "LED COLOUR MATCH",
             "Matches the LED colours to the game screen for accurate colour reproduction.",
@@ -146,7 +146,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
                 .putExtra(SamplingEditorActivity.EXTRA_START_MODE, SamplingEditorActivity.MODE_COLOUR_MATCH))
         })
 
-        root.addView(card(
+        content.addView(card(
             "☼",
             "LED BRIGHTNESS TEST",
             "Checks LED output at several brightness levels.",
