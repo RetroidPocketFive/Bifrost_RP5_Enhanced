@@ -154,7 +154,7 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             "Each level lasts briefly; keep the device visible.",
             listOf("START")
         ) {
-            runBrightnessSweep()
+            startActivity(Intent(this, Rp5LedBrightnessTestActivity::class.java))
         })
 
         setContentView(root)
