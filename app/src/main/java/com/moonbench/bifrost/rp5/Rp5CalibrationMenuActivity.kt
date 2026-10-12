@@ -4,6 +4,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
@@ -141,24 +143,56 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         root.addView(card(
             "☼",
             "LED BRIGHTNESS TEST",
-            "Checks the LED brightness levels and uniformity.",
-            "Adjust if needed for even lighting.",
-            "",
+            "Checks LED output at several brightness levels.",
+            "Both sticks illuminate in white from dim to bright.",
+            "Each level lasts briefly; keep the device visible.",
             listOf("START")
         ) {
-            // Run a short neutral-white LED test directly; do not navigate to calibration.
-            val test = Intent(this, LEDService::class.java).apply {
-                action = LEDService.ACTION_RP5_LED_TEST
-                putExtra(LEDService.EXTRA_RP5_LEFT_COLOR, Color.WHITE)
-                putExtra(LEDService.EXTRA_RP5_RIGHT_COLOR, Color.WHITE)
-                putExtra(LEDService.EXTRA_RP5_TEST_DURATION_MS, 1500L)
-            }
-            runCatching { startService(test) }.onFailure {
-                android.widget.Toast.makeText(this, "Could not start LED brightness test", android.widget.Toast.LENGTH_LONG).show()
-            }
+            runBrightnessSweep()
         })
 
         setContentView(root)
+    }
+
+    private fun runBrightnessSweep() {
+        val levels = listOf(32, 64, 96, 128, 176, 224, 255)
+        val handler = Handler(Looper.getMainLooper())
+        val stepDurationMs = 650L
+        val toast = android.widget.Toast.makeText(this, "LED brightness test starting", android.widget.Toast.LENGTH_SHORT)
+        toast.show()
+
+        fun step(index: Int) {
+            if (isFinishing || isDestroyed) return
+            if (index >= levels.size) {
+                val clear = Intent(this, LEDService::class.java).apply {
+                    action = LEDService.ACTION_RP5_LED_TEST
+                    putExtra(LEDService.EXTRA_RP5_LEFT_COLOR, Color.BLACK)
+                    putExtra(LEDService.EXTRA_RP5_RIGHT_COLOR, Color.BLACK)
+                    putExtra(LEDService.EXTRA_RP5_TEST_DURATION_MS, 300L)
+                }
+                runCatching { startService(clear) }
+                android.widget.Toast.makeText(this, "LED brightness test complete", android.widget.Toast.LENGTH_SHORT).show()
+                return
+            }
+            val level = levels[index]
+            val white = Color.rgb(level, level, level)
+            val test = Intent(this, LEDService::class.java).apply {
+                action = LEDService.ACTION_RP5_LED_TEST
+                putExtra(LEDService.EXTRA_RP5_LEFT_COLOR, white)
+                putExtra(LEDService.EXTRA_RP5_RIGHT_COLOR, white)
+                putExtra(LEDService.EXTRA_RP5_TEST_DURATION_MS, stepDurationMs)
+                putExtra(LEDService.EXTRA_RP5_TEST_BYPASS_CALIBRATION, true)
+            }
+            try {
+                startService(test)
+                android.widget.Toast.makeText(this, "LED brightness: $level / 255", android.widget.Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                android.widget.Toast.makeText(this, "Could not start LED brightness test. Check that Bifrost LED control is enabled.", android.widget.Toast.LENGTH_LONG).show()
+                return
+            }
+            handler.postDelayed({ step(index + 1) }, stepDurationMs + 200L)
+        }
+        step(0)
     }
 
     private fun card(
