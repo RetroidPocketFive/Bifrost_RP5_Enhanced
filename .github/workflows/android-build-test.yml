@@ -1,1 +1,74 @@
+name: Bifrost Android Test APK
 
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**.gradle'
+      - '**.gradle.kts'
+      - 'gradle/**'
+      - 'app/**'
+      - '.github/workflows/android-build-test.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bifrost-android-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test debug APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages required by Bifrost
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Run unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Build debug APK
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Verify APK and calculate checksum
+        shell: bash
+        run: |
+          APK='app/build/outputs/apk/debug/app-debug.apk'
+          if [[ ! -s "$APK" ]]; then
+            echo "::error::Expected APK was not produced at $APK"
+            find app/build/outputs -maxdepth 5 -type f -print || true
+            exit 1
+          fi
+          ls -lh "$APK"
+          sha256sum "$APK" > app/build/outputs/apk/debug/app-debug.apk.sha256
+
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bifrost-RP5-Edition-debug-${{ github.run_number }}
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/debug/app-debug.apk.sha256
+          if-no-files-found: error
+          retention-days: 14
