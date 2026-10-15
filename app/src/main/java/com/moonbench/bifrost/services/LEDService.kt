@@ -111,6 +111,7 @@ class LEDService : Service() {
         const val EXTRA_RP5_LEFT_COLOR = "rp5.leftColor"
         const val EXTRA_RP5_RIGHT_COLOR = "rp5.rightColor"
         const val EXTRA_RP5_TEST_DURATION_MS = "rp5.durationMs"
+        const val EXTRA_RP5_TEST_HOLD = "rp5.hold"
         const val EXTRA_RP5_TEST_BYPASS_CALIBRATION = "rp5.bypassCalibration"
         const val EXTRA_EXTERNAL_PULSE_KIND = "external.pulseKind"
         const val EXTRA_ALLOW_BACKGROUND_RUN = "allowBackgroundRun"
@@ -649,10 +650,13 @@ class LEDService : Service() {
                 Color.red(right), Color.green(right), Color.blue(right)
             )
         }
-        handler.postDelayed({
-            if (!isStopping.get()) ledController.clear()
-            stopSelf()
-        }, duration)
+        val hold = intent.getBooleanExtra(EXTRA_RP5_TEST_HOLD, false)
+        if (!hold) {
+            handler.postDelayed({
+                if (!isStopping.get()) ledController.clear()
+                stopSelf()
+            }, duration)
+        }
     }
 
     private fun handleUpdateParams(intent: Intent) {
