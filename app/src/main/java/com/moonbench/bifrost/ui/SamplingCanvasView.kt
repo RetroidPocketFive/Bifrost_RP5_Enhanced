@@ -198,6 +198,7 @@ class SamplingCanvasView @JvmOverloads constructor(
         canvas.drawRect(r, rectPaint)
 
         if (label.isNotBlank()) {
+            val identityColor = if (label.startsWith("BLUE")) defaultLeftColor else defaultRightColor
             val corners = listOf(
                 r.left to r.top, r.right to r.top,
                 r.left to r.bottom, r.right to r.bottom
@@ -205,10 +206,10 @@ class SamplingCanvasView @JvmOverloads constructor(
             corners.forEach { (cx, cy) ->
                 handlePaint.color = Color.BLACK
                 canvas.drawCircle(cx, cy, handleRadius, handlePaint)
-                handlePaint.color = color
+                handlePaint.color = identityColor
                 canvas.drawCircle(cx, cy, handleRadius - 5f, handlePaint)
             }
-            labelPaint.color = color
+            labelPaint.color = identityColor
             canvas.drawText(label, r.left + 12f, r.top + 34f, labelPaint)
         }
     }
