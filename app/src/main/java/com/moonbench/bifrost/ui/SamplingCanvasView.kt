@@ -55,8 +55,14 @@ class SamplingCanvasView @JvmOverloads constructor(
             invalidate()
         }
 
-    private val leftColor = Color.rgb(40, 130, 255)
-    private val rightColor = Color.rgb(255, 106, 0)
+    private var leftColor = Color.rgb(40, 130, 255)
+    private var rightColor = Color.rgb(255, 106, 0)
+
+    fun setSampleColors(left: Int, right: Int) {
+        leftColor = left
+        rightColor = right
+        invalidate()
+    }
     private val bgPaint = Paint(Paint.FILTER_BITMAP_FLAG).apply { isFilterBitmap = true }
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val rectPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
