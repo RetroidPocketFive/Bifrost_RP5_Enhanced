@@ -168,16 +168,16 @@ class SamplingCanvasView @JvmOverloads constructor(
         }
 
         if (focus == Focus.BOTH) {
-            drawRegion(canvas, leftRegion, leftColor, "BLUE / LEFT STICK", 255)
-            drawRegion(canvas, rightRegion, rightColor, "ORANGE / RIGHT STICK", 255)
+            drawRegion(canvas, leftRegion, leftColor, "Left", 255)
+            drawRegion(canvas, rightRegion, rightColor, "Right", 255)
         } else {
             val active = if (focus == Focus.LEFT) leftRegion else rightRegion
             val inactive = if (focus == Focus.LEFT) rightRegion else leftRegion
             val activeColor = if (focus == Focus.LEFT) leftColor else rightColor
             val inactiveColor = if (focus == Focus.LEFT) rightColor else leftColor
             drawRegion(canvas, inactive, inactiveColor, "", 80)
-            drawRegion(canvas, active, activeColor, if (focus == Focus.LEFT) "BLUE / LEFT STICK" else "ORANGE / RIGHT STICK", 255)
-            val label = if (focus == Focus.LEFT) "BLUE / LEFT STICK — zoomed editor" else "ORANGE / RIGHT STICK — zoomed editor"
+            drawRegion(canvas, active, activeColor, if (focus == Focus.LEFT) "Left" else "Right", 255)
+            val label = if (focus == Focus.LEFT) "Left — zoomed editor" else "Right — zoomed editor"
             canvas.drawText(label, 18f, 32f, infoPaint)
         }
     }
@@ -198,15 +198,16 @@ class SamplingCanvasView @JvmOverloads constructor(
         canvas.drawRect(r, rectPaint)
 
         if (label.isNotBlank()) {
-            val identityColor = if (label.startsWith("BLUE")) defaultLeftColor else defaultRightColor
+            val identityColor = if (label == "Left") defaultLeftColor else defaultRightColor
             val corners = listOf(
                 r.left to r.top, r.right to r.top,
                 r.left to r.bottom, r.right to r.bottom
             )
             corners.forEach { (cx, cy) ->
-                handlePaint.color = Color.BLACK
-                canvas.drawCircle(cx, cy, handleRadius, handlePaint)
+                // Outer ring identifies the stick; inner fill shows the sampled viewing-area colour.
                 handlePaint.color = identityColor
+                canvas.drawCircle(cx, cy, handleRadius, handlePaint)
+                handlePaint.color = color
                 canvas.drawCircle(cx, cy, handleRadius - 5f, handlePaint)
             }
             labelPaint.color = identityColor
