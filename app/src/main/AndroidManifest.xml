@@ -72,6 +72,11 @@
             android:label="Calibration" />
 
         <activity
+            android:name=".EditSampleAreaActivity"
+            android:exported="false"
+            android:label="Edit Sample Area" />
+
+        <activity
             android:name=".SamplingEditorActivity"
             android:exported="false"
             android:label="Sampling Areas" />
