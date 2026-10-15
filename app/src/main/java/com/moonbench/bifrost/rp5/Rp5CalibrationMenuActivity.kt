@@ -134,6 +134,17 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         })
 
         content.addView(card(
+            "▧",
+            "EDIT SAMPLE AREA",
+            "Create and manage named viewing-area profiles for Ambient colour matching.",
+            "Adjust left and right sample boxes over a live or still image.",
+            "Saved profiles are stored separately from calibration.",
+            listOf("OPEN")
+        ) {
+            startActivity(Intent(this, com.moonbench.bifrost.EditSampleAreaActivity::class.java))
+        })
+
+        content.addView(card(
             "💡",
             "LED COLOUR MATCH",
             "Matches the LED colours to the game screen for accurate colour reproduction.",
