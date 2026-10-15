@@ -164,7 +164,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
                 if (initialSelection) {
                     initialSelection = false
-                    refreshLedColors(feedbackLeft = false, feedbackRight = false, scheduleReset = false)
+                    showDefaultLedColors()
                 } else {
                     refreshLedColors()
                 }
@@ -189,8 +189,8 @@ class EditSampleAreaActivity : AppCompatActivity() {
         }
         root.addView(actions)
         setContentView(root)
-        // Keep default blue/orange outlines on first entry while syncing LEDs to current samples.
-        canvas.post { refreshLedColors(feedbackLeft = false, feedbackRight = false, scheduleReset = false) }
+        // Start with the stick identity colors; sample colors take over after user adjustment.
+        canvas.post { showDefaultLedColors() }
     }
 
     private fun promptSave() {
@@ -401,6 +401,11 @@ class EditSampleAreaActivity : AppCompatActivity() {
         }
         output.setPixels(pixels, 0, size, 0, 0, size, size)
         return output
+    }
+
+    private fun showDefaultLedColors() {
+        handler.removeCallbacks(restoreBoxColors)
+        runLedTest(Color.rgb(40, 130, 255), Color.rgb(255, 106, 0), 5000L, hold = true)
     }
 
     private fun refreshLedColors(
