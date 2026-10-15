@@ -2,6 +2,15 @@ name: Bifrost Android Test APK
 
 'on':
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.gradle'
+      - '**.gradle.kts'
+      - 'gradle/**'
+      - 'app/**'
+      - '.github/workflows/android-build-test.yml'
   pull_request:
     branches:
       - main
