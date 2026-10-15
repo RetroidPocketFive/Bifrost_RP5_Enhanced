@@ -203,10 +203,10 @@ class SamplingCanvasView @JvmOverloads constructor(
                 r.left to r.bottom, r.right to r.bottom
             )
             corners.forEach { (cx, cy) ->
-                handlePaint.color = Color.WHITE
+                handlePaint.color = Color.BLACK
                 canvas.drawCircle(cx, cy, handleRadius, handlePaint)
                 handlePaint.color = color
-                canvas.drawCircle(cx, cy, handleRadius - 7f, handlePaint)
+                canvas.drawCircle(cx, cy, handleRadius - 5f, handlePaint)
             }
             labelPaint.color = color
             canvas.drawText(label, r.left + 12f, r.top + 34f, labelPaint)
