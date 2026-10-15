@@ -55,12 +55,20 @@ class SamplingCanvasView @JvmOverloads constructor(
             invalidate()
         }
 
-    private var leftColor = Color.rgb(40, 130, 255)
-    private var rightColor = Color.rgb(255, 106, 0)
+    private val defaultLeftColor = Color.rgb(40, 130, 255)
+    private val defaultRightColor = Color.rgb(255, 106, 0)
+    private var leftColor = defaultLeftColor
+    private var rightColor = defaultRightColor
 
     fun setSampleColors(left: Int, right: Int) {
         leftColor = left
         rightColor = right
+        invalidate()
+    }
+
+    fun restoreDefaultRegionColors() {
+        leftColor = defaultLeftColor
+        rightColor = defaultRightColor
         invalidate()
     }
     private val bgPaint = Paint(Paint.FILTER_BITMAP_FLAG).apply { isFilterBitmap = true }
@@ -160,15 +168,15 @@ class SamplingCanvasView @JvmOverloads constructor(
         }
 
         if (focus == Focus.BOTH) {
-            drawRegion(canvas, leftRegion, leftColor, "L", 255)
-            drawRegion(canvas, rightRegion, rightColor, "R", 255)
+            drawRegion(canvas, leftRegion, leftColor, "LEFT THUMB STICK", 255)
+            drawRegion(canvas, rightRegion, rightColor, "RIGHT THUMB STICK", 255)
         } else {
             val active = if (focus == Focus.LEFT) leftRegion else rightRegion
             val inactive = if (focus == Focus.LEFT) rightRegion else leftRegion
             val activeColor = if (focus == Focus.LEFT) leftColor else rightColor
             val inactiveColor = if (focus == Focus.LEFT) rightColor else leftColor
             drawRegion(canvas, inactive, inactiveColor, "", 80)
-            drawRegion(canvas, active, activeColor, if (focus == Focus.LEFT) "LEFT" else "RIGHT", 255)
+            drawRegion(canvas, active, activeColor, if (focus == Focus.LEFT) "LEFT THUMB STICK" else "RIGHT THUMB STICK", 255)
             val label = if (focus == Focus.LEFT) "LEFT STICK — zoomed editor" else "RIGHT STICK — zoomed editor"
             canvas.drawText(label, 18f, 32f, infoPaint)
         }
