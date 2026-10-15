@@ -54,6 +54,10 @@ class EditSampleAreaActivity : AppCompatActivity() {
     private var capturePending = false
     private var captureStatus: TextView? = null
     private var activeProfile = ""
+    private val restoreBoxColors = Runnable {
+        if (::canvas.isInitialized && !isFinishing && !isDestroyed) canvas.restoreDefaultRegionColors()
+    }
+    private val boxColorResetDelayMs = 30_000L
 
     private val imagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) loadStill(uri) else if (bitmap == null) {
@@ -389,6 +393,8 @@ class EditSampleAreaActivity : AppCompatActivity() {
         if (bitmap == null || !::canvas.isInitialized || !::modeSpinner.isInitialized) return
         val colors = runCatching { sampleColors() }.getOrElse { Color.rgb(40, 130, 255) to Color.rgb(255, 106, 0) }
         canvas.setSampleColors(colors.first, colors.second)
+        handler.removeCallbacks(restoreBoxColors)
+        handler.postDelayed(restoreBoxColors, boxColorResetDelayMs)
         runLedTest(colors.first, colors.second, 5000L, hold = true)
     }
 
