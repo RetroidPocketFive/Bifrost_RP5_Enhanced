@@ -57,18 +57,28 @@ class SamplingCanvasView @JvmOverloads constructor(
 
     private val defaultLeftColor = Color.rgb(40, 130, 255)
     private val defaultRightColor = Color.rgb(255, 106, 0)
-    private var leftColor = defaultLeftColor
-    private var rightColor = defaultRightColor
+    // Box outlines temporarily show the sampled colour; handle centres retain the
+    // latest sampled colour even after the box outline returns to its identity colour.
+    private var leftBoxColor = defaultLeftColor
+    private var rightBoxColor = defaultRightColor
+    private var leftSampleColor = defaultLeftColor
+    private var rightSampleColor = defaultRightColor
 
     fun setSampleColors(left: Int?, right: Int?) {
-        if (left != null) leftColor = left
-        if (right != null) rightColor = right
+        if (left != null) {
+            leftSampleColor = left
+            leftBoxColor = left
+        }
+        if (right != null) {
+            rightSampleColor = right
+            rightBoxColor = right
+        }
         invalidate()
     }
 
     fun restoreDefaultRegionColors() {
-        leftColor = defaultLeftColor
-        rightColor = defaultRightColor
+        leftBoxColor = defaultLeftColor
+        rightBoxColor = defaultRightColor
         invalidate()
     }
     private val bgPaint = Paint(Paint.FILTER_BITMAP_FLAG).apply { isFilterBitmap = true }
@@ -168,15 +178,17 @@ class SamplingCanvasView @JvmOverloads constructor(
         }
 
         if (focus == Focus.BOTH) {
-            drawRegion(canvas, leftRegion, leftColor, "Left", 255)
-            drawRegion(canvas, rightRegion, rightColor, "Right", 255)
+            drawRegion(canvas, leftRegion, leftBoxColor, leftSampleColor, "Left", 255)
+            drawRegion(canvas, rightRegion, rightBoxColor, rightSampleColor, "Right", 255)
         } else {
             val active = if (focus == Focus.LEFT) leftRegion else rightRegion
             val inactive = if (focus == Focus.LEFT) rightRegion else leftRegion
-            val activeColor = if (focus == Focus.LEFT) leftColor else rightColor
-            val inactiveColor = if (focus == Focus.LEFT) rightColor else leftColor
-            drawRegion(canvas, inactive, inactiveColor, "", 80)
-            drawRegion(canvas, active, activeColor, if (focus == Focus.LEFT) "Left" else "Right", 255)
+            val activeColor = if (focus == Focus.LEFT) leftBoxColor else rightBoxColor
+            val inactiveColor = if (focus == Focus.LEFT) rightBoxColor else leftBoxColor
+            val activeSampleColor = if (focus == Focus.LEFT) leftSampleColor else rightSampleColor
+            val inactiveSampleColor = if (focus == Focus.LEFT) rightSampleColor else leftSampleColor
+            drawRegion(canvas, inactive, inactiveColor, inactiveSampleColor, "", 80)
+            drawRegion(canvas, active, activeColor, activeSampleColor, if (focus == Focus.LEFT) "Left" else "Right", 255)
             val label = if (focus == Focus.LEFT) "Left — zoomed editor" else "Right — zoomed editor"
             canvas.drawText(label, 18f, 32f, infoPaint)
         }
@@ -186,6 +198,7 @@ class SamplingCanvasView @JvmOverloads constructor(
         canvas: Canvas,
         region: SamplingRegion,
         color: Int,
+        sampleColor: Int,
         label: String,
         alpha: Int
     ) {
@@ -207,7 +220,7 @@ class SamplingCanvasView @JvmOverloads constructor(
                 // Outer ring identifies the stick; inner fill shows the sampled viewing-area colour.
                 handlePaint.color = identityColor
                 canvas.drawCircle(cx, cy, handleRadius, handlePaint)
-                handlePaint.color = color
+                handlePaint.color = sampleColor
                 canvas.drawCircle(cx, cy, handleRadius - 5f, handlePaint)
             }
             labelPaint.color = identityColor
