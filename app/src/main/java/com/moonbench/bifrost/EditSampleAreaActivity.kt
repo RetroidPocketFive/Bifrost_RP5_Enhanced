@@ -57,7 +57,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
     private val restoreBoxColors = Runnable {
         if (::canvas.isInitialized && !isFinishing && !isDestroyed) canvas.restoreDefaultRegionColors()
     }
-    private val boxColorResetDelayMs = 30_000L
+    private val boxColorResetDelayMs = 5_000L
 
     private val imagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) loadStill(uri) else if (bitmap == null) {
@@ -133,9 +133,16 @@ class EditSampleAreaActivity : AppCompatActivity() {
             backgroundBitmap = bitmap
             setRegions(SamplingRegion.RP5_LEFT_DEFAULT, SamplingRegion.RP5_RIGHT_DEFAULT)
             listener = object : SamplingCanvasView.OnRegionsChangedListener {
+                private var previousLeft = SamplingRegion.RP5_LEFT_DEFAULT
+                private var previousRight = SamplingRegion.RP5_RIGHT_DEFAULT
+
                 override fun onRegionsChanged(left: SamplingRegion, right: SamplingRegion) {
-                    // Keep each physical stick lit with the colour sampled from its current box.
-                    refreshLedColors()
+                    // Only the box being adjusted gets temporary sampled-colour feedback.
+                    val leftChanged = left != previousLeft
+                    val rightChanged = right != previousRight
+                    previousLeft = left
+                    previousRight = right
+                    refreshLedColors(feedbackLeft = leftChanged, feedbackRight = rightChanged)
                 }
             }
         }
@@ -153,8 +160,14 @@ class EditSampleAreaActivity : AppCompatActivity() {
         }
         root.addView(modeSpinner, LinearLayout.LayoutParams(-1, dp(48)).apply { bottomMargin = dp(8) })
         modeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            private var initialSelection = true
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
-                refreshLedColors()
+                if (initialSelection) {
+                    initialSelection = false
+                    refreshLedColors(feedbackLeft = false, feedbackRight = false, scheduleReset = false)
+                } else {
+                    refreshLedColors()
+                }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
         }
@@ -176,7 +189,8 @@ class EditSampleAreaActivity : AppCompatActivity() {
         }
         root.addView(actions)
         setContentView(root)
-        canvas.post { refreshLedColors() }
+        // Keep default blue/orange outlines on first entry while syncing LEDs to current samples.
+        canvas.post { refreshLedColors(feedbackLeft = false, feedbackRight = false, scheduleReset = false) }
     }
 
     private fun promptSave() {
@@ -389,12 +403,21 @@ class EditSampleAreaActivity : AppCompatActivity() {
         return output
     }
 
-    private fun refreshLedColors() {
+    private fun refreshLedColors(
+        feedbackLeft: Boolean = true,
+        feedbackRight: Boolean = true,
+        scheduleReset: Boolean = true
+    ) {
         if (bitmap == null || !::canvas.isInitialized || !::modeSpinner.isInitialized) return
         val colors = runCatching { sampleColors() }.getOrElse { Color.rgb(40, 130, 255) to Color.rgb(255, 106, 0) }
-        canvas.setSampleColors(colors.first, colors.second)
+        if (feedbackLeft || feedbackRight) {
+            canvas.setSampleColors(
+                if (feedbackLeft) colors.first else null,
+                if (feedbackRight) colors.second else null
+            )
+        }
         handler.removeCallbacks(restoreBoxColors)
-        handler.postDelayed(restoreBoxColors, boxColorResetDelayMs)
+        if (scheduleReset) handler.postDelayed(restoreBoxColors, boxColorResetDelayMs)
         runLedTest(colors.first, colors.second, 5000L, hold = true)
     }
 
