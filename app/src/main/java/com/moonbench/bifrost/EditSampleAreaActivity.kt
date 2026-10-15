@@ -33,6 +33,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
         const val EXTRA_SOURCE = "edit_sample_area.source"
         const val SOURCE_LIVE = "live"
         const val SOURCE_STILL = "still"
+        const val SOURCE_COLOR_WHEEL = "color_wheel"
         private const val PREFS = "bifrost_edit_sample_area_profiles"
         private const val KEY_NAMES = "profile_names"
         private const val KEY_ACTIVE = "active_profile"
@@ -51,6 +52,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
     private lateinit var modeSpinner: Spinner
     private var bitmap: Bitmap? = null
     private var capturePending = false
+    private var captureStatus: TextView? = null
     private var activeProfile = ""
 
     private val imagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -67,6 +69,10 @@ class EditSampleAreaActivity : AppCompatActivity() {
         when (intent.getStringExtra(EXTRA_SOURCE)) {
             SOURCE_LIVE -> { showCaptureWaiting(); startLiveCapture() }
             SOURCE_STILL -> { showCaptureWaiting(); imagePicker.launch("image/*") }
+            SOURCE_COLOR_WHEEL -> {
+                bitmap = createColorWheelBitmap(720)
+                showEditor()
+            }
             else -> showSourceChooser()
         }
     }
@@ -83,6 +89,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
             addView(TextView(this@EditSampleAreaActivity).apply {
                 text = "Preparing image…"; textSize = 14f; setTextColor(secondaryText); gravity = Gravity.CENTER
                 setPadding(0, dp(12), 0, 0)
+                captureStatus = this
             })
         })
     }
@@ -224,8 +231,9 @@ class EditSampleAreaActivity : AppCompatActivity() {
 
     private fun sampleColors(): Pair<Int, Int> {
         val bmp = bitmap ?: return Color.BLACK to Color.BLACK
-        val left = if (modeSpinner.selectedItemPosition == 0) SamplingRegion.LEFT_HALF else canvas.leftRegion
-        val right = if (modeSpinner.selectedItemPosition == 0) SamplingRegion.RIGHT_HALF else canvas.rightRegion
+        // Always sample the exact regions shown by the draggable boxes.
+        val left = canvas.leftRegion
+        val right = canvas.rightRegion
         fun sample(region: SamplingRegion, dominant: Boolean, weighted: Boolean): Int {
             val x0 = (region.left * bmp.width).toInt().coerceIn(0, bmp.width - 1)
             val x1 = (region.right * bmp.width).toInt().coerceIn(x0 + 1, bmp.width)
@@ -296,12 +304,33 @@ class EditSampleAreaActivity : AppCompatActivity() {
         val service = BifrostAccessibilityService.instance
         if (service == null || !BifrostAccessibilityService.isEnabled(service)) {
             Toast.makeText(this, "Enable Bifrost accessibility service before using LIVE IMAGE.", Toast.LENGTH_LONG).show()
+            showSourceChooser()
             return
         }
         if (capturePending) return
         capturePending = true
-        Toast.makeText(this, "Capturing in 5 seconds — switch to your game now.", Toast.LENGTH_LONG).show()
-        handler.postDelayed({ captureScreen(service) }, 5000L)
+        var secondsLeft = 5
+        captureStatus?.text = "Switch to your game now. Capturing in 5…"
+        val countdown = object : Runnable {
+            override fun run() {
+                if (!capturePending || isFinishing || isDestroyed) return
+                secondsLeft--
+                if (secondsLeft > 0) {
+                    captureStatus?.text = "Switch to your game now. Capturing in $secondsLeft…"
+                    handler.postDelayed(this, 1000L)
+                }
+            }
+        }
+        handler.postDelayed(countdown, 1000L)
+        handler.postDelayed({ if (capturePending) captureScreen(service) }, 5000L)
+        handler.postDelayed({
+            if (capturePending && !isFinishing && !isDestroyed) {
+                capturePending = false
+                captureStatus = null
+                Toast.makeText(this, "Live capture timed out. Try again or use STILL IMAGE.", Toast.LENGTH_LONG).show()
+                showSourceChooser()
+            }
+        }, 15000L)
     }
 
     private fun captureScreen(service: AccessibilityService) {
@@ -310,6 +339,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
             service.takeScreenshot(android.view.Display.DEFAULT_DISPLAY, Executor { runOnUiThread(it) }, object : AccessibilityService.TakeScreenshotCallback {
                 override fun onSuccess(screenshot: AccessibilityService.ScreenshotResult) {
                     capturePending = false
+                    captureStatus = null
                     try {
                         val hardware = Bitmap.wrapHardwareBuffer(screenshot.hardwareBuffer, screenshot.colorSpace)
                         screenshot.hardwareBuffer.close()
@@ -327,12 +357,38 @@ class EditSampleAreaActivity : AppCompatActivity() {
                     showSourceChooser()
                 }
             })
-        } catch (e: Exception) { capturePending = false; Toast.makeText(this, "Capture unavailable: ${e.message}", Toast.LENGTH_LONG).show(); showSourceChooser() }
+        } catch (e: Exception) { capturePending = false; captureStatus = null; Toast.makeText(this, "Capture unavailable: ${e.message}", Toast.LENGTH_LONG).show(); showSourceChooser() }
+    }
+
+    private fun createColorWheelBitmap(size: Int): Bitmap {
+        val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val pixels = IntArray(size * size)
+        val center = (size - 1) / 2f
+        val radius = center * 0.96f
+        val hsv = floatArrayOf(0f, 1f, 1f)
+        for (y in 0 until size) {
+            for (x in 0 until size) {
+                val dx = x - center
+                val dy = y - center
+                val distance = kotlin.math.sqrt(dx * dx + dy * dy)
+                val index = y * size + x
+                if (distance > radius) {
+                    pixels[index] = Color.TRANSPARENT
+                } else {
+                    hsv[0] = ((Math.toDegrees(kotlin.math.atan2(dy.toDouble(), dx.toDouble())) + 360.0) % 360.0).toFloat()
+                    hsv[1] = (distance / radius).coerceIn(0f, 1f)
+                    pixels[index] = Color.HSVToColor(hsv)
+                }
+            }
+        }
+        output.setPixels(pixels, 0, size, 0, 0, size, size)
+        return output
     }
 
     private fun refreshLedColors() {
         if (bitmap == null || !::canvas.isInitialized || !::modeSpinner.isInitialized) return
         val colors = runCatching { sampleColors() }.getOrElse { Color.rgb(40, 130, 255) to Color.rgb(255, 106, 0) }
+        canvas.setSampleColors(colors.first, colors.second)
         runLedTest(colors.first, colors.second, 5000L, hold = true)
     }
 
