@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
 import android.view.WindowManager
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -29,6 +30,9 @@ import java.util.concurrent.Executor
 /** Standalone profile editor. Intentionally does not read or write calibration SamplingRegionStore. */
 class EditSampleAreaActivity : AppCompatActivity() {
     companion object {
+        const val EXTRA_SOURCE = "edit_sample_area.source"
+        const val SOURCE_LIVE = "live"
+        const val SOURCE_STILL = "still"
         private const val PREFS = "bifrost_edit_sample_area_profiles"
         private const val KEY_NAMES = "profile_names"
         private const val KEY_ACTIVE = "active_profile"
@@ -50,7 +54,9 @@ class EditSampleAreaActivity : AppCompatActivity() {
     private var activeProfile = ""
 
     private val imagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        if (uri != null) loadStill(uri) else if (bitmap == null) showSourceChooser()
+        if (uri != null) loadStill(uri) else if (bitmap == null) {
+            if (intent.hasExtra(EXTRA_SOURCE)) finish() else showSourceChooser()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,7 +64,27 @@ class EditSampleAreaActivity : AppCompatActivity() {
         window.statusBarColor = bg
         window.navigationBarColor = bg
         window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        showSourceChooser()
+        when (intent.getStringExtra(EXTRA_SOURCE)) {
+            SOURCE_LIVE -> { showCaptureWaiting(); startLiveCapture() }
+            SOURCE_STILL -> { showCaptureWaiting(); imagePicker.launch("image/*") }
+            else -> showSourceChooser()
+        }
+    }
+
+    private fun showCaptureWaiting() {
+        setContentView(LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(dp(24), dp(24), dp(24), dp(24))
+            setBackgroundColor(bg)
+            addView(TextView(this@EditSampleAreaActivity).apply {
+                text = "EDIT SAMPLE AREA"; textSize = 26f; setTextColor(primaryText); gravity = Gravity.CENTER
+            })
+            addView(TextView(this@EditSampleAreaActivity).apply {
+                text = "Preparing image…"; textSize = 14f; setTextColor(secondaryText); gravity = Gravity.CENTER
+                setPadding(0, dp(12), 0, 0)
+            })
+        })
     }
 
     private fun showSourceChooser() {
@@ -97,8 +123,8 @@ class EditSampleAreaActivity : AppCompatActivity() {
             setRegions(SamplingRegion.RP5_LEFT_DEFAULT, SamplingRegion.RP5_RIGHT_DEFAULT)
             listener = object : SamplingCanvasView.OnRegionsChangedListener {
                 override fun onRegionsChanged(left: SamplingRegion, right: SamplingRegion) {
-                    // Identify each physical stick while its region is being adjusted.
-                    runLedTest(Color.rgb(40, 130, 255), Color.rgb(255, 130, 30), 450L)
+                    // Keep each physical stick lit with the colour sampled from its current box.
+                    refreshLedColors()
                 }
             }
         }
@@ -115,6 +141,12 @@ class EditSampleAreaActivity : AppCompatActivity() {
             setBackgroundColor(surface)
         }
         root.addView(modeSpinner, LinearLayout.LayoutParams(-1, dp(48)).apply { bottomMargin = dp(8) })
+        modeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
+                refreshLedColors()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+        }
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER; weightSum = 4f }
         listOf("SAVE", "EDIT", "RESET", "EXIT").forEach { label ->
             val button = MaterialButton(this).apply {
@@ -133,7 +165,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
         }
         root.addView(actions)
         setContentView(root)
-        canvas.post { runLedTest(Color.rgb(40, 130, 255), Color.rgb(255, 130, 30), 450L) }
+        canvas.post { refreshLedColors() }
     }
 
     private fun promptSave() {
@@ -298,18 +330,25 @@ class EditSampleAreaActivity : AppCompatActivity() {
         } catch (e: Exception) { capturePending = false; Toast.makeText(this, "Capture unavailable: ${e.message}", Toast.LENGTH_LONG).show(); showSourceChooser() }
     }
 
-    private fun runLedTest(left: Int, right: Int, duration: Long) {
+    private fun refreshLedColors() {
+        if (bitmap == null || !::canvas.isInitialized || !::modeSpinner.isInitialized) return
+        val colors = runCatching { sampleColors() }.getOrElse { Color.rgb(40, 130, 255) to Color.rgb(255, 106, 0) }
+        runLedTest(colors.first, colors.second, 5000L, hold = true)
+    }
+
+    private fun runLedTest(left: Int, right: Int, duration: Long, hold: Boolean = false) {
         val intent = Intent(this, LEDService::class.java).apply {
             action = LEDService.ACTION_RP5_LED_TEST
             putExtra(LEDService.EXTRA_RP5_LEFT_COLOR, left and 0xFFFFFF)
             putExtra(LEDService.EXTRA_RP5_RIGHT_COLOR, right and 0xFFFFFF)
             putExtra(LEDService.EXTRA_RP5_TEST_DURATION_MS, duration)
+            putExtra(LEDService.EXTRA_RP5_TEST_HOLD, hold)
             putExtra(LEDService.EXTRA_RP5_TEST_BYPASS_CALIBRATION, true)
         }
         runCatching { startService(intent) }.onFailure { Toast.makeText(this, "Could not update thumb-stick LEDs. Check LED control is enabled.", Toast.LENGTH_LONG).show() }
     }
 
-    private fun clearLeds() = runLedTest(Color.BLACK, Color.BLACK, 250L)
+    private fun clearLeds() = runLedTest(Color.BLACK, Color.BLACK, 250L, hold = false)
     private fun addButton(parent: LinearLayout, title: String, description: String, action: () -> Unit) {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(12), dp(16), dp(12)); setBackgroundColor(panel) }
         box.addView(TextView(this).apply { text = title; textSize = 16f; setTextColor(primaryText) })
@@ -318,5 +357,11 @@ class EditSampleAreaActivity : AppCompatActivity() {
         parent.addView(box, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
     }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
-    override fun onDestroy() { handler.removeCallbacksAndMessages(null); bitmap?.recycle(); bitmap = null; super.onDestroy() }
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        clearLeds()
+        bitmap?.recycle()
+        bitmap = null
+        super.onDestroy()
+    }
 }
