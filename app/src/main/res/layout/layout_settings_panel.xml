@@ -1227,7 +1227,19 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center"
-                        android:weightSum="2">
+                        android:weightSum="3">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/editSampleAreaColorWheelButton"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="4dp"
+                            android:text="COLOR WHEEL"
+                            android:textSize="11sp"
+                            android:contentDescription="Edit sample area using a colour wheel"
+                            android:tooltipText="Use a generated colour wheel to test sampled colours" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/editSampleAreaLiveButton"
@@ -1235,7 +1247,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginEnd="4dp"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginEnd="2dp"
                             android:text="LIVE IMAGE"
                             android:textSize="12sp"
                             android:contentDescription="Edit sample area using a live screen capture"
@@ -1247,7 +1260,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginStart="4dp"
+                            android:layout_marginStart="2dp"
                             android:text="STILL IMAGE"
                             android:textSize="12sp"
                             android:contentDescription="Edit sample area using a still image"
