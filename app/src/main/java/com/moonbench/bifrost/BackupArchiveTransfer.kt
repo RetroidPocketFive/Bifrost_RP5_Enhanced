@@ -19,6 +19,11 @@ object BackupArchiveTransfer {
     private const val MANIFEST_ENTRY_NAME = "manifest.json"
     private const val PREFS_ENTRY_NAME = "prefs.json"
     private const val ICONS_DIR_PREFIX = "icons/"
+    // Bound untrusted archive processing to avoid memory exhaustion from oversized ZIPs.
+    private const val MAX_ARCHIVE_ENTRIES = 256
+    private const val MAX_ENTRY_BYTES = 8 * 1024 * 1024
+    private const val MAX_TOTAL_UNCOMPRESSED_BYTES = 32 * 1024 * 1024
+    private val SAFE_ICON_NAME = Regex("[A-Za-z0-9._-]{1,180}")
     private val THEME_PREF_KEYS = setOf(
         "selected_ui_theme",
         "colored_logo_enabled"
@@ -158,22 +163,63 @@ object BackupArchiveTransfer {
         val errors = mutableListOf<String>()
 
         val zipEntries = mutableMapOf<String, ByteArray>()
+        var totalUncompressedBytes = 0L
+        var archiveError: String? = null
         cancelSignal?.throwIfCanceled()
         context.contentResolver.openInputStream(uri)?.use { input ->
             ZipInputStream(input.buffered()).use { zip ->
+                var entryCount = 0
                 while (true) {
                     cancelSignal?.throwIfCanceled()
                     val entry = zip.nextEntry ?: break
+                    entryCount++
+                    if (entryCount > MAX_ARCHIVE_ENTRIES) {
+                        archiveError = "Archive contains too many entries."
+                        break
+                    }
                     if (entry.isDirectory) {
                         zip.closeEntry()
                         continue
                     }
 
+                    val name = entry.name
+                    val allowedName = name == MANIFEST_ENTRY_NAME ||
+                        name == PREFS_ENTRY_NAME ||
+                        (name.startsWith(ICONS_DIR_PREFIX) &&
+                            !name.removePrefix(ICONS_DIR_PREFIX).contains('/') &&
+                            SAFE_ICON_NAME.matches(name.removePrefix(ICONS_DIR_PREFIX)))
+                    if (!allowedName) {
+                        archiveError = "Archive contains an unsupported or unsafe entry name."
+                        break
+                    }
+                    if (name in zipEntries) {
+                        archiveError = "Archive contains duplicate entries."
+                        break
+                    }
+
                     val data = ByteArrayOutputStream().use { output ->
-                        zip.copyTo(output)
+                        val buffer = ByteArray(8192)
+                        var entryBytes = 0
+                        while (true) {
+                            cancelSignal?.throwIfCanceled()
+                            val count = zip.read(buffer)
+                            if (count < 0) break
+                            entryBytes += count
+                            totalUncompressedBytes += count
+                            if (entryBytes > MAX_ENTRY_BYTES) {
+                                archiveError = "Archive entry exceeds the 8 MiB safety limit."
+                                break
+                            }
+                            if (totalUncompressedBytes > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+                                archiveError = "Archive exceeds the 32 MiB uncompressed safety limit."
+                                break
+                            }
+                            output.write(buffer, 0, count)
+                        }
                         output.toByteArray()
                     }
-                    zipEntries[entry.name] = data
+                    if (archiveError != null) break
+                    zipEntries[name] = data
                     zip.closeEntry()
                 }
             }
@@ -184,6 +230,16 @@ object BackupArchiveTransfer {
             warnings = emptyList(),
             errors = listOf("Unable to read selected file.")
         )
+
+        if (archiveError != null) {
+            return ImportResult(
+                preferenceCount = 0,
+                iconCount = 0,
+                appliedOptions = options,
+                warnings = emptyList(),
+                errors = listOf(archiveError!!)
+            )
+        }
 
         val manifestRaw = zipEntries[MANIFEST_ENTRY_NAME]
             ?: return ImportResult(
