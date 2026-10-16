@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -122,6 +123,9 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             }
         }
         layout.addView(statusText)
-        setContentView(layout)
+        setContentView(ScrollView(this).apply {
+            isFillViewport = true
+            addView(layout)
+        })
     }
 }
