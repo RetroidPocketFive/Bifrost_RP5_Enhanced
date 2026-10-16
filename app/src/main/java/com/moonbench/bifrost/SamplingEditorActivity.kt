@@ -2,6 +2,7 @@ package com.moonbench.bifrost
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
+import android.text.InputType
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
 import android.graphics.Color
@@ -16,6 +17,7 @@ import android.widget.TextView
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
@@ -142,6 +144,13 @@ class SamplingEditorActivity : AppCompatActivity() {
             showEditor(0)
             importImageLauncher.launch("image/*")
         }
+
+        findViewById<MaterialButton>(R.id.btnSaveSampleAreaProfile).setOnClickListener {
+            promptSaveSampleAreaProfile()
+        }
+        findViewById<MaterialButton>(R.id.btnLoadSampleAreaProfile).setOnClickListener {
+            showSampleAreaProfilePicker()
+        }
         findViewById<MaterialButton>(R.id.btnRecapture).setOnClickListener {
             startDelayedCapture()
         }
@@ -256,6 +265,71 @@ class SamplingEditorActivity : AppCompatActivity() {
                 importImageLauncher.launch("image/*")
             }
         }
+    }
+
+    private fun promptSaveSampleAreaProfile() {
+        val nameInput = android.widget.EditText(this).apply {
+            hint = "Profile name"
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            setSingleLine(true)
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.GRAY)
+            val padding = (16 * resources.displayMetrics.density).toInt()
+            setPadding(padding, padding, padding, padding)
+        }
+        val container = android.widget.FrameLayout(this).apply {
+            val padding = (20 * resources.displayMetrics.density).toInt()
+            setPadding(padding, 0, padding, 0)
+            addView(nameInput)
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Save Sample Area Profile")
+            .setMessage("Save the current left and right sampling regions under a name. Saving an existing name replaces that profile.")
+            .setView(container)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Save", null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                val name = nameInput.text.toString().trim()
+                if (name.isEmpty() || name.length > 64) {
+                    nameInput.error = "Enter a name of 1–64 characters"
+                    return@setOnClickListener
+                }
+                val saved = SampleAreaProfileStore.save(this, name, canvas.leftRegion, canvas.rightRegion)
+                if (saved) {
+                    Toast.makeText(this, "Sample Area profile saved: " + name, Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                } else {
+                    nameInput.error = "Could not save profile. The library may contain 100 profiles."
+                }
+            }
+        }
+        dialog.show()
+    }
+
+    private fun showSampleAreaProfilePicker() {
+        val profiles = SampleAreaProfileStore.list(this)
+        if (profiles.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Saved Sample Area Profiles")
+                .setMessage("No saved profiles yet. Adjust the sampling regions, then choose SAVE SAMPLE AREA PROFILE.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+        val names = profiles.map { it.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Load Sample Area Profile")
+            .setItems(names) { _, which ->
+                val profile = profiles[which]
+                canvas.setRegions(profile.left, profile.right, notify = true)
+                SamplingRegionStore.setRegions(this, profile.left, profile.right)
+                SamplingRegionStore.setEnabled(this, true)
+                Toast.makeText(this, "Loaded and applied Sample Area profile: " + profile.name, Toast.LENGTH_LONG).show()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showChooser() {
