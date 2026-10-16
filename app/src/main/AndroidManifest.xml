@@ -82,6 +82,11 @@
             android:label="Sampling Areas" />
 
         <activity
+            android:name=".BifrostLibrarySettingsActivity"
+            android:exported="false"
+            android:label="Library &amp; Import/Export" />
+
+        <activity
             android:name=".StartupGuideActivity"
             android:exported="false" />
 
