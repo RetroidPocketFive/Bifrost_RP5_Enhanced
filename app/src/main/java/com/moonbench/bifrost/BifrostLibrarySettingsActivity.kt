@@ -13,6 +13,24 @@ import com.google.android.material.button.MaterialButton
 class BifrostLibrarySettingsActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
 
+    private val exportSampleAreas = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        runCatching { SampleAreaProfileTransfer.exportToUri(this, uri) }
+            .onSuccess { count -> statusText.text = "Export complete: $count Sample Area profile(s). Active sampling and calibration were not changed." }
+            .onFailure { error -> statusText.text = "Export failed: ${error.localizedMessage ?: "unknown error"}" }
+    }
+
+    private val importSampleAreas = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        runCatching { SampleAreaProfileTransfer.importFromUri(this, uri) }
+            .onSuccess { result -> statusText.text = "Import complete: ${result.importedCount} Sample Area profile(s) imported or replaced. They were saved but not activated." }
+            .onFailure { error -> statusText.text = "Import failed: ${error.localizedMessage ?: "unknown error"}" }
+    }
+
     private val folderPicker = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
@@ -59,6 +77,19 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
         layout.addView(MaterialButton(this).apply {
             text = "Choose Library Folder"
             setOnClickListener { folderPicker.launch(BifrostLibraryStorage.getRememberedRoot(this@BifrostLibrarySettingsActivity)) }
+        })
+        layout.addView(MaterialButton(this).apply {
+            text = "Export Sample Area Profiles (JSON)"
+            setOnClickListener { exportSampleAreas.launch("bifrost_sample_area_profiles.json") }
+        })
+        layout.addView(MaterialButton(this).apply {
+            text = "Import Sample Area Profiles (JSON)"
+            setOnClickListener { importSampleAreas.launch(arrayOf("application/json", "text/*")) }
+        })
+        layout.addView(TextView(this).apply {
+            text = "Import merges profiles by name and validates the entire file before saving. It does not activate imported regions or change LED calibration."
+            textSize = 13f
+            setPadding(0, padding / 3, 0, padding / 2)
         })
         layout.addView(MaterialButton(this).apply {
             text = "Check / Repair Folder Layout"
