@@ -58,6 +58,32 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
         }
     }
 
+    private val exportSampleAreasLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            runCatching { SampleAreaProfileTransfer.exportToUri(this, uri) }
+                .onSuccess { count ->
+                    statusText.text = "Export complete: $count Sample Area profile(s).\\nActive sampling and calibration were not changed."
+                    Toast.makeText(this, "Sample Area profiles exported", Toast.LENGTH_SHORT).show()
+                }
+                .onFailure { error ->
+                    statusText.text = "Export failed: ${error.localizedMessage ?: "unknown error"}"
+                }
+        }
+
+    private val importSampleAreasLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            runCatching { SampleAreaProfileTransfer.importFromUri(this, uri) }
+                .onSuccess { result ->
+                    statusText.text = "Import complete: ${result.importedCount} profile(s) imported or updated.\\nOther saved profiles were preserved. Active sampling and calibration were not changed."
+                    Toast.makeText(this, "Sample Area profiles imported", Toast.LENGTH_LONG).show()
+                }
+                .onFailure { error ->
+                    statusText.text = "Import failed: ${error.localizedMessage ?: "unknown error"}"
+                }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -108,6 +134,19 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
                     }
                 }
             }
+        })
+        layout.addView(MaterialButton(this).apply {
+            text = "Export Sample Area Profiles"
+            setOnClickListener { exportSampleAreasLauncher.launch("Bifrost-Sample-Area-Profiles.json") }
+        })
+        layout.addView(MaterialButton(this).apply {
+            text = "Import Sample Area Profiles"
+            setOnClickListener { importSampleAreasLauncher.launch(arrayOf("application/json", "text/json", "text/plain")) }
+        })
+        layout.addView(TextView(this).apply {
+            text = "Sample Area imports merge by profile name. They never activate a profile or change LED calibration. Import only JSON files exported by Bifrost."
+            textSize = 13f
+            setPadding(0, padding / 2, 0, padding / 2)
         })
         layout.addView(MaterialButton(this).apply {
             text = "Back"
