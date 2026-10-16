@@ -7,6 +7,7 @@ on:
       - "v3/**"
       - "v4/**"
       - "v5/**"
+      - "feature/bifrost-library-management"
     tags:
       - "v*.*.*"
   pull_request:
