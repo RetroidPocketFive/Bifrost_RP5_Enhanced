@@ -949,9 +949,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupHomeSurface() {
         bifrostLogoView.setOnClickListener { openSettingsOverlay() }
         bifrostTitleText.setOnClickListener { openSettingsOverlay() }
-        homeSettingsButton.setOnClickListener {
-            startActivity(Intent(this, BifrostLibrarySettingsActivity::class.java))
-        }
+        homeSettingsButton.setOnClickListener { openSettingsOverlay() }
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
         }
