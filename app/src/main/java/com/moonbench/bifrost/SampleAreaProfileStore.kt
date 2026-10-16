@@ -67,4 +67,19 @@ object SampleAreaProfileStore {
         }
         return array.toString()
     }
+
+    /** Atomically replaces the saved library after validating all names and the profile limit. */
+    fun replaceAll(context: Context, profiles: List<Profile>): Boolean {
+        if (profiles.size > MAX_PROFILES) return false
+        val seen = mutableSetOf<String>()
+        val clean = mutableListOf<Profile>()
+        for (profile in profiles) {
+            val name = profile.name.trim()
+            val key = name.lowercase()
+            if (name.isEmpty() || name.length > MAX_NAME_LENGTH || !seen.add(key)) return false
+            clean += Profile(name, profile.left.clamped(), profile.right.clamped())
+        }
+        return preferences(context).edit().putString(KEY_PROFILES, encode(clean)).commit()
+    }
+
 }
