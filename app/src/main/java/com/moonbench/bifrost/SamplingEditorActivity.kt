@@ -151,6 +151,9 @@ class SamplingEditorActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnLoadSampleAreaProfile).setOnClickListener {
             showSampleAreaProfilePicker()
         }
+        findViewById<MaterialButton>(R.id.btnManageSampleAreaProfiles).setOnClickListener {
+            showSampleAreaProfileManager()
+        }
         findViewById<MaterialButton>(R.id.btnRecapture).setOnClickListener {
             startDelayedCapture()
         }
@@ -329,6 +332,52 @@ class SamplingEditorActivity : AppCompatActivity() {
                 Toast.makeText(this, "Loaded and applied Sample Area profile: " + profile.name, Toast.LENGTH_LONG).show()
             }
             .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showSampleAreaProfileManager() {
+        val profiles = SampleAreaProfileStore.list(this)
+        if (profiles.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Manage Sample Area Profiles")
+                .setMessage("There are no saved Sample Area profiles to manage.")
+                .setPositiveButton("OK", null)
+                .show()
+            return
+        }
+        val names = profiles.map { it.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Manage Sample Area Profiles")
+            .setItems(names) { _, which ->
+                val selected = profiles[which]
+                AlertDialog.Builder(this)
+                    .setTitle(selected.name)
+                    .setMessage("Choose an action for this saved pair of left and right sampling regions.")
+                    .setPositiveButton("Load") { _, _ ->
+                        canvas.setRegions(selected.left, selected.right, notify = true)
+                        SamplingRegionStore.setRegions(this, selected.left, selected.right)
+                        SamplingRegionStore.setEnabled(this, true)
+                        Toast.makeText(this, "Loaded and applied: " + selected.name, Toast.LENGTH_LONG).show()
+                    }
+                    .setNeutralButton("Delete") { _, _ ->
+                        AlertDialog.Builder(this)
+                            .setTitle("Delete Sample Area Profile?")
+                            .setMessage("Delete \"" + selected.name + "\"? This does not change the currently active sampling areas.")
+                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton("Delete") { _, _ ->
+                                val deleted = SampleAreaProfileStore.delete(this, selected.name)
+                                Toast.makeText(
+                                    this,
+                                    if (deleted) "Deleted: " + selected.name else "Could not delete profile.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            .show()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+            .setNegativeButton("Close", null)
             .show()
     }
 
