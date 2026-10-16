@@ -697,6 +697,9 @@ class MainActivity : AppCompatActivity() {
         homeContainer = findViewById(R.id.homeContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
+        findViewById<MaterialButton>(R.id.openLibrarySettingsButton).setOnClickListener {
+            startActivity(Intent(this, BifrostLibrarySettingsActivity::class.java))
+        }
         homeExitButton = findViewById<MaterialButton?>(R.id.homeExitButton)
             ?: MaterialButton(this).apply {
                 id = R.id.homeExitButton
