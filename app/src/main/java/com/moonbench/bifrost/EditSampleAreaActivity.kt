@@ -243,8 +243,10 @@ class EditSampleAreaActivity : AppCompatActivity() {
         canvas.setRegions(SamplingRegion.RP5_LEFT_DEFAULT, SamplingRegion.RP5_RIGHT_DEFAULT)
         modeSpinner.setSelection(0)
         activeProfile = ""
-        runLedTest(Color.rgb(40, 130, 255), Color.rgb(255, 130, 30), 450L)
-        Toast.makeText(this, "Viewing area and method reset to defaults.", Toast.LENGTH_SHORT).show()
+        // Reset should return to the same held identity colours used on editor startup,
+        // not a short test pulse that clears the LEDs after 450ms.
+        showDefaultLedColors()
+        Toast.makeText(this, "Viewing area, method, and LED preview reset to defaults.", Toast.LENGTH_SHORT).show()
     }
 
     private fun sampleColors(): Pair<Int, Int> {
