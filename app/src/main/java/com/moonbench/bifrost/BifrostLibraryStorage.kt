@@ -3,20 +3,19 @@ package com.moonbench.bifrost
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
-import android.webkit.MimeTypeMap
 import java.io.IOException
 
 /**
  * SAF-backed folder layout for user-managed Bifrost exports.
  *
- * This class deliberately does not request broad storage permissions and never
- * deletes existing files. The calling Activity is responsible for launching
- * ACTION_OPEN_DOCUMENT_TREE and taking the persistable URI permission when
- * Android grants it.
+ * The caller launches ACTION_OPEN_DOCUMENT_TREE and persists the granted URI
+ * permission. This helper never requests broad storage permissions and never
+ * deletes existing files.
  */
 object BifrostLibraryStorage {
     private const val PREFS_NAME = "bifrost_library_storage"
     private const val KEY_TREE_URI = "tree_uri"
+    private const val BIFROST_DIRECTORY = "Bifrost"
     private const val DIRECTORY_MIME = DocumentsContract.Document.MIME_TYPE_DIR
 
     val directoryLayout: List<String> = listOf(
@@ -44,7 +43,7 @@ object BifrostLibraryStorage {
         val warnings: List<String>
     )
 
-    /** Save the user-selected SAF tree URI after permission has been granted. */
+    /** Save the user-selected parent tree URI after permission has been granted. */
     fun rememberRoot(context: Context, treeUri: Uri) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
@@ -65,32 +64,46 @@ object BifrostLibraryStorage {
     }
 
     /**
-     * Create or reuse the standard directory layout beneath a SAF tree.
-     * Existing entries are reused and unrelated files are left untouched.
+     * Create or reuse Bifrost/Saved/... under the user-selected parent.
+     * Re-running this method is safe: existing directories are reused and no
+     * files are deleted or overwritten.
      */
     @Throws(IOException::class, SecurityException::class)
     fun ensureDirectoryLayout(context: Context, treeUri: Uri): SetupResult {
-        val rootDocumentId = runCatching {
+        val treeDocumentId = runCatching {
             DocumentsContract.getTreeDocumentId(treeUri)
         }.getOrElse {
             throw IOException("The selected folder is not a valid Android document tree.", it)
         }
-        var currentParent = DocumentsContract.buildDocumentUriUsingTree(treeUri, rootDocumentId)
+        val selectedParent = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId)
         val created = mutableListOf<String>()
         val existing = mutableListOf<String>()
         val warnings = mutableListOf<String>()
 
+        val bifrostRoot = findChildDirectory(context, treeUri, selectedParent, BIFROST_DIRECTORY)
+            ?: runCatching {
+                DocumentsContract.createDocument(
+                    context.contentResolver, selectedParent, DIRECTORY_MIME, BIFROST_DIRECTORY
+                )
+            }.getOrNull()?.also {
+                created += BIFROST_DIRECTORY
+            }
+
+        if (bifrostRoot == null) {
+            throw IOException("Could not create or open the Bifrost folder. Check write access.")
+        }
+        if (created.isEmpty()) existing += BIFROST_DIRECTORY
+
         for (path in directoryLayout) {
-            var parentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, rootDocumentId)
-            val segments = path.split('/')
+            var parentUri = bifrostRoot
             val traversed = mutableListOf<String>()
-            for (segment in segments) {
+            for (segment in path.split('/')) {
                 traversed += segment
-                val relativePath = traversed.joinToString("/")
+                val relativePath = "$BIFROST_DIRECTORY/" + traversed.joinToString("/")
                 val child = findChildDirectory(context, treeUri, parentUri, segment)
-                parentUri = if (child != null) {
-                    if (relativePath == path) existing += relativePath
-                    child
+                if (child != null) {
+                    parentUri = child
+                    if (traversed.joinToString("/") == path) existing += relativePath
                 } else {
                     val newDirectory = runCatching {
                         DocumentsContract.createDocument(
@@ -100,20 +113,21 @@ object BifrostLibraryStorage {
                     if (newDirectory == null) {
                         warnings += "Could not create folder '$relativePath'. Check write access to the selected location."
                         break
-                    } else {
-                        created += relativePath
-                        newDirectory
                     }
+                    created += relativePath
+                    parentUri = newDirectory
                 }
             }
         }
 
-        currentParent = DocumentsContract.buildDocumentUriUsingTree(treeUri, rootDocumentId)
-        // The root folder itself is user-selected; we only create/reuse children.
-        return SetupResult(treeUri, created.distinct(), existing.distinct(), warnings.distinct())
+        return SetupResult(
+            rootUri = bifrostRoot,
+            createdFolders = created.distinct(),
+            existingFolders = existing.distinct(),
+            warnings = warnings.distinct()
+        )
     }
 
-    /** Find a direct child directory by display name without touching other entries. */
     private fun findChildDirectory(
         context: Context,
         treeUri: Uri,
