@@ -638,6 +638,13 @@ class LEDService : Service() {
         val right = intent.getIntExtra(EXTRA_RP5_RIGHT_COLOR, left) and 0xFFFFFF
         val duration = intent.getLongExtra(EXTRA_RP5_TEST_DURATION_MS, 1500L).coerceIn(250L, 5000L)
         Log.d(TAG, "RP5 LED test: left=#%06X right=#%06X duration=%dms".format(left, right, duration))
+        val hold = intent.getBooleanExtra(EXTRA_RP5_TEST_HOLD, false)
+        // A held RP5 test is an explicit static-colour preview. Stop the current
+        // animation first so its next frame cannot immediately overwrite the test
+        // colours (notably the blue/orange Sample Area startup preview).
+        if (hold) {
+            stopCurrentAnimation()
+        }
         val bypassCalibration = intent.getBooleanExtra(EXTRA_RP5_TEST_BYPASS_CALIBRATION, false)
         if (bypassCalibration) {
             ledController.setLedColorDualUncorrected(
@@ -650,7 +657,6 @@ class LEDService : Service() {
                 Color.red(right), Color.green(right), Color.blue(right)
             )
         }
-        val hold = intent.getBooleanExtra(EXTRA_RP5_TEST_HOLD, false)
         if (!hold) {
             handler.postDelayed({
                 if (!isStopping.get()) ledController.clear()
