@@ -23,7 +23,7 @@ object BackupArchiveTransfer {
     private const val MAX_ARCHIVE_ENTRIES = 256
     private const val MAX_ENTRY_BYTES = 8 * 1024 * 1024
     private const val MAX_TOTAL_UNCOMPRESSED_BYTES = 32 * 1024 * 1024
-    private val SAFE_ICON_NAME = Regex("[A-Za-z0-9._-]{1,180}")
+    private val SAFE_ICON_NAME = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,179}")
     private val THEME_PREF_KEYS = setOf(
         "selected_ui_theme",
         "colored_logo_enabled"
@@ -187,7 +187,8 @@ object BackupArchiveTransfer {
                         name == PREFS_ENTRY_NAME ||
                         (name.startsWith(ICONS_DIR_PREFIX) &&
                             !name.removePrefix(ICONS_DIR_PREFIX).contains('/') &&
-                            SAFE_ICON_NAME.matches(name.removePrefix(ICONS_DIR_PREFIX)))
+                            SAFE_ICON_NAME.matches(name.removePrefix(ICONS_DIR_PREFIX)) &&
+                            name.removePrefix(ICONS_DIR_PREFIX) !in setOf(".", ".."))
                     if (!allowedName) {
                         archiveError = "Archive contains an unsupported or unsafe entry name."
                         break
@@ -383,9 +384,11 @@ object BackupArchiveTransfer {
         }
 
         var importedIconCount = 0
-        if (effectiveOptions.images) {
+        val iconEntries = zipEntries.filterKeys { it.startsWith(ICONS_DIR_PREFIX) }
+        if (effectiveOptions.images && iconEntries.isNotEmpty()) {
+            // Do not erase existing artwork when a valid archive contains no icon payload.
             PresetImageStorage.clearAllIcons(context)
-            zipEntries.forEach { (entryName, bytes) ->
+            iconEntries.forEach { (entryName, bytes) ->
                 cancelSignal?.throwIfCanceled()
                 if (!entryName.startsWith(ICONS_DIR_PREFIX)) return@forEach
 
