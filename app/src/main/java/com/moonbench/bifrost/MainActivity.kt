@@ -3689,9 +3689,19 @@ class MainActivity : AppCompatActivity() {
                 subtitle = "Choose what to include in the backup",
                 confirmLabel = "BACKUP"
             ) { options ->
-                pendingBackupExportOptions = options
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                exportPresetsLauncher.launch("bifrost_backup_$timestamp.bifrost_backup")
+                val uri = runCatching {
+                    BifrostLibraryStorage.createUniqueFileInLibrary(
+                        this, "Saved/Backups", "Bifrost-Backup-$timestamp.zip", "application/zip"
+                    )
+                }.getOrNull()
+                if (uri != null) {
+                    exportPresetBundle(uri, options)
+                    Toast.makeText(this, "Saved in Bifrost/Saved/Backups", Toast.LENGTH_SHORT).show()
+                } else {
+                    pendingBackupExportOptions = options
+                    exportPresetsLauncher.launch("Bifrost-Backup-$timestamp.zip")
+                }
             }
         }
 
@@ -3708,7 +3718,17 @@ class MainActivity : AppCompatActivity() {
 
         exportThemeButton.setOnClickListener {
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-            exportThemeLauncher.launch("bifrost_theme_$timestamp.bifrost_theme")
+            val uri = runCatching {
+                BifrostLibraryStorage.createUniqueFileInLibrary(
+                    this, "Saved/Themes", "Bifrost-Theme-$timestamp.bifrost_theme", "application/json"
+                )
+            }.getOrNull()
+            if (uri != null) {
+                exportThemeBundle(uri)
+                Toast.makeText(this, "Saved in Bifrost/Saved/Themes", Toast.LENGTH_SHORT).show()
+            } else {
+                exportThemeLauncher.launch("Bifrost-Theme-$timestamp.bifrost_theme")
+            }
         }
 
         importThemeButton.setOnClickListener {
