@@ -171,7 +171,6 @@ object PresetArchiveTransfer {
                             (name.startsWith(ICONS_DIR_PREFIX) &&
                                 SAFE_ICON_NAME.matches(name.removePrefix(ICONS_DIR_PREFIX)) &&
                                 !name.removePrefix(ICONS_DIR_PREFIX).contains('\\'))
-                                '\\\\' !in name.removePrefix(ICONS_DIR_PREFIX))
                         if (!validName || name in zipEntries) {
                             throw IllegalArgumentException("Archive contains an unsafe or duplicate entry.")
                         }
