@@ -255,7 +255,32 @@ object PresetArchiveTransfer {
             )
         }
 
-        val presetArray = manifest.optJSONArray("presets") ?: JSONArray()
+        val presetArray = manifest.optJSONArray("presets")
+        if (presetArray == null || presetArray.length() == 0) {
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = warnings,
+                errors = listOf("Preset bundle contains no presets.")
+            )
+        }
+
+        // Reject malformed entries instead of silently skipping them. This keeps
+        // archive contents and app-profile mappings predictable before any images
+        // are written into app storage.
+        for (index in 0 until presetArray.length()) {
+            if (presetArray.optJSONObject(index) == null) {
+                errors += "Preset entry ${index + 1} is not a valid object."
+            }
+        }
+        if (errors.isNotEmpty()) {
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = warnings,
+                errors = errors
+            )
+        }
 
         // Validate preset identity before parsePreset() writes any bundled image
         // files into app storage. Duplicate names make app-profile mappings
