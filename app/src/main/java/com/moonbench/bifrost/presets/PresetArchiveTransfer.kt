@@ -104,19 +104,33 @@ object PresetArchiveTransfer {
         }
 
         val seenIconNames = linkedSetOf<String>()
-        // Check for cancellation before starting heavy IO
+        var totalUncompressedBytes = 0L
+        var entryCount = 0
+        // Apply the same limits to exports as imports. A damaged or unexpectedly
+        // large local artwork file must not create an archive this app cannot safely
+        // read back, and cancellation remains responsive during icon copying.
         cancelSignal?.throwIfCanceled()
         context.contentResolver.openOutputStream(uri)?.use { stream ->
             ZipOutputStream(stream.buffered()).use { zip ->
                 cancelSignal?.throwIfCanceled()
+                val manifestBytes = manifest.toString(2).toByteArray(Charsets.UTF_8)
+                if (manifestBytes.size > MAX_ENTRY_BYTES) {
+                    throw IllegalArgumentException("Preset manifest exceeds the allowed archive size.")
+                }
+                entryCount++
+                totalUncompressedBytes += manifestBytes.size
                 zip.putNextEntry(ZipEntry(MANIFEST_ENTRY_NAME))
-                zip.write(manifest.toString(2).toByteArray(Charsets.UTF_8))
+                zip.write(manifestBytes)
                 zip.closeEntry()
 
                 presets.forEach { preset ->
                     cancelSignal?.throwIfCanceled()
                     val iconName = preset.customImageFileName?.trim().orEmpty()
                     if (iconName.isEmpty() || !seenIconNames.add(iconName)) return@forEach
+                    if (!SAFE_ICON_NAME.matches(iconName) || iconName.contains('\\\\')) {
+                        warnings += "Unsafe image filename for preset '${preset.name}'; skipping."
+                        return@forEach
+                    }
 
                     val input = PresetImageStorage.openIconInputStream(context, iconName)
                     if (input == null) {
@@ -126,9 +140,28 @@ object PresetArchiveTransfer {
 
                     input.use { iconStream ->
                         cancelSignal?.throwIfCanceled()
+                        if (entryCount >= MAX_ARCHIVE_ENTRIES) {
+                            throw IllegalArgumentException("Preset bundle contains too many artwork entries.")
+                        }
                         zip.putNextEntry(ZipEntry("$ICONS_DIR_PREFIX$iconName"))
-                        iconStream.copyTo(zip)
+                        val buffer = ByteArray(8192)
+                        var iconBytes = 0
+                        while (true) {
+                            cancelSignal?.throwIfCanceled()
+                            val read = iconStream.read(buffer)
+                            if (read < 0) break
+                            iconBytes += read
+                            totalUncompressedBytes += read
+                            if (iconBytes > MAX_ENTRY_BYTES) {
+                                throw IllegalArgumentException("Artwork '$iconName' exceeds the allowed size.")
+                            }
+                            if (totalUncompressedBytes > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+                                throw IllegalArgumentException("Preset bundle exceeds the allowed total size.")
+                            }
+                            zip.write(buffer, 0, read)
+                        }
                         zip.closeEntry()
+                        entryCount++
                         exportedIconCount++
                     }
                 }
