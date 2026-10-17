@@ -89,13 +89,12 @@ object BifrostLibraryStorage {
                 created += BIFROST_DIRECTORY
             }
 
-        if (bifrostRoot == null) {
-            throw IOException("Could not create or open the Bifrost folder. Check write access.")
-        }
+        val rootUri = bifrostRoot
+            ?: throw IOException("Could not create or open the Bifrost folder. Check write access.")
         if (created.isEmpty()) existing += BIFROST_DIRECTORY
 
         for (path in directoryLayout) {
-            var parentUri = bifrostRoot
+            var parentUri: Uri = rootUri
             val traversed = mutableListOf<String>()
             for (segment in path.split('/')) {
                 traversed += segment
@@ -121,7 +120,7 @@ object BifrostLibraryStorage {
         }
 
         return SetupResult(
-            rootUri = bifrostRoot,
+            rootUri = rootUri,
             createdFolders = created.distinct(),
             existingFolders = existing.distinct(),
             warnings = warnings.distinct()
