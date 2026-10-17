@@ -127,6 +127,51 @@ object BifrostLibraryStorage {
         )
     }
 
+    /** Create a non-overwriting file inside a managed Bifrost/Saved subfolder. */
+    fun createUniqueFileInLibrary(
+        context: Context,
+        relativeFolder: String,
+        requestedName: String,
+        mimeType: String
+    ): Uri? {
+        val treeUri = getRememberedRoot(context) ?: return null
+        val treeDocumentId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull() ?: return null
+        var current = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId)
+        current = findChildDirectory(context, treeUri, current, BIFROST_DIRECTORY) ?: return null
+        for (segment in relativeFolder.split('/').filter { it.isNotBlank() }) {
+            current = findChildDirectory(context, treeUri, current, segment) ?: return null
+        }
+        val dot = requestedName.lastIndexOf('.')
+        val stem = if (dot > 0) requestedName.substring(0, dot) else requestedName
+        val extension = if (dot > 0) requestedName.substring(dot) else ""
+        var candidate = requestedName
+        var suffix = 1
+        while (findChildFile(context, treeUri, current, candidate) != null) {
+            candidate = "$stem ($suffix)$extension"
+            suffix++
+            if (suffix > 1000) throw IOException("Could not choose a unique filename.")
+        }
+        return DocumentsContract.createDocument(context.contentResolver, current, mimeType, candidate)
+    }
+
+    private fun findChildFile(
+        context: Context, treeUri: Uri, parentUri: Uri, displayName: String
+    ): Uri? {
+        val parentId = runCatching { DocumentsContract.getDocumentId(parentUri) }.getOrNull() ?: return null
+        val childrenUri = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parentId)
+        val projection = arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID, DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+        context.contentResolver.query(childrenUri, projection, null, null, null)?.use { cursor ->
+            val idColumn = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+            val nameColumn = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+            if (idColumn < 0 || nameColumn < 0) return null
+            while (cursor.moveToNext()) {
+                if (cursor.getString(nameColumn) == displayName) {
+                    return DocumentsContract.buildDocumentUriUsingTree(treeUri, cursor.getString(idColumn))
+                }
+            }
+        }
+        return null
+    }
     private fun findChildDirectory(
         context: Context,
         treeUri: Uri,
