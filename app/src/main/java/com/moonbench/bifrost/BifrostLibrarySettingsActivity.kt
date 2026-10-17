@@ -177,6 +177,19 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             }
         })
         layout.addView(MaterialButton(this).apply {
+            text = "Export Full Backup (.zip)"
+            setOnClickListener { chooseBackupCategories(forExport = true) }
+        })
+        layout.addView(MaterialButton(this).apply {
+            text = "Restore Full Backup (.zip)"
+            setOnClickListener { chooseBackupCategories(forExport = false) }
+        })
+        layout.addView(TextView(this).apply {
+            text = "Full backups can include themes, profile settings/mappings, and preset artwork. Restore replaces selected preference categories. LED calibration is excluded; artwork already on the device is preserved."
+            textSize = 13f
+            setPadding(0, padding / 2, 0, padding / 2)
+        })
+        layout.addView(MaterialButton(this).apply {
             text = "Export Sample Area Profiles"
             setOnClickListener { exportSampleAreasLauncher.launch("Bifrost-Sample-Area-Profiles.json") }
         })
