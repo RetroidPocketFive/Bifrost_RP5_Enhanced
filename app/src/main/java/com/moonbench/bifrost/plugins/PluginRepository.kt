@@ -82,15 +82,52 @@ object PluginRepository {
 
     // ---- HTTP ------------------------------------------------------------
 
-    private fun openGet(url: String, timeoutMs: Int): HttpURLConnection =
-        (URL(url).openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            connectTimeout = timeoutMs
-            readTimeout = timeoutMs
-            instanceFollowRedirects = true
-            setRequestProperty("Accept", "application/json, application/octet-stream")
-            setRequestProperty("User-Agent", "Bifrost-PluginStore")
+    /**
+     * Only allow HTTPS requests, including every redirect hop. The catalogue URL
+     * is user-overridable and bundle URLs come from remote catalogue data, so
+     * checking only the default URL would not be sufficient.
+     */
+    private fun openGet(url: String, timeoutMs: Int): HttpURLConnection {
+        var current = URL(url)
+        for (hop in 0..5) {
+            validateHttpsUrl(current)
+            val conn = current.openConnection() as? HttpURLConnection
+                ?: throw IOException("unsupported connection type")
+            conn.requestMethod = "GET"
+            conn.connectTimeout = timeoutMs
+            conn.readTimeout = timeoutMs
+            conn.instanceFollowRedirects = false
+            conn.setRequestProperty("Accept", "application/json, application/octet-stream")
+            conn.setRequestProperty("User-Agent", "Bifrost-PluginStore")
+
+            val code = try {
+                conn.responseCode
+            } catch (t: Throwable) {
+                conn.disconnect()
+                throw t
+            }
+            if (code in 300..399) {
+                val location = conn.getHeaderField("Location")
+                conn.disconnect()
+                if (location.isNullOrBlank()) throw IOException("redirect missing Location")
+                if (hop == 5) throw IOException("too many redirects")
+                current = URL(current, location)
+                validateHttpsUrl(current)
+                continue
+            }
+            return conn
         }
+        throw IOException("too many redirects")
+    }
+
+    private fun validateHttpsUrl(url: URL) {
+        if (!url.protocol.equals("https", ignoreCase = true)) {
+            throw IOException("only HTTPS plugin sources are allowed")
+        }
+        if (url.host.isBlank() || url.userInfo != null) {
+            throw IOException("invalid plugin source URL")
+        }
+    }
 
     private fun httpGetText(url: String, timeoutMs: Int): String {
         val conn = openGet(url, timeoutMs)
