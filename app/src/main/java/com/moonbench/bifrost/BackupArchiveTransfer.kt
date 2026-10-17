@@ -386,8 +386,8 @@ object BackupArchiveTransfer {
         var importedIconCount = 0
         val iconEntries = zipEntries.filterKeys { it.startsWith(ICONS_DIR_PREFIX) }
         if (effectiveOptions.images && iconEntries.isNotEmpty()) {
-            // Do not erase existing artwork when a valid archive contains no icon payload.
-            PresetImageStorage.clearAllIcons(context)
+            // Restore each validated icon by name without clearing unrelated existing artwork.
+            // This keeps the library usable if a later icon write fails or is cancelled.
             iconEntries.forEach { (entryName, bytes) ->
                 cancelSignal?.throwIfCanceled()
                 if (!entryName.startsWith(ICONS_DIR_PREFIX)) return@forEach
