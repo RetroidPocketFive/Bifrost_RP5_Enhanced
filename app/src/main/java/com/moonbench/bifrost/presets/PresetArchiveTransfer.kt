@@ -311,7 +311,13 @@ object PresetArchiveTransfer {
             importedPresets += parsePreset(context, obj, index, zipEntries, warnings, cancelSignal)
         }
 
-        val mappings = parseMappings(context, manifest.optJSONObject("appProfileMappings"), warnings, cancelSignal)
+        val mappings = parseMappings(
+            context,
+            manifest.optJSONObject("appProfileMappings"),
+            seenPresetNames,
+            warnings,
+            cancelSignal
+        )
         val livePolicies = parseLivePolicies(manifest.optJSONObject("livePolicies"), warnings)
 
         return ImportResult(
@@ -449,6 +455,7 @@ object PresetArchiveTransfer {
     private fun parseMappings(
         context: Context,
         mappingsObj: JSONObject?,
+        includedPresetNames: Set<String>,
         warnings: MutableList<String>,
         cancelSignal: CancellationSignal? = null
     ): Map<String, String> {
@@ -461,6 +468,10 @@ object PresetArchiveTransfer {
             val packageName = iterator.next()
             val presetName = mappingsObj.optString(packageName).takeIf { it.isNotBlank() }
             if (presetName == null) continue
+            if (presetName !in includedPresetNames) {
+                warnings += "Mapping ignored: preset '$presetName' is not included in this bundle."
+                continue
+            }
 
             if (!isPackageInstalled(context.packageManager, packageName)) {
                 warnings += "Mapping ignored: package '$packageName' is not installed."
