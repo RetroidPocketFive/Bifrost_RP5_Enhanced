@@ -266,6 +266,18 @@
                 android:tooltipText="Wallpaper" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/settingsOwnershipHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="-4dp"
+        android:layout_marginBottom="8dp"
+        android:text="Profile Settings apply to the selected preset. Bifrost Settings control app-wide behaviour."
+        android:textColor="@color/bifrost_text_secondary"
+        android:textSize="11sp"
+        android:gravity="start"
+        android:accessibilityLiveRegion="polite" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/openLibrarySettingsButton"
         android:layout_width="match_parent"
