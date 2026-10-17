@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -55,8 +56,9 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
         }
 
     private val importSampleAreasLauncher =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { resultData ->
+            if (resultData.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = resultData.data?.data ?: return@registerForActivityResult
             runCatching { SampleAreaProfileTransfer.importFromUri(this, uri) }
                 .onSuccess { result ->
                     statusText.text = "Import complete: ${result.importedCount} profile(s) imported or updated.\nOther saved profiles were preserved. Active sampling and calibration were not changed."
@@ -86,8 +88,9 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
         }
 
     private val importBackupLauncher =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { resultData ->
+            if (resultData.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = resultData.data?.data ?: return@registerForActivityResult
             val options = pendingBackupOptions ?: BackupArchiveTransfer.CategoryOptions()
             pendingBackupOptions = null
             runCatching { BackupArchiveTransfer.importFromUri(this, uri, options) }
@@ -104,6 +107,21 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
                     statusText.text = "Backup restore failed: ${error.localizedMessage ?: "unknown error"}"
                 }
         }
+
+    private fun launchLibraryImport(
+        relativeFolder: String,
+        mimeTypes: Array<String>,
+        launcher: androidx.activity.result.ActivityResultLauncher<Intent>
+    ) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = if (mimeTypes.size == 1) mimeTypes[0] else "*/*"
+            if (mimeTypes.size > 1) putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+            BifrostLibraryStorage.getLibraryFolderUri(this@BifrostLibrarySettingsActivity, relativeFolder)
+                ?.let { putExtra(DocumentsContract.EXTRA_INITIAL_URI, it) }
+        }
+        launcher.launch(intent)
+    }
 
     private fun exportSampleAreasToLibrary() {
         val uri = try {
@@ -171,7 +189,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
                             .onFailure { error -> statusText.text = "Backup export failed: ${error.localizedMessage ?: "unknown error"}" }
                     }
                 } else {
-                    importBackupLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+                    launchLibraryImport("Saved/Backups", arrayOf("application/zip", "application/octet-stream"), importBackupLauncher)
                 }
             }
             .show()
@@ -234,7 +252,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
         })
         layout.addView(MaterialButton(this).apply {
             text = "Import Sample Area Profiles"
-            setOnClickListener { importSampleAreasLauncher.launch(arrayOf("application/json", "text/json", "text/plain")) }
+            setOnClickListener { launchLibraryImport("Saved/Sample Area", arrayOf("application/json", "text/json", "text/plain"), importSampleAreasLauncher) }
         })
         layout.addView(TextView(this).apply {
             text = "Sample Area imports merge by profile name. They never activate a profile or change LED calibration. Import only JSON files exported by Bifrost."
