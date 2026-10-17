@@ -76,7 +76,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
                 .onSuccess { result ->
                     statusText.text = buildString {
                         append("Backup export complete. Preferences: ${result.preferenceCount}; images: ${result.iconCount}.")
-                        if (result.warnings.isNotEmpty()) append("\\n\\nWarnings:\\n" + result.warnings.joinToString("\\n"))
+                        if (result.warnings.isNotEmpty()) append("\n\nWarnings:\n" + result.warnings.joinToString("\n"))
                     }
                     Toast.makeText(this, "Bifrost backup exported", Toast.LENGTH_LONG).show()
                 }
@@ -94,9 +94,9 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
                 .onSuccess { result ->
                     statusText.text = buildString {
                         append("Backup restore finished. Preferences restored: ${result.preferenceCount}; images restored: ${result.iconCount}.")
-                        if (result.warnings.isNotEmpty()) append("\\n\\nWarnings:\\n" + result.warnings.joinToString("\\n"))
-                        if (result.errors.isNotEmpty()) append("\\n\\nErrors:\\n" + result.errors.joinToString("\\n"))
-                        if (result.errors.isEmpty()) append("\\n\\nRestart Bifrost if restored settings are not reflected immediately.")
+                        if (result.warnings.isNotEmpty()) append("\n\nWarnings:\n" + result.warnings.joinToString("\n"))
+                        if (result.errors.isNotEmpty()) append("\n\nErrors:\n" + result.errors.joinToString("\n"))
+                        if (result.errors.isEmpty()) append("\n\nRestart Bifrost if restored settings are not reflected immediately.")
                     }
                     Toast.makeText(this, if (result.errors.isEmpty()) "Backup restore finished" else "Backup restore reported errors", Toast.LENGTH_LONG).show()
                 }
