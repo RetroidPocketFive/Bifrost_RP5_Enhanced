@@ -53,6 +53,15 @@ object PresetArchiveTransfer {
         mappings: Map<String, String>,
         cancelSignal: CancellationSignal? = null
     ): ExportResult {
+        require(presets.isNotEmpty()) { "Select at least one preset to export." }
+        val seenNames = linkedSetOf<String>()
+        presets.forEach { preset ->
+            require(preset.name.isNotBlank()) { "A preset has no name and cannot be exported safely." }
+            require(seenNames.add(preset.name)) {
+                "Duplicate preset name '${preset.name}'. Rename duplicates before exporting."
+            }
+        }
+
         val warnings = mutableListOf<String>()
         var exportedIconCount = 0
 
