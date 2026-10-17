@@ -45,7 +45,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             if (uri == null) return@registerForActivityResult
             runCatching { SampleAreaProfileTransfer.exportToUri(this, uri) }
                 .onSuccess { count ->
-                    statusText.text = "Export complete: $count Sample Area profile(s).\\nActive sampling and calibration were not changed."
+                    statusText.text = "Export complete: $count Sample Area profile(s).\nActive sampling and calibration were not changed."
                     Toast.makeText(this, "Sample Area profiles exported", Toast.LENGTH_SHORT).show()
                 }
                 .onFailure { error ->
@@ -58,7 +58,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             if (uri == null) return@registerForActivityResult
             runCatching { SampleAreaProfileTransfer.importFromUri(this, uri) }
                 .onSuccess { result ->
-                    statusText.text = "Import complete: ${result.importedCount} profile(s) imported or updated.\\nOther saved profiles were preserved. Active sampling and calibration were not changed."
+                    statusText.text = "Import complete: ${result.importedCount} profile(s) imported or updated.\nOther saved profiles were preserved. Active sampling and calibration were not changed."
                     Toast.makeText(this, "Sample Area profiles imported", Toast.LENGTH_LONG).show()
                 }
                 .onFailure { error ->
