@@ -80,14 +80,21 @@ object BifrostLibraryStorage {
         val existing = mutableListOf<String>()
         val warnings = mutableListOf<String>()
 
-        val bifrostRoot = findChildDirectory(context, treeUri, selectedParent, BIFROST_DIRECTORY)
-            ?: runCatching {
-                DocumentsContract.createDocument(
-                    context.contentResolver, selectedParent, DIRECTORY_MIME, BIFROST_DIRECTORY
-                )
-            }.getOrNull()?.also {
-                created += BIFROST_DIRECTORY
-            }
+        // Users may select either the parent directory or the Bifrost directory
+        // itself. Detect the latter so setup never creates Bifrost/Bifrost.
+        val selectedIsBifrost = isBifrostDirectory(context, selectedParent)
+        val bifrostRoot = if (selectedIsBifrost) {
+            selectedParent
+        } else {
+            findChildDirectory(context, treeUri, selectedParent, BIFROST_DIRECTORY)
+                ?: runCatching {
+                    DocumentsContract.createDocument(
+                        context.contentResolver, selectedParent, DIRECTORY_MIME, BIFROST_DIRECTORY
+                    )
+                }.getOrNull()?.also {
+                    created += BIFROST_DIRECTORY
+                }
+        }
 
         val rootUri = bifrostRoot
             ?: throw IOException("Could not create or open the Bifrost folder. Check write access.")
@@ -133,7 +140,9 @@ object BifrostLibraryStorage {
         val treeDocumentId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
             ?: return null
         var current = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId)
-        current = findChildDirectory(context, treeUri, current, BIFROST_DIRECTORY) ?: return null
+        if (!isBifrostDirectory(context, current)) {
+            current = findChildDirectory(context, treeUri, current, BIFROST_DIRECTORY) ?: return null
+        }
         for (segment in relativeFolder.split('/').filter { it.isNotBlank() }) {
             current = findChildDirectory(context, treeUri, current, segment) ?: return null
         }
@@ -150,7 +159,9 @@ object BifrostLibraryStorage {
         val treeUri = getRememberedRoot(context) ?: return null
         val treeDocumentId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull() ?: return null
         var current = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId)
-        current = findChildDirectory(context, treeUri, current, BIFROST_DIRECTORY) ?: return null
+        if (!isBifrostDirectory(context, current)) {
+            current = findChildDirectory(context, treeUri, current, BIFROST_DIRECTORY) ?: return null
+        }
         for (segment in relativeFolder.split('/').filter { it.isNotBlank() }) {
             current = findChildDirectory(context, treeUri, current, segment) ?: return null
         }
@@ -165,6 +176,24 @@ object BifrostLibraryStorage {
             if (suffix > 1000) throw IOException("Could not choose a unique filename.")
         }
         return DocumentsContract.createDocument(context.contentResolver, current, mimeType, candidate)
+    }
+
+    /** True when the user-selected tree root is already the Bifrost directory. */
+    private fun isBifrostDirectory(context: Context, documentUri: Uri): Boolean {
+        val projection = arrayOf(
+            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+            DocumentsContract.Document.COLUMN_MIME_TYPE
+        )
+        return runCatching {
+            context.contentResolver.query(documentUri, projection, null, null, null)?.use { cursor ->
+                if (!cursor.moveToFirst()) return@use false
+                val nameColumn = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
+                val mimeColumn = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE)
+                nameColumn >= 0 && mimeColumn >= 0 &&
+                    cursor.getString(nameColumn) == BIFROST_DIRECTORY &&
+                    cursor.getString(mimeColumn) == DIRECTORY_MIME
+            } ?: false
+        }.getOrDefault(false)
     }
 
     private fun findChildFile(
