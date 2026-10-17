@@ -22,6 +22,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.provider.DocumentsContract
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -538,16 +539,18 @@ class MainActivity : AppCompatActivity() {
         }
 
     private val importPresetsLauncher =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
             val options = pendingBackupImportOptions ?: BackupArchiveTransfer.CategoryOptions()
             pendingBackupImportOptions = null
             importPresetBundle(uri, options)
         }
 
     private val importThemeLauncher =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
             importThemeBundle(uri)
         }
 
@@ -3711,7 +3714,11 @@ class MainActivity : AppCompatActivity() {
                 confirmLabel = "RESTORE"
             ) { options ->
                 pendingBackupImportOptions = options
-                importPresetsLauncher.launch(arrayOf("*/*"))
+                launchManagedLibraryImport(
+                    "Saved/Backups",
+                    arrayOf("application/zip", "application/octet-stream", "*/*"),
+                    importPresetsLauncher
+                )
             }
         }
 
@@ -3730,13 +3737,32 @@ class MainActivity : AppCompatActivity() {
         }
 
         importThemeButton.setOnClickListener {
-            importThemeLauncher.launch(arrayOf("*/*"))
+            launchManagedLibraryImport(
+                "Saved/Themes",
+                arrayOf("application/json", "text/json", "*/*"),
+                importThemeLauncher
+            )
         }
 
         // If the app switching feature is already enabled, start syncing the UI after presets load.
         if (::appProfileManager.isInitialized && appProfileManager.isEnabled) {
             startAppProfileSync()
         }
+    }
+
+    private fun launchManagedLibraryImport(
+        relativeFolder: String,
+        mimeTypes: Array<String>,
+        launcher: androidx.activity.result.ActivityResultLauncher<Intent>
+    ) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+            BifrostLibraryStorage.getLibraryFolderUri(this@MainActivity, relativeFolder)
+                ?.let { putExtra(DocumentsContract.EXTRA_INITIAL_URI, it) }
+        }
+        launcher.launch(intent)
     }
 
     private fun exportPresetBundle(uri: Uri, options: BackupArchiveTransfer.CategoryOptions) {
