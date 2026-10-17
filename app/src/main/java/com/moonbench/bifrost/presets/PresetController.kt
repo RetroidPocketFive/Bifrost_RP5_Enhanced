@@ -791,12 +791,23 @@ class IconLabelSpinnerAdapter<T>(
 
     private fun bindView(position: Int, convertView: View?, parent: ViewGroup, layoutRes: Int): View {
         val row = convertView ?: inflater.inflate(layoutRes, parent, false)
-        val item = items[position]
         val text = row.findViewById<TextView>(android.R.id.text1)
         val icon = row.findViewById<ImageView>(android.R.id.icon)
         val emoji = row.findViewById<TextView>(R.id.presetIconEmoji)
-        val visual = visualProvider(item)
 
+        // Spinner can briefly request a stale position while its adapter/selection
+        // is being refreshed. Never index the backing list until the position is valid.
+        val item = items.getOrNull(position)
+        if (item == null) {
+            text.text = ""
+            icon.setImageDrawable(null)
+            icon.visibility = View.GONE
+            emoji.text = null
+            emoji.visibility = View.GONE
+            return row
+        }
+
+        val visual = visualProvider(item)
         text.text = labelProvider(item)
 
         val iconSize = maxOf(icon.layoutParams?.width ?: 0, icon.layoutParams?.height ?: 0, 20)
