@@ -373,7 +373,16 @@ object PresetArchiveTransfer {
 
         val customEmoji = obj.optString("customEmoji").takeIf { it.isNotBlank() }
 
-        val importedIconName = obj.optString("customImageFileName").takeIf { it.isNotBlank() }
+        val requestedIconName = obj.optString("customImageFileName").takeIf { it.isNotBlank() }
+        // Validate manifest-provided filenames as well as ZIP entry paths. A safe
+        // ZIP can still contain a malicious filename reference in its JSON manifest.
+        val importedIconName = requestedIconName?.takeIf { SAFE_ICON_NAME.matches(it) }
+            ?: run {
+                if (requestedIconName != null) {
+                    warnings += "Preset '$name': unsafe image filename; skipping custom artwork."
+                }
+                null
+            }
         val customImageFileName = if (importedIconName != null) {
             cancelSignal?.throwIfCanceled()
             val archiveEntryName = "$ICONS_DIR_PREFIX$importedIconName"
