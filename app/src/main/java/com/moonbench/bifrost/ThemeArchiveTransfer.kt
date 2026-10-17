@@ -3,11 +3,14 @@ package com.moonbench.bifrost
 import android.content.Context
 import android.net.Uri
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 
 object ThemeArchiveTransfer {
 
     private const val THEME_SCHEMA = "bifrost_theme_bundle"
     private const val THEME_VERSION = 1
+    private const val MAX_IMPORT_BYTES = 1024 * 1024
 
     data class ExportResult(
         val themeId: String,
@@ -53,16 +56,42 @@ object ThemeArchiveTransfer {
         val warnings = mutableListOf<String>()
         val errors = mutableListOf<String>()
 
-        val rawJson = context.contentResolver.openInputStream(uri)?.use { input ->
-            input.bufferedReader(Charsets.UTF_8).use { reader ->
-                reader.readText()
+        val rawJson = try {
+            val input = context.contentResolver.openInputStream(uri)
+                ?: return ImportResult(
+                    themeId = null,
+                    coloredLogoEnabled = true,
+                    warnings = emptyList(),
+                    errors = listOf("Unable to read selected file.")
+                )
+            input.use { stream ->
+                val output = ByteArrayOutputStream()
+                val buffer = ByteArray(8192)
+                var total = 0
+                while (true) {
+                    val count = stream.read(buffer)
+                    if (count < 0) break
+                    total += count
+                    if (total > MAX_IMPORT_BYTES) {
+                        return ImportResult(
+                            themeId = null,
+                            coloredLogoEnabled = true,
+                            warnings = emptyList(),
+                            errors = listOf("Theme file exceeds the 1 MB size limit.")
+                        )
+                    }
+                    output.write(buffer, 0, count)
+                }
+                output.toString(Charsets.UTF_8.name())
             }
-        } ?: return ImportResult(
-            themeId = null,
-            coloredLogoEnabled = true,
-            warnings = emptyList(),
-            errors = listOf("Unable to read selected file.")
-        )
+        } catch (error: Exception) {
+            return ImportResult(
+                themeId = null,
+                coloredLogoEnabled = true,
+                warnings = emptyList(),
+                errors = listOf("Unable to read selected theme file.")
+            )
+        }
 
         val payload = runCatching { JSONObject(rawJson) }.getOrElse {
             return ImportResult(
