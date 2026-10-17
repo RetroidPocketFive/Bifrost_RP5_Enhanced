@@ -100,9 +100,17 @@ object PresetArchiveTransfer {
             manifestPresets.put(presetJson)
         }
 
+        // A bundle must not carry app-profile mappings for presets that were
+        // not selected for export. Otherwise an otherwise valid partial export
+        // can produce dangling mappings when imported on another device.
+        val exportedPresetNames = seenNames
         val mappingsJson = JSONObject()
         mappings.forEach { (packageName, presetName) ->
-            mappingsJson.put(packageName, presetName)
+            if (presetName in exportedPresetNames) {
+                mappingsJson.put(packageName, presetName)
+            } else {
+                warnings += "Skipped app mapping for '$packageName': preset '$presetName' is not included in this bundle."
+            }
         }
 
         val manifest = JSONObject().apply {
