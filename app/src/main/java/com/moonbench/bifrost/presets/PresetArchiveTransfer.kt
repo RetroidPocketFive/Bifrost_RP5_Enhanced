@@ -256,6 +256,28 @@ object PresetArchiveTransfer {
         }
 
         val presetArray = manifest.optJSONArray("presets") ?: JSONArray()
+
+        // Validate preset identity before parsePreset() writes any bundled image
+        // files into app storage. Duplicate names make app-profile mappings
+        // ambiguous and can also create duplicate spinner entries.
+        val seenPresetNames = linkedSetOf<String>()
+        for (index in 0 until presetArray.length()) {
+            val obj = presetArray.optJSONObject(index) ?: continue
+            val name = obj.optString("name").takeIf { it.isNotBlank() }
+                ?: "Imported Preset ${index + 1}"
+            if (!seenPresetNames.add(name)) {
+                errors += "Duplicate preset name '$name' in bundle. Rename duplicates and export again."
+            }
+        }
+        if (errors.isNotEmpty()) {
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = warnings,
+                errors = errors
+            )
+        }
+
         val importedPresets = mutableListOf<LedPreset>()
 
         for (index in 0 until presetArray.length()) {
