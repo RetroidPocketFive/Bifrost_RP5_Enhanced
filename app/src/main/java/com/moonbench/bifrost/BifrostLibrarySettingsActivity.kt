@@ -105,6 +105,27 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
                 }
         }
 
+    private fun exportSampleAreasToLibrary() {
+        val uri = try {
+            BifrostLibraryStorage.createUniqueFileInLibrary(
+                this, "Saved/Sample Area", "Bifrost-Sample-Area-Profiles.json", "application/json"
+            )
+        } catch (error: Exception) {
+            statusText.text = "Export failed: ${error.localizedMessage ?: "could not create file"}"
+            return
+        }
+        if (uri == null) {
+            statusText.text = "Choose or repair the library folder first. Sample Area exports are saved in Bifrost/Saved/Sample Area."
+            return
+        }
+        runCatching { SampleAreaProfileTransfer.exportToUri(this, uri) }
+            .onSuccess { count ->
+                statusText.text = "Export complete: $count Sample Area profile(s).\nSaved to Bifrost/Saved/Sample Area. Existing files were not overwritten."
+                Toast.makeText(this, "Sample Area profiles exported", Toast.LENGTH_LONG).show()
+            }
+            .onFailure { error -> statusText.text = "Export failed: ${error.localizedMessage ?: "unknown error"}" }
+    }
+
     private var pendingBackupOptions: BackupArchiveTransfer.CategoryOptions? = null
 
     private fun chooseBackupCategories(forExport: Boolean) {
@@ -130,7 +151,25 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
                 }
                 pendingBackupOptions = options
                 if (forExport) {
-                    exportBackupLauncher.launch("Bifrost-Backup.zip")
+                    val uri = try {
+                        BifrostLibraryStorage.createUniqueFileInLibrary(
+                            this, "Saved/Backups", "Bifrost-Backup.zip", "application/zip"
+                        )
+                    } catch (error: Exception) {
+                        statusText.text = "Backup export failed: ${error.localizedMessage ?: "could not create file"}"
+                        null
+                    }
+                    if (uri == null) {
+                        statusText.text = "Choose or repair the library folder first. Backups are saved in Bifrost/Saved/Backups."
+                    } else {
+                        runCatching { BackupArchiveTransfer.exportToUri(this, uri, options) }
+                            .onSuccess { result ->
+                                statusText.text = "Backup exported to Bifrost/Saved/Backups. Preferences: ${result.preferenceCount}; images: ${result.iconCount}."
+                                if (result.warnings.isNotEmpty()) statusText.append("\n\nWarnings:\n" + result.warnings.joinToString("\n"))
+                                Toast.makeText(this, "Bifrost backup exported", Toast.LENGTH_LONG).show()
+                            }
+                            .onFailure { error -> statusText.text = "Backup export failed: ${error.localizedMessage ?: "unknown error"}" }
+                    }
                 } else {
                     importBackupLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
                 }
@@ -177,7 +216,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             }
         })
         layout.addView(MaterialButton(this).apply {
-            text = "Export Full Backup (.zip)"
+            text = "Export Full Backup to Bifrost/Saved/Backups"
             setOnClickListener { chooseBackupCategories(forExport = true) }
         })
         layout.addView(MaterialButton(this).apply {
@@ -190,8 +229,8 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             setPadding(0, padding / 2, 0, padding / 2)
         })
         layout.addView(MaterialButton(this).apply {
-            text = "Export Sample Area Profiles"
-            setOnClickListener { exportSampleAreasLauncher.launch("Bifrost-Sample-Area-Profiles.json") }
+            text = "Export Sample Areas to Bifrost/Saved/Sample Area"
+            setOnClickListener { exportSampleAreasToLibrary() }
         })
         layout.addView(MaterialButton(this).apply {
             text = "Import Sample Area Profiles"
