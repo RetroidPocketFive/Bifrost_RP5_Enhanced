@@ -127,6 +127,19 @@ object BifrostLibraryStorage {
         )
     }
 
+    /** Resolve a managed Bifrost/Saved subfolder for document-picker navigation. */
+    fun getLibraryFolderUri(context: Context, relativeFolder: String): Uri? {
+        val treeUri = getRememberedRoot(context) ?: return null
+        val treeDocumentId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull()
+            ?: return null
+        var current = DocumentsContract.buildDocumentUriUsingTree(treeUri, treeDocumentId)
+        current = findChildDirectory(context, treeUri, current, BIFROST_DIRECTORY) ?: return null
+        for (segment in relativeFolder.split('/').filter { it.isNotBlank() }) {
+            current = findChildDirectory(context, treeUri, current, segment) ?: return null
+        }
+        return current
+    }
+
     /** Create a non-overwriting file inside a managed Bifrost/Saved subfolder. */
     fun createUniqueFileInLibrary(
         context: Context,
