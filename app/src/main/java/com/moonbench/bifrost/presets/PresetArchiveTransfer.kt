@@ -24,6 +24,11 @@ object PresetArchiveTransfer {
     private const val ARCHIVE_VERSION = 2
     private const val MANIFEST_ENTRY_NAME = "manifest.json"
     private const val ICONS_DIR_PREFIX = "icons/"
+    // Defensive limits for user-selected archives and downloaded plugin bundles.
+    private const val MAX_ARCHIVE_ENTRIES = 256
+    private const val MAX_ENTRY_BYTES = 8 * 1024 * 1024
+    private const val MAX_TOTAL_UNCOMPRESSED_BYTES = 32 * 1024 * 1024
+    private val SAFE_ICON_NAME = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,179}")
 
     data class ExportResult(
         val presetCount: Int,
@@ -142,32 +147,73 @@ object PresetArchiveTransfer {
         val errors = mutableListOf<String>()
 
         val zipEntries = mutableMapOf<String, ByteArray>()
-        // Check cancellation before reading
+        var totalUncompressedBytes = 0L
+        var entryCount = 0
+        // Check cancellation before reading. Do not trust ZIP metadata: enforce
+        // limits while streaming so forged sizes and zip bombs are bounded.
         cancelSignal?.throwIfCanceled()
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            ZipInputStream(input.buffered()).use { zip ->
-                while (true) {
-                    cancelSignal?.throwIfCanceled()
-                    val entry = zip.nextEntry ?: break
-                    if (entry.isDirectory) {
-                        zip.closeEntry()
-                        continue
-                    }
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                ZipInputStream(input.buffered()).use { zip ->
+                    while (true) {
+                        cancelSignal?.throwIfCanceled()
+                        val entry = zip.nextEntry ?: break
+                        entryCount++
+                        if (entryCount > MAX_ARCHIVE_ENTRIES) {
+                            throw IllegalArgumentException("Archive contains too many entries.")
+                        }
+                        if (entry.isDirectory) {
+                            zip.closeEntry()
+                            continue
+                        }
+                        val name = entry.name
+                        val validName = name == MANIFEST_ENTRY_NAME ||
+                            (name.startsWith(ICONS_DIR_PREFIX) &&
+                                SAFE_ICON_NAME.matches(name.removePrefix(ICONS_DIR_PREFIX)) &&
+                                '/' !in name.removePrefix(ICONS_DIR_PREFIX) &&
+                                '\\\\' !in name.removePrefix(ICONS_DIR_PREFIX))
+                        if (!validName || name in zipEntries) {
+                            throw IllegalArgumentException("Archive contains an unsafe or duplicate entry.")
+                        }
 
-                    val data = ByteArrayOutputStream().use { output ->
-                        zip.copyTo(output)
-                        output.toByteArray()
+                        val data = ByteArrayOutputStream().use { output ->
+                            val buffer = ByteArray(8192)
+                            var entryBytes = 0
+                            while (true) {
+                                cancelSignal?.throwIfCanceled()
+                                val read = zip.read(buffer)
+                                if (read < 0) break
+                                entryBytes += read
+                                totalUncompressedBytes += read
+                                if (entryBytes > MAX_ENTRY_BYTES) {
+                                    throw IllegalArgumentException("Archive entry is too large.")
+                                }
+                                if (totalUncompressedBytes > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+                                    throw IllegalArgumentException("Archive expands beyond the allowed size.")
+                                }
+                                output.write(buffer, 0, read)
+                            }
+                            output.toByteArray()
+                        }
+                        zipEntries[name] = data
+                        zip.closeEntry()
                     }
-                    zipEntries[entry.name] = data
-                    zip.closeEntry()
                 }
-            }
-        } ?: return ImportResult(
-            presets = emptyList(),
-            mappings = emptyMap(),
-            warnings = emptyList(),
-            errors = listOf("Unable to read selected file.")
-        )
+            } ?: return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = emptyList(),
+                errors = listOf("Unable to read selected file.")
+            )
+        } catch (t: Throwable) {
+            if (t is android.os.OperationCanceledException) throw t
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = emptyList(),
+                errors = listOf(t.message ?: "Unable to read archive safely.")
+            )
+        }
 
         val manifestRaw = zipEntries[MANIFEST_ENTRY_NAME]
             ?: return ImportResult(
@@ -197,6 +243,17 @@ object PresetArchiveTransfer {
             errors += "Unsupported preset bundle version: $version"
         } else if (version > ARCHIVE_VERSION) {
             warnings += "Bundle version $version is newer than supported version $ARCHIVE_VERSION. Attempting compatible import."
+        }
+
+        // Never parse presets (which may import image files) from a manifest
+        // whose schema or required version fields have already failed validation.
+        if (errors.isNotEmpty()) {
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = warnings,
+                errors = errors
+            )
         }
 
         val presetArray = manifest.optJSONArray("presets") ?: JSONArray()
