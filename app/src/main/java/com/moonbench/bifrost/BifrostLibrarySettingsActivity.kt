@@ -1,5 +1,6 @@
 package com.moonbench.bifrost
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -65,6 +66,77 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
                     statusText.text = "Import failed: ${error.localizedMessage ?: "unknown error"}"
                 }
         }
+
+    private val exportBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            val options = pendingBackupOptions ?: BackupArchiveTransfer.CategoryOptions()
+            pendingBackupOptions = null
+            runCatching { BackupArchiveTransfer.exportToUri(this, uri, options) }
+                .onSuccess { result ->
+                    statusText.text = buildString {
+                        append("Backup export complete. Preferences: ${result.preferenceCount}; images: ${result.iconCount}.")
+                        if (result.warnings.isNotEmpty()) append("\\n\\nWarnings:\\n" + result.warnings.joinToString("\\n"))
+                    }
+                    Toast.makeText(this, "Bifrost backup exported", Toast.LENGTH_LONG).show()
+                }
+                .onFailure { error ->
+                    statusText.text = "Backup export failed: ${error.localizedMessage ?: "unknown error"}"
+                }
+        }
+
+    private val importBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            val options = pendingBackupOptions ?: BackupArchiveTransfer.CategoryOptions()
+            pendingBackupOptions = null
+            runCatching { BackupArchiveTransfer.importFromUri(this, uri, options) }
+                .onSuccess { result ->
+                    statusText.text = buildString {
+                        append("Backup restore finished. Preferences restored: ${result.preferenceCount}; images restored: ${result.iconCount}.")
+                        if (result.warnings.isNotEmpty()) append("\\n\\nWarnings:\\n" + result.warnings.joinToString("\\n"))
+                        if (result.errors.isNotEmpty()) append("\\n\\nErrors:\\n" + result.errors.joinToString("\\n"))
+                        if (result.errors.isEmpty()) append("\\n\\nRestart Bifrost if restored settings are not reflected immediately.")
+                    }
+                    Toast.makeText(this, if (result.errors.isEmpty()) "Backup restore finished" else "Backup restore reported errors", Toast.LENGTH_LONG).show()
+                }
+                .onFailure { error ->
+                    statusText.text = "Backup restore failed: ${error.localizedMessage ?: "unknown error"}"
+                }
+        }
+
+    private var pendingBackupOptions: BackupArchiveTransfer.CategoryOptions? = null
+
+    private fun chooseBackupCategories(forExport: Boolean) {
+        val labels = arrayOf("Themes and interface settings", "Profiles and profile mappings", "Preset artwork / images")
+        val selected = booleanArrayOf(true, true, true)
+        AlertDialog.Builder(this)
+            .setTitle(if (forExport) "Export backup categories" else "Restore backup categories")
+            .setMultiChoiceItems(labels, selected) { _, which, isChecked -> selected[which] = isChecked }
+            .setMessage(
+                if (forExport) "Only the selected categories will be included in the archive."
+                else "Selected settings may replace matching settings on this device. Existing artwork not present in the archive is preserved. Global LED calibration is not included."
+            )
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton(if (forExport) "Choose file" else "Select backup") { _, _ ->
+                val options = BackupArchiveTransfer.CategoryOptions(
+                    themes = selected[0],
+                    profiles = selected[1],
+                    images = selected[2]
+                )
+                if (!options.hasAtLeastOneCategory()) {
+                    statusText.text = "Choose at least one category."
+                    return@setPositiveButton
+                }
+                pendingBackupOptions = options
+                if (forExport) {
+                    exportBackupLauncher.launch("Bifrost-Backup.zip")
+                } else {
+                    importBackupLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+                }
+            }
+            .show()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
