@@ -127,7 +127,7 @@ object PresetArchiveTransfer {
                     cancelSignal?.throwIfCanceled()
                     val iconName = preset.customImageFileName?.trim().orEmpty()
                     if (iconName.isEmpty() || !seenIconNames.add(iconName)) return@forEach
-                    if (!SAFE_ICON_NAME.matches(iconName) || iconName.contains('\\\\')) {
+                    if (!SAFE_ICON_NAME.matches(iconName) || iconName.contains('\\')) {
                         warnings += "Unsafe image filename for preset '${preset.name}'; skipping."
                         return@forEach
                     }
