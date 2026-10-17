@@ -3697,7 +3697,6 @@ class MainActivity : AppCompatActivity() {
                 }.getOrNull()
                 if (uri != null) {
                     exportPresetBundle(uri, options)
-                    Toast.makeText(this, "Saved in Bifrost/Saved/Backups", Toast.LENGTH_SHORT).show()
                 } else {
                     pendingBackupExportOptions = options
                     exportPresetsLauncher.launch("Bifrost-Backup-$timestamp.zip")
@@ -3725,7 +3724,6 @@ class MainActivity : AppCompatActivity() {
             }.getOrNull()
             if (uri != null) {
                 exportThemeBundle(uri)
-                Toast.makeText(this, "Saved in Bifrost/Saved/Themes", Toast.LENGTH_SHORT).show()
             } else {
                 exportThemeLauncher.launch("Bifrost-Theme-$timestamp.bifrost_theme")
             }
