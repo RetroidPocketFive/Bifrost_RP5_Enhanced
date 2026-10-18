@@ -368,21 +368,6 @@
         android:gravity="start"
         android:accessibilityLiveRegion="polite" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/openLibrarySettingsButton"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginBottom="8dp"
-        android:text="LIBRARY &amp; IMPORT / EXPORT"
-        android:textColor="@color/bifrost_text"
-        android:textSize="11sp"
-        android:contentDescription="Open library folder and import/export settings"
-        android:tooltipText="Manage library folders and backups"
-        android:backgroundTint="@color/bifrost_surface"
-        app:cornerRadius="10dp"
-        app:strokeWidth="1dp"
-        app:strokeColor="@color/bifrost_accent" />
-
     <ScrollView
         android:id="@+id/mainSettingsScroll"
         android:layout_width="match_parent"
@@ -1533,26 +1518,7 @@
                             app:trackTint="@color/switch_track_tint" />
                     </LinearLayout>
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/pluginStoreButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Open Plugin Store" 
-                android:contentDescription="Open plugin store"
-                android:tooltipText="Open plugin store" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/scheduleButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Open Schedule" 
-                android:contentDescription="Open schedule"
-                android:tooltipText="Open schedule" />
-
-
-                </LinearLayout>
+                                                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
@@ -1971,15 +1937,57 @@
                         app:iconGravity="textEnd"
                         app:iconTint="@color/bifrost_icon" />
 
-                    <TextView
-                        android:id="@+id/miscellaneousPlaceholderText"
+                    <LinearLayout
+                        android:id="@+id/miscellaneousOptionsContainer"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:text="Global settings without a dedicated category belong here. Existing controls will be retained as sections are reorganised."
-                        android:textColor="@color/bifrost_text_secondary"
-                        android:textSize="11sp"
-                        android:visibility="gone" />
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:id="@+id/miscellaneousPlaceholderText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="8dp"
+                            android:text="Additional global tools and settings that do not belong to another section."
+                            android:textColor="@color/bifrost_text_secondary"
+                            android:textSize="11sp" />
+
+                            <com.google.android.material.button.MaterialButton
+        android:id="@+id/openLibrarySettingsButton"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="8dp"
+        android:text="LIBRARY &amp; IMPORT / EXPORT"
+        android:textColor="@color/bifrost_text"
+        android:textSize="11sp"
+        android:contentDescription="Open library folder and import/export settings"
+        android:tooltipText="Manage library folders and backups"
+        android:backgroundTint="@color/bifrost_surface"
+        app:cornerRadius="10dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="@color/bifrost_accent" />
+                        
+                            <com.google.android.material.button.MaterialButton
+                        android:id="@+id/pluginStoreButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Open Plugin Store" 
+                android:contentDescription="Open plugin store"
+                android:tooltipText="Open plugin store" />
+                        
+                            <com.google.android.material.button.MaterialButton
+                        android:id="@+id/scheduleButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="Open Schedule" 
+                android:contentDescription="Open schedule"
+                android:tooltipText="Open schedule" />
+                    </LinearLayout>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
