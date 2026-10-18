@@ -955,9 +955,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupHomeSurface() {
-        bifrostLogoView.setOnClickListener { openSettingsOverlay() }
-        bifrostTitleText.setOnClickListener { openSettingsOverlay() }
-        homeSettingsButton.setOnClickListener { openSettingsOverlay() }
+        // The home-screen gear/logo are the app-wide Bifrost settings entry points.
+        bifrostLogoView.setOnClickListener {
+            setSettingsTab(SettingsTab.BEHAVIOR)
+            openSettingsOverlay()
+        }
+        bifrostTitleText.setOnClickListener {
+            setSettingsTab(SettingsTab.BEHAVIOR)
+            openSettingsOverlay()
+        }
+        homeSettingsButton.setOnClickListener {
+            setSettingsTab(SettingsTab.BEHAVIOR)
+            openSettingsOverlay()
+        }
+        findViewById<MaterialButton>(R.id.homeProfileSettingsButton).setOnClickListener {
+            setSettingsTab(SettingsTab.UI)
+            openSettingsOverlay()
+        }
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
         }
