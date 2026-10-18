@@ -192,6 +192,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var miscellaneousCard: MaterialCardView
     private lateinit var miscellaneousToggleButton: MaterialButton
     private lateinit var miscellaneousPlaceholderText: TextView
+    private lateinit var miscellaneousOptionsContainer: View
     private lateinit var systemStatusContainer: View
     private lateinit var bifrostLogoView: ImageView
     private lateinit var bifrostTitleText: TextView
@@ -751,9 +752,10 @@ class MainActivity : AppCompatActivity() {
         miscellaneousCard = findViewById(R.id.miscellaneousCard)
         miscellaneousToggleButton = findViewById(R.id.miscellaneousToggleButton)
         miscellaneousPlaceholderText = findViewById(R.id.miscellaneousPlaceholderText)
+        miscellaneousOptionsContainer = findViewById(R.id.miscellaneousOptionsContainer)
         miscellaneousToggleButton.setOnClickListener {
-            val expanded = miscellaneousPlaceholderText.visibility != View.VISIBLE
-            miscellaneousPlaceholderText.visibility = if (expanded) View.VISIBLE else View.GONE
+            val expanded = miscellaneousOptionsContainer.visibility != View.VISIBLE
+            miscellaneousOptionsContainer.visibility = if (expanded) View.VISIBLE else View.GONE
             miscellaneousToggleButton.setIconResource(if (expanded) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float)
         }
         liveWallpaperSettingsScroll = findViewById(R.id.liveWallpaperSettingsScroll)
