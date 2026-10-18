@@ -160,6 +160,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabUiSettings: MaterialButton
     private lateinit var tabBehaviorSettings: MaterialButton
     private lateinit var tabThemesSettings: MaterialButton
+    private lateinit var settingsOwnershipHint: TextView
     private lateinit var liveWallpaperTabButton: MaterialButton
     private lateinit var mainSettingsScroll: ScrollView
     private lateinit var liveWallpaperSettingsScroll: ScrollView
@@ -734,6 +735,7 @@ class MainActivity : AppCompatActivity() {
         tabUiSettings = findViewById(R.id.tabUiSettings)
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
         tabThemesSettings = findViewById(R.id.tabThemesSettings)
+        settingsOwnershipHint = findViewById(R.id.settingsOwnershipHint)
         liveWallpaperTabButton = findViewById(R.id.liveWallpaperTabButton)
         mainSettingsScroll = findViewById(R.id.mainSettingsScroll)
         liveWallpaperSettingsScroll = findViewById(R.id.liveWallpaperSettingsScroll)
@@ -1005,6 +1007,13 @@ class MainActivity : AppCompatActivity() {
         val showingBehavior = tab == SettingsTab.BEHAVIOR
         val showingThemes = tab == SettingsTab.THEMES
         val showingLiveWallpaper = tab == SettingsTab.LIVE_WALLPAPER
+
+        settingsOwnershipHint.text = when (tab) {
+            SettingsTab.UI -> "These controls tune the selected preset. Save changes to keep them in that preset."
+            SettingsTab.BEHAVIOR -> "These controls affect Bifrost globally, including startup, system behaviour and app profiles."
+            SettingsTab.THEMES -> "Themes change the app's interface appearance, not the LED settings stored in a preset."
+            SettingsTab.LIVE_WALLPAPER -> "Wallpaper playback settings are app-wide and remain separate from LED presets."
+        }
 
         modeCard.visibility = if (showingUi) View.VISIBLE else View.GONE
         colorCard.visibility = if (showingUi) View.VISIBLE else View.GONE
