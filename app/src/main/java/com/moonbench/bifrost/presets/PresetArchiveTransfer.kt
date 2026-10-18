@@ -24,6 +24,11 @@ object PresetArchiveTransfer {
     private const val ARCHIVE_VERSION = 2
     private const val MANIFEST_ENTRY_NAME = "manifest.json"
     private const val ICONS_DIR_PREFIX = "icons/"
+    // Defensive limits for user-selected archives and downloaded plugin bundles.
+    private const val MAX_ARCHIVE_ENTRIES = 256
+    private const val MAX_ENTRY_BYTES = 8 * 1024 * 1024
+    private const val MAX_TOTAL_UNCOMPRESSED_BYTES = 32 * 1024 * 1024
+    private val SAFE_ICON_NAME = Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,179}")
 
     data class ExportResult(
         val presetCount: Int,
@@ -48,6 +53,15 @@ object PresetArchiveTransfer {
         mappings: Map<String, String>,
         cancelSignal: CancellationSignal? = null
     ): ExportResult {
+        require(presets.isNotEmpty()) { "Select at least one preset to export." }
+        val seenNames = linkedSetOf<String>()
+        presets.forEach { preset ->
+            require(preset.name.isNotBlank()) { "A preset has no name and cannot be exported safely." }
+            require(seenNames.add(preset.name)) {
+                "Duplicate preset name '${preset.name}'. Rename duplicates before exporting."
+            }
+        }
+
         val warnings = mutableListOf<String>()
         var exportedIconCount = 0
 
@@ -86,9 +100,17 @@ object PresetArchiveTransfer {
             manifestPresets.put(presetJson)
         }
 
+        // A bundle must not carry app-profile mappings for presets that were
+        // not selected for export. Otherwise an otherwise valid partial export
+        // can produce dangling mappings when imported on another device.
+        val exportedPresetNames = seenNames
         val mappingsJson = JSONObject()
         mappings.forEach { (packageName, presetName) ->
-            mappingsJson.put(packageName, presetName)
+            if (presetName in exportedPresetNames) {
+                mappingsJson.put(packageName, presetName)
+            } else {
+                warnings += "Skipped app mapping for '$packageName': preset '$presetName' is not included in this bundle."
+            }
         }
 
         val manifest = JSONObject().apply {
@@ -99,19 +121,33 @@ object PresetArchiveTransfer {
         }
 
         val seenIconNames = linkedSetOf<String>()
-        // Check for cancellation before starting heavy IO
+        var totalUncompressedBytes = 0L
+        var entryCount = 0
+        // Apply the same limits to exports as imports. A damaged or unexpectedly
+        // large local artwork file must not create an archive this app cannot safely
+        // read back, and cancellation remains responsive during icon copying.
         cancelSignal?.throwIfCanceled()
         context.contentResolver.openOutputStream(uri)?.use { stream ->
             ZipOutputStream(stream.buffered()).use { zip ->
                 cancelSignal?.throwIfCanceled()
+                val manifestBytes = manifest.toString(2).toByteArray(Charsets.UTF_8)
+                if (manifestBytes.size > MAX_ENTRY_BYTES) {
+                    throw IllegalArgumentException("Preset manifest exceeds the allowed archive size.")
+                }
+                entryCount++
+                totalUncompressedBytes += manifestBytes.size
                 zip.putNextEntry(ZipEntry(MANIFEST_ENTRY_NAME))
-                zip.write(manifest.toString(2).toByteArray(Charsets.UTF_8))
+                zip.write(manifestBytes)
                 zip.closeEntry()
 
                 presets.forEach { preset ->
                     cancelSignal?.throwIfCanceled()
                     val iconName = preset.customImageFileName?.trim().orEmpty()
                     if (iconName.isEmpty() || !seenIconNames.add(iconName)) return@forEach
+                    if (!SAFE_ICON_NAME.matches(iconName) || iconName.contains('\\')) {
+                        warnings += "Unsafe image filename for preset '${preset.name}'; skipping."
+                        return@forEach
+                    }
 
                     val input = PresetImageStorage.openIconInputStream(context, iconName)
                     if (input == null) {
@@ -121,9 +157,28 @@ object PresetArchiveTransfer {
 
                     input.use { iconStream ->
                         cancelSignal?.throwIfCanceled()
+                        if (entryCount >= MAX_ARCHIVE_ENTRIES) {
+                            throw IllegalArgumentException("Preset bundle contains too many artwork entries.")
+                        }
                         zip.putNextEntry(ZipEntry("$ICONS_DIR_PREFIX$iconName"))
-                        iconStream.copyTo(zip)
+                        val buffer = ByteArray(8192)
+                        var iconBytes = 0
+                        while (true) {
+                            cancelSignal?.throwIfCanceled()
+                            val read = iconStream.read(buffer)
+                            if (read < 0) break
+                            iconBytes += read
+                            totalUncompressedBytes += read
+                            if (iconBytes > MAX_ENTRY_BYTES) {
+                                throw IllegalArgumentException("Artwork '$iconName' exceeds the allowed size.")
+                            }
+                            if (totalUncompressedBytes > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+                                throw IllegalArgumentException("Preset bundle exceeds the allowed total size.")
+                            }
+                            zip.write(buffer, 0, read)
+                        }
                         zip.closeEntry()
+                        entryCount++
                         exportedIconCount++
                     }
                 }
@@ -142,32 +197,72 @@ object PresetArchiveTransfer {
         val errors = mutableListOf<String>()
 
         val zipEntries = mutableMapOf<String, ByteArray>()
-        // Check cancellation before reading
+        var totalUncompressedBytes = 0L
+        var entryCount = 0
+        // Check cancellation before reading. Do not trust ZIP metadata: enforce
+        // limits while streaming so forged sizes and zip bombs are bounded.
         cancelSignal?.throwIfCanceled()
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            ZipInputStream(input.buffered()).use { zip ->
-                while (true) {
-                    cancelSignal?.throwIfCanceled()
-                    val entry = zip.nextEntry ?: break
-                    if (entry.isDirectory) {
-                        zip.closeEntry()
-                        continue
-                    }
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                ZipInputStream(input.buffered()).use { zip ->
+                    while (true) {
+                        cancelSignal?.throwIfCanceled()
+                        val entry = zip.nextEntry ?: break
+                        entryCount++
+                        if (entryCount > MAX_ARCHIVE_ENTRIES) {
+                            throw IllegalArgumentException("Archive contains too many entries.")
+                        }
+                        if (entry.isDirectory) {
+                            zip.closeEntry()
+                            continue
+                        }
+                        val name = entry.name
+                        val validName = name == MANIFEST_ENTRY_NAME ||
+                            (name.startsWith(ICONS_DIR_PREFIX) &&
+                                SAFE_ICON_NAME.matches(name.removePrefix(ICONS_DIR_PREFIX)) &&
+                                !name.removePrefix(ICONS_DIR_PREFIX).contains('\\'))
+                        if (!validName || name in zipEntries) {
+                            throw IllegalArgumentException("Archive contains an unsafe or duplicate entry.")
+                        }
 
-                    val data = ByteArrayOutputStream().use { output ->
-                        zip.copyTo(output)
-                        output.toByteArray()
+                        val data = ByteArrayOutputStream().use { output ->
+                            val buffer = ByteArray(8192)
+                            var entryBytes = 0
+                            while (true) {
+                                cancelSignal?.throwIfCanceled()
+                                val read = zip.read(buffer)
+                                if (read < 0) break
+                                entryBytes += read
+                                totalUncompressedBytes += read
+                                if (entryBytes > MAX_ENTRY_BYTES) {
+                                    throw IllegalArgumentException("Archive entry is too large.")
+                                }
+                                if (totalUncompressedBytes > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+                                    throw IllegalArgumentException("Archive expands beyond the allowed size.")
+                                }
+                                output.write(buffer, 0, read)
+                            }
+                            output.toByteArray()
+                        }
+                        zipEntries[name] = data
+                        zip.closeEntry()
                     }
-                    zipEntries[entry.name] = data
-                    zip.closeEntry()
                 }
-            }
-        } ?: return ImportResult(
-            presets = emptyList(),
-            mappings = emptyMap(),
-            warnings = emptyList(),
-            errors = listOf("Unable to read selected file.")
-        )
+            } ?: return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = emptyList(),
+                errors = listOf("Unable to read selected file.")
+            )
+        } catch (t: Throwable) {
+            if (t is android.os.OperationCanceledException) throw t
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = emptyList(),
+                errors = listOf(t.message ?: "Unable to read archive safely.")
+            )
+        }
 
         val manifestRaw = zipEntries[MANIFEST_ENTRY_NAME]
             ?: return ImportResult(
@@ -199,7 +294,65 @@ object PresetArchiveTransfer {
             warnings += "Bundle version $version is newer than supported version $ARCHIVE_VERSION. Attempting compatible import."
         }
 
-        val presetArray = manifest.optJSONArray("presets") ?: JSONArray()
+        // Never parse presets (which may import image files) from a manifest
+        // whose schema or required version fields have already failed validation.
+        if (errors.isNotEmpty()) {
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = warnings,
+                errors = errors
+            )
+        }
+
+        val presetArray = manifest.optJSONArray("presets")
+        if (presetArray == null || presetArray.length() == 0) {
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = warnings,
+                errors = listOf("Preset bundle contains no presets.")
+            )
+        }
+
+        // Reject malformed entries instead of silently skipping them. This keeps
+        // archive contents and app-profile mappings predictable before any images
+        // are written into app storage.
+        for (index in 0 until presetArray.length()) {
+            if (presetArray.optJSONObject(index) == null) {
+                errors += "Preset entry ${index + 1} is not a valid object."
+            }
+        }
+        if (errors.isNotEmpty()) {
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = warnings,
+                errors = errors
+            )
+        }
+
+        // Validate preset identity before parsePreset() writes any bundled image
+        // files into app storage. Duplicate names make app-profile mappings
+        // ambiguous and can also create duplicate spinner entries.
+        val seenPresetNames = linkedSetOf<String>()
+        for (index in 0 until presetArray.length()) {
+            val obj = presetArray.optJSONObject(index) ?: continue
+            val name = obj.optString("name").takeIf { it.isNotBlank() }
+                ?: "Imported Preset ${index + 1}"
+            if (!seenPresetNames.add(name)) {
+                errors += "Duplicate preset name '$name' in bundle. Rename duplicates and export again."
+            }
+        }
+        if (errors.isNotEmpty()) {
+            return ImportResult(
+                presets = emptyList(),
+                mappings = emptyMap(),
+                warnings = warnings,
+                errors = errors
+            )
+        }
+
         val importedPresets = mutableListOf<LedPreset>()
 
         for (index in 0 until presetArray.length()) {
@@ -208,7 +361,13 @@ object PresetArchiveTransfer {
             importedPresets += parsePreset(context, obj, index, zipEntries, warnings, cancelSignal)
         }
 
-        val mappings = parseMappings(context, manifest.optJSONObject("appProfileMappings"), warnings, cancelSignal)
+        val mappings = parseMappings(
+            context,
+            manifest.optJSONObject("appProfileMappings"),
+            seenPresetNames,
+            warnings,
+            cancelSignal
+        )
         val livePolicies = parseLivePolicies(manifest.optJSONObject("livePolicies"), warnings)
 
         return ImportResult(
@@ -270,7 +429,16 @@ object PresetArchiveTransfer {
 
         val customEmoji = obj.optString("customEmoji").takeIf { it.isNotBlank() }
 
-        val importedIconName = obj.optString("customImageFileName").takeIf { it.isNotBlank() }
+        val requestedIconName = obj.optString("customImageFileName").takeIf { it.isNotBlank() }
+        // Validate manifest-provided filenames as well as ZIP entry paths. A safe
+        // ZIP can still contain a malicious filename reference in its JSON manifest.
+        val importedIconName = requestedIconName?.takeIf { SAFE_ICON_NAME.matches(it) }
+            ?: run {
+                if (requestedIconName != null) {
+                    warnings += "Preset '$name': unsafe image filename; skipping custom artwork."
+                }
+                null
+            }
         val customImageFileName = if (importedIconName != null) {
             cancelSignal?.throwIfCanceled()
             val archiveEntryName = "$ICONS_DIR_PREFIX$importedIconName"
@@ -337,6 +505,7 @@ object PresetArchiveTransfer {
     private fun parseMappings(
         context: Context,
         mappingsObj: JSONObject?,
+        includedPresetNames: Set<String>,
         warnings: MutableList<String>,
         cancelSignal: CancellationSignal? = null
     ): Map<String, String> {
@@ -349,6 +518,10 @@ object PresetArchiveTransfer {
             val packageName = iterator.next()
             val presetName = mappingsObj.optString(packageName).takeIf { it.isNotBlank() }
             if (presetName == null) continue
+            if (presetName !in includedPresetNames) {
+                warnings += "Mapping ignored: preset '$presetName' is not included in this bundle."
+                continue
+            }
 
             if (!isPackageInstalled(context.packageManager, packageName)) {
                 warnings += "Mapping ignored: package '$packageName' is not installed."

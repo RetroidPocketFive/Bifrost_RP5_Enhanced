@@ -22,6 +22,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.provider.DocumentsContract
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -159,6 +160,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabUiSettings: MaterialButton
     private lateinit var tabBehaviorSettings: MaterialButton
     private lateinit var tabThemesSettings: MaterialButton
+    private lateinit var settingsOwnershipHint: TextView
     private lateinit var liveWallpaperTabButton: MaterialButton
     private lateinit var mainSettingsScroll: ScrollView
     private lateinit var liveWallpaperSettingsScroll: ScrollView
@@ -538,16 +540,18 @@ class MainActivity : AppCompatActivity() {
         }
 
     private val importPresetsLauncher =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
             val options = pendingBackupImportOptions ?: BackupArchiveTransfer.CategoryOptions()
             pendingBackupImportOptions = null
             importPresetBundle(uri, options)
         }
 
     private val importThemeLauncher =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
-            if (uri == null) return@registerForActivityResult
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
             importThemeBundle(uri)
         }
 
@@ -697,6 +701,9 @@ class MainActivity : AppCompatActivity() {
         homeContainer = findViewById(R.id.homeContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
+        findViewById<MaterialButton>(R.id.openLibrarySettingsButton).setOnClickListener {
+            startActivity(Intent(this, BifrostLibrarySettingsActivity::class.java))
+        }
         homeExitButton = findViewById<MaterialButton?>(R.id.homeExitButton)
             ?: MaterialButton(this).apply {
                 id = R.id.homeExitButton
@@ -728,6 +735,7 @@ class MainActivity : AppCompatActivity() {
         tabUiSettings = findViewById(R.id.tabUiSettings)
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
         tabThemesSettings = findViewById(R.id.tabThemesSettings)
+        settingsOwnershipHint = findViewById(R.id.settingsOwnershipHint)
         liveWallpaperTabButton = findViewById(R.id.liveWallpaperTabButton)
         mainSettingsScroll = findViewById(R.id.mainSettingsScroll)
         liveWallpaperSettingsScroll = findViewById(R.id.liveWallpaperSettingsScroll)
@@ -999,6 +1007,13 @@ class MainActivity : AppCompatActivity() {
         val showingBehavior = tab == SettingsTab.BEHAVIOR
         val showingThemes = tab == SettingsTab.THEMES
         val showingLiveWallpaper = tab == SettingsTab.LIVE_WALLPAPER
+
+        settingsOwnershipHint.text = when (tab) {
+            SettingsTab.UI -> "These controls tune the selected preset. When closing settings, choose Save to keep your changes or Don’t Save to discard them."
+            SettingsTab.BEHAVIOR -> "These controls affect Bifrost globally, including startup, system behaviour and app profiles."
+            SettingsTab.THEMES -> "Themes change the app's interface appearance, not the LED settings stored in a preset."
+            SettingsTab.LIVE_WALLPAPER -> "Wallpaper playback settings are app-wide and remain separate from LED presets."
+        }
 
         modeCard.visibility = if (showingUi) View.VISIBLE else View.GONE
         colorCard.visibility = if (showingUi) View.VISIBLE else View.GONE
@@ -3686,9 +3701,18 @@ class MainActivity : AppCompatActivity() {
                 subtitle = "Choose what to include in the backup",
                 confirmLabel = "BACKUP"
             ) { options ->
-                pendingBackupExportOptions = options
                 val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                exportPresetsLauncher.launch("bifrost_backup_$timestamp.bifrost_backup")
+                val uri = runCatching {
+                    BifrostLibraryStorage.createUniqueFileInLibrary(
+                        this, "Saved/Backups", "Bifrost-Backup-$timestamp.zip", "application/zip"
+                    )
+                }.getOrNull()
+                if (uri != null) {
+                    exportPresetBundle(uri, options)
+                } else {
+                    pendingBackupExportOptions = options
+                    exportPresetsLauncher.launch("Bifrost-Backup-$timestamp.zip")
+                }
             }
         }
 
@@ -3699,23 +3723,55 @@ class MainActivity : AppCompatActivity() {
                 confirmLabel = "RESTORE"
             ) { options ->
                 pendingBackupImportOptions = options
-                importPresetsLauncher.launch(arrayOf("*/*"))
+                launchManagedLibraryImport(
+                    "Saved/Backups",
+                    arrayOf("application/zip", "application/octet-stream", "*/*"),
+                    importPresetsLauncher
+                )
             }
         }
 
         exportThemeButton.setOnClickListener {
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-            exportThemeLauncher.launch("bifrost_theme_$timestamp.bifrost_theme")
+            val uri = runCatching {
+                BifrostLibraryStorage.createUniqueFileInLibrary(
+                    this, "Saved/Themes", "Bifrost-Theme-$timestamp.bifrost_theme", "application/json"
+                )
+            }.getOrNull()
+            if (uri != null) {
+                exportThemeBundle(uri)
+            } else {
+                exportThemeLauncher.launch("Bifrost-Theme-$timestamp.bifrost_theme")
+            }
         }
 
         importThemeButton.setOnClickListener {
-            importThemeLauncher.launch(arrayOf("*/*"))
+            launchManagedLibraryImport(
+                "Saved/Themes",
+                arrayOf("application/json", "text/json", "*/*"),
+                importThemeLauncher
+            )
         }
 
         // If the app switching feature is already enabled, start syncing the UI after presets load.
         if (::appProfileManager.isInitialized && appProfileManager.isEnabled) {
             startAppProfileSync()
         }
+    }
+
+    private fun launchManagedLibraryImport(
+        relativeFolder: String,
+        mimeTypes: Array<String>,
+        launcher: androidx.activity.result.ActivityResultLauncher<Intent>
+    ) {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes)
+            BifrostLibraryStorage.getLibraryFolderUri(this@MainActivity, relativeFolder)
+                ?.let { putExtra(DocumentsContract.EXTRA_INITIAL_URI, it) }
+        }
+        launcher.launch(intent)
     }
 
     private fun exportPresetBundle(uri: Uri, options: BackupArchiveTransfer.CategoryOptions) {
