@@ -53,17 +53,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
         persistPresets()
         toast("Profile icon image saved.")
     }
-    private var pendingImagePresetIndex: Int = -1
-        if (uri == null) return@registerForActivityResult
-        val target = presets.optJSONObject(selectedPreset) ?: run { toast("Create or select a saved profile before choosing its icon."); return@registerForActivityResult }
-        val fileName = runCatching { PresetImageStorage.copyPickedImage(this, uri) }.getOrNull()
-        if (fileName == null) { toast("Could not import that image."); return@registerForActivityResult }
-        target.put("customEmoji", JSONObject.NULL)
-        target.put("customImageFileName", fileName)
-        target.put("appIconPackageName", JSONObject.NULL)
-        persistPresets()
-        toast("Profile icon image saved.")
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
