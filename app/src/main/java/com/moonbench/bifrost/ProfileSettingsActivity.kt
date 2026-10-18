@@ -5,6 +5,9 @@ import android.os.Bundle
 import android.net.Uri
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import android.text.InputType
 import android.view.View
 import android.widget.ArrayAdapter
@@ -42,6 +45,17 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private lateinit var videoWallpaperSwitch: SwitchMaterial
     private lateinit var fpsSpinner: Spinner
     private var selectedProfileColor: Int = android.graphics.Color.WHITE
+    private val profileImagePicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val target = presets.optJSONObject(selectedPreset) ?: run { toast("Select a saved profile first."); return@registerForActivityResult }
+        val fileName = runCatching { PresetImageStorage.copyPickedImage(this, uri) }.getOrNull()
+        if (fileName == null) { toast("Could not import that image."); return@registerForActivityResult }
+        target.put("customEmoji", JSONObject.NULL)
+        target.put("customImageFileName", fileName)
+        target.put("appIconPackageName", JSONObject.NULL)
+        persistPresets()
+        toast("Profile icon image saved.")
+    }
     private var pendingImagePresetIndex: Int = -1
     private val profileImagePicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri == null) return@registerForActivityResult
@@ -90,7 +104,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.profileSettingsIconColorButton).setOnClickListener { chooseProfileColor() }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
-            toast("Profile image selection will be added in the next step; the saved-profile icon colour is available now.")
+            if (presets.optJSONObject(selectedPreset) == null) { toast("Create or select a saved profile first."); return@setOnClickListener }
+            profileImagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         }
 
         val characteristicsTab = findViewById<MaterialButton>(R.id.profileSettingsArtworkTab)
