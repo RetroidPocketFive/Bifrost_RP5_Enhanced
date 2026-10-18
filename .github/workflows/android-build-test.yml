@@ -94,9 +94,10 @@ jobs:
       - name: Upload test APK
         uses: actions/upload-artifact@v4
         with:
-          name: Bifrost-RP5-Edition-debug-${{ github.run_number }}
+          name: Bifrost-RP5-Profile-Settings-test-${{ github.run_number }}
           path: |
             app/build/outputs/apk/debug/app-debug.apk
             app/build/outputs/apk/debug/app-debug.apk.sha256
           if-no-files-found: error
           retention-days: 14
+          compression-level: 0
