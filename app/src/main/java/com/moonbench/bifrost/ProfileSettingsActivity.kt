@@ -5,9 +5,6 @@ import android.os.Bundle
 import android.net.Uri
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import android.net.Uri
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import android.text.InputType
 import android.view.View
 import android.widget.ArrayAdapter
@@ -57,7 +54,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
         toast("Profile icon image saved.")
     }
     private var pendingImagePresetIndex: Int = -1
-    private val profileImagePicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri == null) return@registerForActivityResult
         val target = presets.optJSONObject(selectedPreset) ?: run { toast("Create or select a saved profile before choosing its icon."); return@registerForActivityResult }
         val fileName = runCatching { PresetImageStorage.copyPickedImage(this, uri) }.getOrNull()
