@@ -75,7 +75,7 @@
                     android:id="@+id/settingsPageTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="PROFILE SETTINGS"
+                    android:text="ARTWORK"
                     android:textColor="@color/bifrost_text"
                     android:textSize="20sp"
                     android:textStyle="bold"
@@ -97,16 +97,16 @@
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <HorizontalScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="8dp"
         android:scrollbars="none"
         android:overScrollMode="never"
         android:fillViewport="false">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
@@ -114,7 +114,9 @@
 
             <Spinner
                 android:id="@+id/presetSpinner"
-                android:layout_width="190dp"
+                android:layout_width="0dp"
+                android:layout_weight="1.55"
+                android:layout_marginEnd="3dp"
                 android:layout_height="48dp"
                 android:background="@drawable/bifrost_spinner_modern"
                 android:paddingStart="12dp"
@@ -124,9 +126,10 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/savePresetButton"
-                android:layout_width="118dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="48dp"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="3dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:paddingStart="8dp"
@@ -146,9 +149,10 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/modifyPresetButton"
-                android:layout_width="118dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="48dp"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="3dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:paddingStart="8dp"
@@ -167,10 +171,29 @@
                 android:tooltipText="Edit" />
 
             <com.google.android.material.button.MaterialButton
+            android:id="@+id/importPresetsButton"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginStart="3dp"
+            android:text="RESTORE"
+            android:textSize="11sp"
+            android:letterSpacing="0.05"
+            android:textColor="@color/bifrost_text"
+            android:backgroundTint="@color/bifrost_surface"
+            app:cornerRadius="10dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/bifrost_accent" 
+                android:contentDescription="Restore"
+                android:tooltipText="Restore" />
+
+<com.google.android.material.button.MaterialButton
                 android:id="@+id/deletePresetButton"
-                android:layout_width="118dp"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="48dp"
-                android:layout_marginStart="6dp"
+                android:layout_marginStart="3dp"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:paddingStart="8dp"
@@ -188,27 +211,7 @@
                 android:contentDescription="Delete"
                 android:tooltipText="Delete" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/customizePresetArtworkButton"
-                android:layout_width="118dp"
-                android:layout_height="48dp"
-                android:layout_marginStart="6dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                app:icon="@android:drawable/ic_menu_gallery"
-                android:text="ARTWORK"
-                app:iconGravity="textStart"
-                app:iconPadding="0dp"
-                app:iconSize="24dp"
-                app:iconTint="@color/bifrost_icon"
-                android:backgroundTint="@color/bifrost_surface"
-                app:cornerRadius="10dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Artwork"
-                android:tooltipText="Artwork" />
+            
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/closeSettingsButton"
@@ -228,9 +231,10 @@
                 android:tooltipText="Done" />
     </LinearLayout>
 
-    </HorizontalScrollView>
+    </LinearLayout>
 
     <HorizontalScrollView
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
@@ -260,22 +264,7 @@
                 android:contentDescription="Backup"
                 android:tooltipText="Backup" />
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/importPresetsButton"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:text="RESTORE"
-            android:textSize="11sp"
-            android:letterSpacing="0.05"
-            android:textColor="@color/bifrost_text"
-            android:backgroundTint="@color/bifrost_surface"
-            app:cornerRadius="10dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Restore"
-                android:tooltipText="Restore" />
+        
     </LinearLayout>
 
     </HorizontalScrollView>
@@ -300,11 +289,12 @@
             app:cornerRadius="10dp"
             app:strokeWidth="1dp"
             app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Profile settings: colour, animation and profile tuning"
-                android:tooltipText="Profile settings" />
+                android:contentDescription="Artwork settings"
+                android:tooltipText="Artwork" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/tabBehaviorSettings"
+            android:visibility="gone"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
@@ -356,8 +346,33 @@
                 android:tooltipText="Wallpaper" />
     </LinearLayout>
 
-    <TextView
+    <LinearLayout android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+<com.google.android.material.button.MaterialButton
+                android:id="@+id/customizePresetArtworkButton"
+                android:layout_width="118dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="6dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                app:icon="@android:drawable/ic_menu_gallery"
+                android:text="ARTWORK"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconSize="24dp"
+                app:iconTint="@color/bifrost_icon"
+                android:backgroundTint="@color/bifrost_surface"
+                app:cornerRadius="10dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/bifrost_accent" 
+                android:contentDescription="Artwork"
+                android:tooltipText="Artwork" />
+</LinearLayout>
+
+<TextView
         android:id="@+id/settingsOwnershipHint"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="-4dp"
