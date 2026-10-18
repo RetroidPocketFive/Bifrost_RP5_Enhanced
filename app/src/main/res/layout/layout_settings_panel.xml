@@ -1962,7 +1962,7 @@
                         android:textSize="12sp"
                         android:letterSpacing="0.05"
                         android:contentDescription="Expand or collapse miscellaneous settings"
-                        android:tooltipText="Additional settings to be organised later"
+                        android:tooltipText="Global settings without a dedicated section"
                         android:backgroundTint="@color/bifrost_surface"
                         app:cornerRadius="10dp"
                         app:strokeWidth="1dp"
@@ -1976,7 +1976,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:text="Additional Bifrost options will be reviewed and organised here later."
+                        android:text="Global settings without a dedicated category belong here. Existing controls will be retained as sections are reorganised."
                         android:textColor="@color/bifrost_text_secondary"
                         android:textSize="11sp"
                         android:visibility="gone" />
