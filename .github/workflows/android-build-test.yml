@@ -5,6 +5,7 @@ name: Bifrost Android Test APK
   push:
     branches:
       - main
+      - settings/header-design-system
     paths:
       - '**.gradle'
       - '**.gradle.kts'
