@@ -186,6 +186,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var performanceCard: MaterialCardView
     private lateinit var themesCard: MaterialCardView
     private lateinit var settingsSystemStatusCard: MaterialCardView
+    private lateinit var miscellaneousCard: MaterialCardView
+    private lateinit var miscellaneousToggleButton: MaterialButton
+    private lateinit var miscellaneousPlaceholderText: TextView
     private lateinit var systemStatusContainer: View
     private lateinit var bifrostLogoView: ImageView
     private lateinit var bifrostTitleText: TextView
@@ -738,6 +741,14 @@ class MainActivity : AppCompatActivity() {
         settingsOwnershipHint = findViewById(R.id.settingsOwnershipHint)
         liveWallpaperTabButton = findViewById(R.id.liveWallpaperTabButton)
         mainSettingsScroll = findViewById(R.id.mainSettingsScroll)
+        miscellaneousCard = findViewById(R.id.miscellaneousCard)
+        miscellaneousToggleButton = findViewById(R.id.miscellaneousToggleButton)
+        miscellaneousPlaceholderText = findViewById(R.id.miscellaneousPlaceholderText)
+        miscellaneousToggleButton.setOnClickListener {
+            val expanded = miscellaneousPlaceholderText.visibility != View.VISIBLE
+            miscellaneousPlaceholderText.visibility = if (expanded) View.VISIBLE else View.GONE
+            miscellaneousToggleButton.setIconResource(if (expanded) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float)
+        }
         liveWallpaperSettingsScroll = findViewById(R.id.liveWallpaperSettingsScroll)
         liveWallpaperVideoPathText = findViewById(R.id.liveWallpaperVideoPathText)
         liveWallpaperPickVideoButton = findViewById(R.id.liveWallpaperPickVideoButton)
@@ -1036,6 +1047,7 @@ class MainActivity : AppCompatActivity() {
 
         settingsSystemStatusCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
         appProfileCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
+        miscellaneousCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
 
         val thorCard = findViewById<View>(R.id.thorSettingsCard)
         thorCard?.visibility = if (showingBehavior && DeviceInfo.isAynThor) View.VISIBLE else View.GONE
