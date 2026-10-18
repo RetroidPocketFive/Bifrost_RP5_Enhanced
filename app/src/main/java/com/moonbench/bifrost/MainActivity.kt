@@ -184,6 +184,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var activePresetProfileText: TextView
     private lateinit var modeCard: MaterialCardView
     private lateinit var appProfileCard: MaterialCardView
+    private lateinit var defaultFallbackCard: MaterialCardView
     private lateinit var colorCard: MaterialCardView
     private lateinit var animationCard: MaterialCardView
     private lateinit var performanceCard: MaterialCardView
@@ -855,6 +856,7 @@ class MainActivity : AppCompatActivity() {
         manageAppsButton = findViewById(R.id.manageAppsButton)
         modeCard = findViewById(R.id.modeCard)
         appProfileCard = findViewById(R.id.appProfileCard)
+        defaultFallbackCard = findViewById(R.id.defaultFallbackCard)
         colorCard = findViewById(R.id.colorCard)
         animationCard = findViewById(R.id.animationCard)
         performanceCard = findViewById(R.id.performanceCard)
@@ -1069,6 +1071,7 @@ class MainActivity : AppCompatActivity() {
 
         settingsSystemStatusCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
         appProfileCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
+        defaultFallbackCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
         miscellaneousCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
 
         val thorCard = findViewById<View>(R.id.thorSettingsCard)
