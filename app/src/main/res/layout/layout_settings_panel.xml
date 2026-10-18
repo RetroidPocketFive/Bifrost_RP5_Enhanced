@@ -1629,36 +1629,70 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
+    
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/defaultFallbackCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/bifrost_spacing_md"
+                app:cardBackgroundColor="@color/bifrost_card"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/bifrost_card_padding"
+                    android:background="@drawable/card_glow_bg">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="DEFAULT FALLBACK"
+                        android:textColor="@color/bifrost_text"
+                        android:textSize="12sp"
+                        android:letterSpacing="0.08"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Use the selected preset when no assigned app is in the foreground."
+                        android:textColor="@color/bifrost_text_secondary"
+                        android:textSize="11sp"
+                        android:layout_marginBottom="8dp" />
                         <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+    
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="DEFAULT FALLBACK"
+                                    android:textColor="@color/bifrost_text_secondary"
+                                    android:textSize="10sp"
+                                    android:letterSpacing="0.1" />
+    
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="Use selected preset when no assigned app is foreground"
+                                    android:textColor="@color/bifrost_text_secondary"
+                                    android:textSize="8sp" />
+                            </LinearLayout>
+    
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/appProfileDefaultSwitch"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="DEFAULT FALLBACK"
-                                android:textColor="@color/bifrost_text_secondary"
-                                android:textSize="10sp"
-                                android:letterSpacing="0.1" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Use selected preset when no assigned app is foreground"
-                                android:textColor="@color/bifrost_text_secondary"
-                                android:textSize="8sp" />
+                                app:thumbTint="@color/switch_thumb_tint"
+                                app:trackTint="@color/switch_track_tint" />
                         </LinearLayout>
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/appProfileDefaultSwitch"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            app:thumbTint="@color/switch_thumb_tint"
-                            app:trackTint="@color/switch_track_tint" />
-                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
