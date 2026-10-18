@@ -2,6 +2,9 @@ package com.moonbench.bifrost
 
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.net.Uri
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import android.text.InputType
 import android.view.View
 import android.widget.ArrayAdapter
@@ -39,6 +42,18 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private lateinit var videoWallpaperSwitch: SwitchMaterial
     private lateinit var fpsSpinner: Spinner
     private var selectedProfileColor: Int = android.graphics.Color.WHITE
+    private var pendingImagePresetIndex: Int = -1
+    private val profileImagePicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val target = presets.optJSONObject(selectedPreset) ?: run { toast("Create or select a saved profile before choosing its icon."); return@registerForActivityResult }
+        val fileName = runCatching { PresetImageStorage.copyPickedImage(this, uri) }.getOrNull()
+        if (fileName == null) { toast("Could not import that image."); return@registerForActivityResult }
+        target.put("customEmoji", JSONObject.NULL)
+        target.put("customImageFileName", fileName)
+        target.put("appIconPackageName", JSONObject.NULL)
+        persistPresets()
+        toast("Profile icon image saved.")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
