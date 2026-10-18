@@ -212,6 +212,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/closeSettingsButton"
+                android:visibility="gone"
                 android:layout_width="100dp"
                 android:layout_height="40dp"
                 android:layout_marginStart="10dp"
