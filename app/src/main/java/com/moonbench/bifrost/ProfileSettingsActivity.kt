@@ -253,7 +253,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
         current.put("color", selectedProfileColor)
         current.put("rightColor", selectedProfileColor)
         persistPresets()
-        toast("Profile saved. Reopen or select it in BIFROST to apply.")
+        prefs.edit().putString("profile_settings_apply_preset_name", current.optString("name", "")).apply()
+        toast("Profile saved. Applying it in BIFROST…")
+        finish()
     }
 
     private fun persistPresets() {
@@ -299,7 +301,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private fun applyThemeSelection(position: Int) {
         val id = if (position == 1) "oled_purple" else "classic"
         prefs.edit().putString("selected_ui_theme", id).apply()
-        toast("Theme set to ${if (position == 1) "OLED Purple" else "Classic"}. Return to BIFROST to refresh the theme.")
+        toast("${if (position == 1) "OLED Purple" else "Classic"} selected. Return to BIFROST to apply the theme.")
     }
 
     private fun setupEnumSpinner(spinner: Spinner, items: List<String>) {
