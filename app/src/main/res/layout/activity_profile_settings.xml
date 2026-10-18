@@ -121,6 +121,8 @@
                         <Spinner android:id="@+id/profileSettingsViewingProfileSpinner" android:layout_width="match_parent" android:layout_height="56dp"
                             android:layout_marginTop="8dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp"
                             android:contentDescription="Animation Viewing Profile"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsSingleColorSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="SINGLE COLOR MODE" android:textColor="@color/bifrost_text"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsScreenCaptureSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="USE SCREEN CAPTURE" android:textColor="@color/bifrost_text"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp"
                             android:text="ANIMATION PARAMETERS" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
@@ -140,7 +142,7 @@
                     android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
                     app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INTENSITY"
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="BRIGHTNESS"
                             android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp" android:letterSpacing="0.05"/>
                         <SeekBar android:id="@+id/profileSettingsIntensitySeekBar" android:layout_width="match_parent" android:layout_height="wrap_content"
                             android:layout_marginTop="12dp" android:max="100" android:progress="75" android:progressTint="@color/bifrost_accent"
@@ -156,6 +158,7 @@
                     app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="THEMES" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsColoredLogoSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Colored Logo" android:textColor="@color/bifrost_text"/>
                         <Spinner android:id="@+id/profileSettingsThemeSpinner" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp"
                             android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp" android:contentDescription="Themes"/>
                     </LinearLayout>
@@ -163,15 +166,21 @@
                 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp" app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ARTWORK" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Artwork settings will be arranged here." android:textColor="@color/bifrost_text_secondary" android:textSize="13sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="PROFILE ICON" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconImageButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choose Image" android:textSize="12sp" app:cornerRadius="10dp"/>
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconColorButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:text="Choose Colour" android:textSize="12sp" app:cornerRadius="10dp"/>
+                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
                 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp" app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="WALLPAPER" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Wallpaper settings will be arranged here." android:textColor="@color/bifrost_text_secondary" android:textSize="13sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Video Wallpaper" android:textColor="@color/bifrost_text" android:textSize="14sp"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsVideoWallpaperSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Enable video wallpaper" android:textColor="@color/bifrost_text" android:layout_marginTop="6dp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="TARGET FPS" android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <Spinner android:id="@+id/profileSettingsTargetFpsSpinner" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp" android:contentDescription="Target FPS"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
