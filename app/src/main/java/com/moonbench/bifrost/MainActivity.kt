@@ -161,6 +161,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabBehaviorSettings: MaterialButton
     private lateinit var tabThemesSettings: MaterialButton
     private lateinit var settingsOwnershipHint: TextView
+    private lateinit var settingsPageTitle: TextView
+    private lateinit var settingsPageDescription: TextView
+    private lateinit var settingsHeaderBackButton: MaterialButton
     private lateinit var liveWallpaperTabButton: MaterialButton
     private lateinit var mainSettingsScroll: ScrollView
     private lateinit var liveWallpaperSettingsScroll: ScrollView
@@ -739,6 +742,10 @@ class MainActivity : AppCompatActivity() {
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
         tabThemesSettings = findViewById(R.id.tabThemesSettings)
         settingsOwnershipHint = findViewById(R.id.settingsOwnershipHint)
+        settingsPageTitle = findViewById(R.id.settingsPageTitle)
+        settingsPageDescription = findViewById(R.id.settingsPageDescription)
+        settingsHeaderBackButton = findViewById(R.id.settingsHeaderBackButton)
+        settingsHeaderBackButton.setOnClickListener { requestCloseSettingsOverlay() }
         liveWallpaperTabButton = findViewById(R.id.liveWallpaperTabButton)
         mainSettingsScroll = findViewById(R.id.mainSettingsScroll)
         miscellaneousCard = findViewById(R.id.miscellaneousCard)
@@ -1032,6 +1039,19 @@ class MainActivity : AppCompatActivity() {
         val showingBehavior = tab == SettingsTab.BEHAVIOR
         val showingThemes = tab == SettingsTab.THEMES
         val showingLiveWallpaper = tab == SettingsTab.LIVE_WALLPAPER
+
+        settingsPageTitle.text = when (tab) {
+            SettingsTab.UI -> "PROFILE SETTINGS"
+            SettingsTab.BEHAVIOR -> "BIFROST SETTINGS"
+            SettingsTab.THEMES -> "THEMES"
+            SettingsTab.LIVE_WALLPAPER -> "WALLPAPER"
+        }
+        settingsPageDescription.text = when (tab) {
+            SettingsTab.UI -> "Configure the selected preset and its behaviour."
+            SettingsTab.BEHAVIOR -> "Configure application behaviour and global preferences."
+            SettingsTab.THEMES -> "Customise the BIFROST interface appearance."
+            SettingsTab.LIVE_WALLPAPER -> "Configure app-wide wallpaper playback."
+        }
 
         settingsOwnershipHint.text = when (tab) {
             SettingsTab.UI -> "These controls tune the selected preset. When closing settings, choose Save to keep your changes or Don’t Save to discard them."
