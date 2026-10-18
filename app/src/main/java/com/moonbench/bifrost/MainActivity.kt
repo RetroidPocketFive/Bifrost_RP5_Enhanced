@@ -991,8 +991,7 @@ class MainActivity : AppCompatActivity() {
             openSettingsOverlay()
         }
         findViewById<MaterialButton>(R.id.homeProfileSettingsButton).setOnClickListener {
-            setSettingsTab(SettingsTab.UI)
-            openSettingsOverlay()
+            startActivity(Intent(this, ProfileSettingsActivity::class.java))
         }
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
