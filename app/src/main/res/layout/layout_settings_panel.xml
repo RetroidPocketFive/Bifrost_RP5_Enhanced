@@ -75,7 +75,7 @@
                     android:id="@+id/settingsPageTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="ARTWORK"
+                    android:text="PROFILE SETTINGS"
                     android:textColor="@color/bifrost_text"
                     android:textSize="20sp"
                     android:textStyle="bold"
@@ -101,9 +101,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:scrollbars="none"
-        android:overScrollMode="never"
-        android:fillViewport="false">
+        android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -175,7 +173,6 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="40dp"
-            android:layout_weight="1"
             android:layout_marginStart="3dp"
             android:text="RESTORE"
             android:textSize="11sp"
@@ -281,7 +278,7 @@
             android:layout_height="40dp"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:text="PROFILE SETTINGS"
+            android:text="ARTWORK"
             android:textColor="@color/bifrost_text"
             android:textSize="10sp"
             android:letterSpacing="0.05"
