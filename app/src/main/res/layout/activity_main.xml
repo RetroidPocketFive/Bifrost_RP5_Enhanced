@@ -219,6 +219,18 @@
             android:orientation="horizontal">
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeProfileSettingsButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="48dp"
+                android:layout_marginEnd="8dp"
+                android:minHeight="48dp"
+                android:text="PROFILE SETTINGS"
+                android:textSize="10sp"
+                android:contentDescription="Open settings for the selected preset"
+                android:tooltipText="Edit the selected preset's LED settings" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/homeClearCacheButton"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="112dp"
