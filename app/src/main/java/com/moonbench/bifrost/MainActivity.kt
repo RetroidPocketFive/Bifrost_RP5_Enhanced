@@ -2521,6 +2521,21 @@ class MainActivity : AppCompatActivity() {
 
             if (::presetController.isInitialized) {
                 presetController.reloadFromPrefs()
+                val pendingPresetName = prefs.getString("profile_settings_apply_preset_name", null)
+                if (!pendingPresetName.isNullOrBlank()) {
+                    prefs.edit().remove("profile_settings_apply_preset_name").apply()
+                    val targetIndex = presetController.getPresets().indexOfFirst { it.name == pendingPresetName }
+                    if (targetIndex >= 0) presetController.applyPresetAt(targetIndex)
+                }
+            }
+
+            val themeId = prefs.getString(PREF_SELECTED_UI_THEME, builtInThemes.first().id)
+            val restoredTheme = builtInThemes.firstOrNull { it.id == themeId } ?: builtInThemes.first()
+            if (restoredTheme.id != selectedUiTheme.id) applySelectedTheme(restoredTheme, persistSelection = false)
+            val coloredLogo = prefs.getBoolean(PREF_COLORED_LOGO_ENABLED, false)
+            if (isColoredLogoEnabled != coloredLogo) {
+                isColoredLogoEnabled = coloredLogo
+                applyHeaderLogoPreference()
             }
 
             if (prefs.getBoolean(PREF_LIVE_WALLPAPER_RESTORE_SETTINGS, false)) {
