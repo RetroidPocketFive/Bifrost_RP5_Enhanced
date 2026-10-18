@@ -104,6 +104,7 @@
                         <Spinner android:id="@+id/profileSettingsPerformanceSpinner" android:layout_width="match_parent" android:layout_height="56dp"
                             android:layout_marginTop="12dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp"
                             android:contentDescription="Performance profile"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Choose the performance preset used to balance LED response and system load." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -116,6 +117,7 @@
                         <Spinner android:id="@+id/profileSettingsAnimationModeSpinner" android:layout_width="match_parent" android:layout_height="64dp"
                             android:layout_marginTop="10dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp"
                             android:contentDescription="Animation mode"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Select the animation pattern used by this profile." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
                             android:text="Animation Viewing Profile" android:textColor="@color/bifrost_text" android:textSize="14sp"/>
                         <Spinner android:id="@+id/profileSettingsViewingProfileSpinner" android:layout_width="match_parent" android:layout_height="56dp"
@@ -158,6 +160,7 @@
                     app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="THEMES" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Choose the BIFROST interface colour scheme." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsColoredLogoSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Colored Logo" android:textColor="@color/bifrost_text"/>
                         <Spinner android:id="@+id/profileSettingsThemeSpinner" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp"
                             android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp" android:contentDescription="Themes"/>
@@ -167,6 +170,7 @@
                     android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp" app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="PROFILE ICON" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Choose an image or colour to identify this saved profile in the preset carousel." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
                             <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconImageButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choose Image" android:textSize="12sp" app:cornerRadius="10dp"/>
                             <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconColorButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:text="Choose Colour" android:textSize="12sp" app:cornerRadius="10dp"/>
@@ -177,6 +181,7 @@
                     android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp" app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="WALLPAPER" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Configure video wallpaper playback and its target frame rate." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Video Wallpaper" android:textColor="@color/bifrost_text" android:textSize="14sp"/>
                         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsVideoWallpaperSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Enable video wallpaper" android:textColor="@color/bifrost_text" android:layout_marginTop="6dp"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="TARGET FPS" android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
