@@ -1009,7 +1009,7 @@ class MainActivity : AppCompatActivity() {
         val showingLiveWallpaper = tab == SettingsTab.LIVE_WALLPAPER
 
         settingsOwnershipHint.text = when (tab) {
-            SettingsTab.UI -> "These controls tune the selected preset. Save changes to keep them in that preset."
+            SettingsTab.UI -> "These controls tune the selected preset. When closing settings, choose Save to keep your changes or Don’t Save to discard them."
             SettingsTab.BEHAVIOR -> "These controls affect Bifrost globally, including startup, system behaviour and app profiles."
             SettingsTab.THEMES -> "Themes change the app's interface appearance, not the LED settings stored in a preset."
             SettingsTab.LIVE_WALLPAPER -> "Wallpaper playback settings are app-wide and remain separate from LED presets."
