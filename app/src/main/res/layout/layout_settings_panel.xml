@@ -1648,15 +1648,6 @@
                     android:padding="@dimen/bifrost_card_padding"
                     android:background="@drawable/card_glow_bg">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="DEFAULT FALLBACK"
-                        android:textColor="@color/bifrost_text"
-                        android:textSize="12sp"
-                        android:letterSpacing="0.08"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="4dp" />
-                    <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Use the selected preset when no assigned app is in the foreground."
