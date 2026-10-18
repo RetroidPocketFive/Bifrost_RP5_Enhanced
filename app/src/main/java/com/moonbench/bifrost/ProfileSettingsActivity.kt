@@ -50,9 +50,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
         val target = presets.optJSONObject(selectedPreset) ?: run { toast("Select a saved profile first."); return@registerForActivityResult }
         val fileName = runCatching { PresetImageStorage.copyPickedImage(this, uri) }.getOrNull()
         if (fileName == null) { toast("Could not import that image."); return@registerForActivityResult }
-        target.put("customEmoji", JSONObject.NULL)
+        target.remove("customEmoji")
         target.put("customImageFileName", fileName)
-        target.put("appIconPackageName", JSONObject.NULL)
+        target.remove("appIconPackageName")
         persistPresets()
         toast("Profile icon image saved.")
     }
@@ -253,7 +253,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     selectedPreset = presets.length() - 1
                     persistPresets()
                     reloadPresets()
-                    toast("Profile created and saved.")
+                    prefs.edit().putString("profile_settings_apply_preset_name", name).apply()
+                    toast("Profile created and saved. Applying it in BIFROST…")
+                    finish()
                 }.show()
             return
         }
