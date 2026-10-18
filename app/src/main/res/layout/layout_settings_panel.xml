@@ -1835,7 +1835,6 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-        </LinearLayout>
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/miscellaneousCard"
                 android:layout_width="match_parent"
@@ -1885,6 +1884,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+        </LinearLayout>
     </ScrollView>
 
     <ScrollView
