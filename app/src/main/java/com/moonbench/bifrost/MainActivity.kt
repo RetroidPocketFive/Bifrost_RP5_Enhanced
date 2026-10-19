@@ -2625,6 +2625,24 @@ class MainActivity : AppCompatActivity() {
                 applyHeaderLogoPreference()
             }
 
+            // Apply the active profile wallpaper after restoring the global theme;
+            // theme restoration can otherwise replace an image wallpaper background.
+            val wallpaperProfileName = prefs.getString("last_preset_name", null)
+            if (!wallpaperProfileName.isNullOrBlank()) {
+                val wallpaperProfiles = runCatching {
+                    JSONArray(prefs.getString("presets_json", "[]"))
+                }.getOrDefault(JSONArray())
+                val wallpaperProfile = (0 until wallpaperProfiles.length())
+                    .mapNotNull { wallpaperProfiles.optJSONObject(it) }
+                    .firstOrNull { it.optString("name") == wallpaperProfileName }
+                if (wallpaperProfile != null) {
+                    applyProfileWallpaper(
+                        wallpaperProfile.optString("wallpaperImageFileName", ""),
+                        wallpaperProfile.optString("wallpaperVideoFileName", "")
+                    )
+                }
+            }
+
             if (prefs.getBoolean(PREF_LIVE_WALLPAPER_RESTORE_SETTINGS, false)) {
                 prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_RESTORE_SETTINGS, false).apply()
                 setSettingsTab(SettingsTab.LIVE_WALLPAPER)
