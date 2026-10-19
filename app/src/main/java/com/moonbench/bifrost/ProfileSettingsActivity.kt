@@ -147,19 +147,31 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
         findViewById<MaterialButton>(R.id.profileSettingsApplyWallpaperButton).setOnClickListener {
             val profile = presets.optJSONObject(selectedPreset)
-            val videoName = profile?.optString("wallpaperVideoFileName").orEmpty()
-            val videoFile = videoName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
-            val imageName = profile?.optString("wallpaperImageFileName").orEmpty()
-            val imageFile = imageName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
-            when {
-                videoFile?.isFile == true && videoFile.length() > 0L -> {
-                    toast("Video is ready as this profile's BIFROST background. Press Save, then select this profile on the BIFROST home screen.")
-                }
-                imageFile?.isFile == true && imageFile.length() > 0L -> {
-                    toast("Image is ready as this profile's BIFROST background. Press Save, then select this profile on the BIFROST home screen.")
-                }
-                else -> toast("Choose a video or upload an image for this profile first.")
+            if (profile == null) {
+                toast("Select a saved profile first.")
+                return@setOnClickListener
             }
+            val videoName = profile.optString("wallpaperVideoFileName").orEmpty()
+            val videoFile = videoName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+            val imageName = profile.optString("wallpaperImageFileName").orEmpty()
+            val imageFile = imageName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+            val hasVideo = videoFile?.isFile == true && videoFile.length() > 0L
+            val hasImage = imageFile?.isFile == true && imageFile.length() > 0L
+            if (!hasVideo && !hasImage) {
+                toast("Choose a video or upload an image for this profile first.")
+                return@setOnClickListener
+            }
+
+            // This action must actually apply the wallpaper, not just report that it is ready.
+            // Persist the selected profile's visual fields, then let MainActivity render them
+            // after it resumes with the home screen visible.
+            profile.put("profileIconColor", selectedProfileColor)
+            prefs.edit()
+                .putString("presets_json", presets.toString())
+                .putString("profile_settings_apply_preset_name", profile.optString("name"))
+                .apply()
+            toast("Applying this profile's wallpaper and icon in BIFROST.")
+            finish()
         }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
             if (presets.optJSONObject(selectedPreset) == null) { toast("Create or select a saved profile first."); return@setOnClickListener }
