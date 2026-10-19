@@ -431,6 +431,7 @@ class PresetController(
                 if (it.has("coloredLogoEnabled")) obj.put("coloredLogoEnabled", it.optBoolean("coloredLogoEnabled"))
                 if (it.has("wallpaperImageFileName")) obj.put("wallpaperImageFileName", it.optString("wallpaperImageFileName"))
                 if (it.has("wallpaperVideoFileName")) obj.put("wallpaperVideoFileName", it.optString("wallpaperVideoFileName"))
+                if (it.has("profileIconColor")) obj.put("profileIconColor", it.optInt("profileIconColor"))
             }
             obj.put("name", preset.name)
             obj.put("animationType", preset.animationType.name)
