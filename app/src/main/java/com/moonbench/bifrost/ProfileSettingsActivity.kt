@@ -219,19 +219,20 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
         fpsSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val fps = listOf(24, 30, 60).getOrElse(position) { 30 }
-                LiveWallpaperSettingsManager.setTargetFps(prefs, fps)
+                if (!bindingPreset) {
+                    val fps = listOf(24, 30, 60).getOrElse(position) { 30 }
+                    LiveWallpaperSettingsManager.setTargetFps(prefs, fps)
+                }
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
         reloadPresets()
-        themeSpinner.setSelection(if (prefs.getString("selected_ui_theme", "classic") == "oled_purple") 1 else 0)
-        coloredLogoSwitch.isChecked = prefs.getBoolean("colored_logo_enabled", false)
-        screenCaptureSwitch.isChecked = prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
+        bindingPreset = true
         videoWallpaperSwitch.isChecked = prefs.getBoolean("profile_settings_video_wallpaper_requested", false)
         fpsSpinner.setSelection(listOf(24, 30, 60).indexOf(LiveWallpaperSettingsManager.getTargetFps(prefs).let { current ->
             listOf(24, 30, 60).minByOrNull { kotlin.math.abs(it - current) } ?: 30
-        }).coerceAtLeast(0))
+        }).coerceAtLeast(0), false)
+        bindingPreset = false
     }
 
     override fun onResume() {
@@ -269,6 +270,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
             reactivity.progress = 50; saturation.progress = 0; intensity.progress = 255
             singleColorSwitch.isChecked = false
             selectedProfileColor = android.graphics.Color.WHITE
+            val themeId = prefs.getString("selected_ui_theme", "classic") ?: "classic"
+            themeSpinner.setSelection(if (themeId == "oled_purple") 1 else 0, false)
+            coloredLogoSwitch.isChecked = prefs.getBoolean("colored_logo_enabled", false)
         }
         screenCaptureSwitch.isChecked = p?.optBoolean("useCustomSampling", prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION))
             ?: prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
