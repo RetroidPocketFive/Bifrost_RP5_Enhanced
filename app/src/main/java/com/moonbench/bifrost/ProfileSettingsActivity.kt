@@ -147,44 +147,18 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
         findViewById<MaterialButton>(R.id.profileSettingsApplyWallpaperButton).setOnClickListener {
             val profile = presets.optJSONObject(selectedPreset)
-            val fileName = profile?.optString("wallpaperVideoFileName").orEmpty()
-            val videoFile = if (fileName.isNotBlank()) File(filesDir, fileName) else null
-            if (videoFile == null || !videoFile.isFile || videoFile.length() == 0L) {
-                val imageName = profile?.optString("wallpaperImageFileName").orEmpty()
-                val imageFile = if (imageName.isNotBlank()) File(filesDir, imageName) else null
-                if (imageFile != null && imageFile.isFile && imageFile.length() > 0L) {
-                    toast("Image wallpaper saved for this profile. Select this profile on the BIFROST home screen to display it.")
-                    finish()
-                } else {
-                    toast("Choose a video or upload an image for this profile first.")
+            val videoName = profile?.optString("wallpaperVideoFileName").orEmpty()
+            val videoFile = videoName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+            val imageName = profile?.optString("wallpaperImageFileName").orEmpty()
+            val imageFile = imageName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+            when {
+                videoFile?.isFile == true && videoFile.length() > 0L -> {
+                    toast("Video is ready as this profile's BIFROST background. Press Save, then select this profile on the BIFROST home screen.")
                 }
-                return@setOnClickListener
-            }
-            LiveWallpaperSettingsManager.setVideoUri(prefs, Uri.fromFile(videoFile))
-            prefs.edit().putBoolean("live_wallpaper_apply_in_progress", true).apply()
-            val component = ComponentName(this, VideoLiveWallpaperService::class.java)
-            val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).apply {
-                putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, component)
-            }
-            toast("Opening Android's live-wallpaper preview. Confirm with Set wallpaper on that screen.")
-            runCatching { startActivity(intent) }.onFailure { previewError ->
-                // Some Android builds do not expose the direct live-wallpaper preview activity.
-                val chooserIntent = Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)
-                val chooserOpened = runCatching { startActivity(chooserIntent) }.isSuccess
-                if (chooserOpened) {
-                    toast("Opened Android's wallpaper chooser. Select BIFROST Video Wallpaper if it is listed.")
-                } else {
-                    // Retroid firmware may omit the dedicated live-wallpaper chooser but still expose
-                    // the generic wallpaper settings entry point.
-                    val genericWallpaperIntent = Intent(Intent.ACTION_SET_WALLPAPER)
-                    val genericChooserOpened = runCatching { startActivity(genericWallpaperIntent) }.isSuccess
-                    if (genericChooserOpened) {
-                        toast("Opened Android wallpaper settings. If BIFROST Video Wallpaper is not listed, this firmware does not expose a live-wallpaper picker.")
-                    } else {
-                        prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
-                        toast("This Android build has no live-wallpaper preview/chooser activity, so it cannot apply video wallpaper through Android. Your video remains selected in the editor; press Save to keep it.")
-                    }
+                imageFile?.isFile == true && imageFile.length() > 0L -> {
+                    toast("Image is ready as this profile's BIFROST background. Press Save, then select this profile on the BIFROST home screen.")
                 }
+                else -> toast("Choose a video or upload an image for this profile first.")
             }
         }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
