@@ -2573,6 +2573,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            if (::presetController.isInitialized) {
+                val activeName = prefs.getString("last_preset_name", null)
+                if (!activeName.isNullOrBlank()) applyPresetUiPreferences(activeName)
+            }
+
             val themeId = prefs.getString(PREF_SELECTED_UI_THEME, builtInThemes.first().id)
             val restoredTheme = builtInThemes.firstOrNull { it.id == themeId } ?: builtInThemes.first()
             if (restoredTheme.id != selectedUiTheme.id) applySelectedTheme(restoredTheme, persistSelection = false)
