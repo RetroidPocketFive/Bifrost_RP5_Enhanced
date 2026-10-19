@@ -5,12 +5,18 @@
     android:layout_height="match_parent"
     android:background="@color/bifrost_bg">
 
+    <FrameLayout
+        android:id="@+id/profileWallpaperContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <LinearLayout
         android:id="@+id/homeContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="@dimen/bifrost_screen_padding">
+        android:padding="@dimen/bifrost_screen_padding"
+        android:background="@android:color/transparent">
 
         
         
@@ -356,6 +362,7 @@
         </com.google.android.material.card.MaterialCardView>
 
     </LinearLayout>
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/settingsOverlay"
