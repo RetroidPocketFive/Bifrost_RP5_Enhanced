@@ -1,6 +1,10 @@
 package com.moonbench.bifrost
 
 import android.content.res.ColorStateList
+import android.content.ComponentName
+import android.content.Intent
+import android.app.WallpaperManager
+import java.io.File
 import android.os.Bundle
 import android.net.Uri
 import androidx.activity.result.PickVisualMediaRequest
@@ -19,6 +23,8 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import com.moonbench.bifrost.animations.LedAnimationType
 import com.moonbench.bifrost.tools.PerformanceProfile
 import com.moonbench.bifrost.services.LEDService
+import com.moonbench.bifrost.services.LiveWallpaperSettingsManager
+import com.moonbench.bifrost.services.VideoLiveWallpaperService
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -42,6 +48,40 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private lateinit var videoWallpaperSwitch: SwitchMaterial
     private lateinit var fpsSpinner: Spinner
     private var selectedProfileColor: Int = android.graphics.Color.WHITE
+    private val videoWallpaperPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val localUri = runCatching {
+            val target = File(filesDir, "live_wallpaper_video.mp4")
+            contentResolver.openInputStream(uri).use { input ->
+                requireNotNull(input) { "Unable to read video" }
+                target.outputStream().use { output -> input.copyTo(output) }
+            }
+            Uri.fromFile(target)
+        }.getOrNull()
+        if (localUri == null) {
+            toast("Could not import the selected video.")
+        } else {
+            LiveWallpaperSettingsManager.setVideoUri(prefs, localUri)
+            prefs.edit().putBoolean("static_image_wallpaper_applied", false).apply()
+            toast("Video wallpaper selected. Tap Apply Wallpaper to activate it.")
+        }
+    }
+    private val wallpaperImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val applied = runCatching {
+            contentResolver.openInputStream(uri).use { input ->
+                requireNotNull(input) { "Unable to read image" }
+                WallpaperManager.getInstance(this).setStream(input, null, true, WallpaperManager.FLAG_SYSTEM)
+            }
+            true
+        }.getOrDefault(false)
+        if (applied) {
+            prefs.edit().putBoolean("static_image_wallpaper_applied", true).apply()
+            toast("Image wallpaper applied.")
+        } else {
+            toast("Could not apply the selected image wallpaper.")
+        }
+    }
     private val profileImagePicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
         if (uri == null) return@registerForActivityResult
         val target = presets.optJSONObject(selectedPreset) ?: run { toast("Select a saved profile first."); return@registerForActivityResult }
@@ -88,6 +128,27 @@ class ProfileSettingsActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.profileSettingsDeleteButton).setOnClickListener { deleteSelectedPreset() }
 
         findViewById<MaterialButton>(R.id.profileSettingsIconColorButton).setOnClickListener { chooseProfileColor() }
+        findViewById<MaterialButton>(R.id.profileSettingsPickVideoButton).setOnClickListener {
+            videoWallpaperPicker.launch(arrayOf("video/*"))
+        }
+        findViewById<MaterialButton>(R.id.profileSettingsPickImageWallpaperButton).setOnClickListener {
+            wallpaperImagePicker.launch("image/*")
+        }
+        findViewById<MaterialButton>(R.id.profileSettingsApplyWallpaperButton).setOnClickListener {
+            if (LiveWallpaperSettingsManager.getVideoUri(prefs) == null) {
+                toast("Choose a video first, or use Upload Image Wallpaper.")
+                return@setOnClickListener
+            }
+            prefs.edit().putBoolean("live_wallpaper_apply_in_progress", true).apply()
+            val component = ComponentName(this, VideoLiveWallpaperService::class.java)
+            val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).apply {
+                putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, component)
+            }
+            runCatching { startActivity(intent) }.onFailure {
+                prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
+                toast("Unable to open the wallpaper chooser.")
+            }
+        }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
             if (presets.optJSONObject(selectedPreset) == null) { toast("Create or select a saved profile first."); return@setOnClickListener }
             profileImagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
@@ -145,10 +206,16 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
         coloredLogoSwitch.setOnCheckedChangeListener { _, checked ->
             prefs.edit().putBoolean("colored_logo_enabled", checked).apply()
+            if (!bindingPreset) {
+                presets.optJSONObject(selectedPreset)?.put("coloredLogoEnabled", checked)
+                persistPresets()
+            }
         }
         videoWallpaperSwitch.setOnCheckedChangeListener { _, checked ->
-            if (checked) toast("Video wallpaper is managed by Android's live wallpaper service. Use the wallpaper chooser to activate it.")
             prefs.edit().putBoolean("profile_settings_video_wallpaper_requested", checked).apply()
+            if (checked && LiveWallpaperSettingsManager.getVideoUri(prefs) == null) {
+                toast("Choose a video below, then tap Apply Wallpaper.")
+            }
         }
         fpsSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
@@ -201,63 +268,79 @@ class ProfileSettingsActivity : AppCompatActivity() {
             singleColorSwitch.isChecked = false
             selectedProfileColor = android.graphics.Color.WHITE
         }
-        screenCaptureSwitch.isChecked = prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
+        screenCaptureSwitch.isChecked = p?.optBoolean("useCustomSampling", prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION))
+            ?: prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
+        val themeId = p?.optString("uiThemeId", prefs.getString("selected_ui_theme", "classic")) ?: prefs.getString("selected_ui_theme", "classic")
+        themeSpinner.setSelection(if (themeId == "oled_purple") 1 else 0, false)
+        coloredLogoSwitch.isChecked = p?.optBoolean("coloredLogoEnabled", prefs.getBoolean("colored_logo_enabled", false))
+            ?: prefs.getBoolean("colored_logo_enabled", false)
+        applySettingsTheme(themeId ?: "classic")
         bindingPreset = false
     }
 
     private fun saveSelectedPreset() {
         val current = presets.optJSONObject(selectedPreset)
-        if (current == null) {
-            val input = android.widget.EditText(this).apply {
-                hint = "Profile name"
-                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-            }
-            AlertDialog.Builder(this).setTitle("Create profile").setMessage("Save these settings as a new profile.")
-                .setView(input).setNegativeButton("Cancel", null)
-                .setPositiveButton("Create and save") { _, _ ->
-                    val name = input.text.toString().trim()
-                    if (name.isBlank()) { toast("Enter a profile name."); return@setPositiveButton }
-                    if ((0 until presets.length()).any { presets.optJSONObject(it)?.optString("name")?.equals(name, true) == true }) {
-                        toast("A profile with that name already exists."); return@setPositiveButton
-                    }
-                    val p = JSONObject().apply {
-                        put("name", name)
-                        put("animationType", LedAnimationType.values()[animationSpinner.selectedItemPosition].name)
-                        put("performanceProfile", PerformanceProfile.values()[performanceSpinner.selectedItemPosition].name)
-                        put("color", selectedProfileColor); put("rightColor", selectedProfileColor)
-                        put("fadeEndColor", android.graphics.Color.WHITE); put("fadeEndRightColor", android.graphics.Color.WHITE)
-                        put("brightness", intensity.progress); put("speed", reactivity.progress / 100.0)
-                        put("smoothness", reactivity.progress / 100.0); put("sensitivity", 0.5)
-                        put("saturationBoost", saturation.progress / 100.0)
-                        put("useCustomSampling", screenCaptureSwitch.isChecked)
-                        put("useSingleColor", singleColorSwitch.isChecked)
-                        put("breatheWhenCharging", false); put("indicateChargingSpeed", false); put("flashWhenReady", false)
-                        put("isAppProfileDefault", false); put("ragnarokAccepted", false); put("icon", "LIGHT")
-                    }
-                    presets.put(p)
-                    selectedPreset = presets.length() - 1
-                    persistPresets()
-                    reloadPresets()
-                    prefs.edit().putString("profile_settings_apply_preset_name", name).apply()
-                    toast("Profile created and saved. Applying it in BIFROST…")
-                    finish()
-                }.show()
-            return
+        val input = android.widget.EditText(this).apply {
+            hint = "Profile name"
+            setText(current?.optString("name", "") ?: "")
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            if (text.isNotEmpty()) setSelection(text.length)
         }
-        current.put("performanceProfile", PerformanceProfile.values()[performanceSpinner.selectedItemPosition].name)
-        current.put("animationType", LedAnimationType.values()[animationSpinner.selectedItemPosition].name)
-        current.put("speed", reactivity.progress / 100.0)
-        current.put("smoothness", reactivity.progress / 100.0)
-        current.put("saturationBoost", saturation.progress / 100.0)
-        current.put("brightness", intensity.progress)
-        current.put("useSingleColor", singleColorSwitch.isChecked)
-        current.put("useCustomSampling", screenCaptureSwitch.isChecked)
-        current.put("color", selectedProfileColor)
-        current.put("rightColor", selectedProfileColor)
-        persistPresets()
-        prefs.edit().putString("profile_settings_apply_preset_name", current.optString("name", "")).apply()
-        toast("Profile saved. Applying it in BIFROST…")
-        finish()
+        AlertDialog.Builder(this)
+            .setTitle(if (current == null) "Create profile" else "Save profile")
+            .setMessage("Enter a profile name. An existing name will update that profile; a new name creates a separate profile.")
+            .setView(input)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Save") { _, _ ->
+                val name = input.text.toString().trim()
+                if (name.isBlank()) { toast("Enter a profile name."); return@setPositiveButton }
+                val existingIndex = (0 until presets.length()).firstOrNull {
+                    presets.optJSONObject(it)?.optString("name")?.equals(name, true) == true
+                }
+                val target = if (existingIndex != null) presets.optJSONObject(existingIndex) else JSONObject()
+                if (target == null) { toast("Could not create the profile."); return@setPositiveButton }
+                target.put("name", name)
+                target.put("animationType", LedAnimationType.values()[animationSpinner.selectedItemPosition].name)
+                target.put("performanceProfile", PerformanceProfile.values()[performanceSpinner.selectedItemPosition].name)
+                target.put("color", selectedProfileColor)
+                target.put("rightColor", selectedProfileColor)
+                target.put("fadeEndColor", target.optInt("fadeEndColor", android.graphics.Color.WHITE))
+                target.put("fadeEndRightColor", target.optInt("fadeEndRightColor", android.graphics.Color.WHITE))
+                target.put("brightness", intensity.progress)
+                target.put("speed", reactivity.progress / 100.0)
+                target.put("smoothness", reactivity.progress / 100.0)
+                target.put("sensitivity", target.optDouble("sensitivity", 0.5))
+                target.put("saturationBoost", saturation.progress / 100.0)
+                target.put("useCustomSampling", screenCaptureSwitch.isChecked)
+                target.put("useSingleColor", singleColorSwitch.isChecked)
+                target.put("uiThemeId", if (themeSpinner.selectedItemPosition == 1) "oled_purple" else "classic")
+                target.put("coloredLogoEnabled", coloredLogoSwitch.isChecked)
+                target.put("breatheWhenCharging", target.optBoolean("breatheWhenCharging", false))
+                target.put("indicateChargingSpeed", target.optBoolean("indicateChargingSpeed", false))
+                target.put("flashWhenReady", target.optBoolean("flashWhenReady", false))
+                target.put("isAppProfileDefault", target.optBoolean("isAppProfileDefault", false))
+                target.put("ragnarokAccepted", target.optBoolean("ragnarokAccepted", false))
+                target.put("icon", target.optString("icon", "LIGHT"))
+                if (existingIndex == null) {
+                    presets.put(target)
+                    selectedPreset = presets.length() - 1
+                } else {
+                    presets.put(existingIndex, target)
+                    selectedPreset = existingIndex
+                }
+                val themeId = target.optString("uiThemeId", "classic")
+                prefs.edit()
+                    .putString("selected_ui_theme", themeId)
+                    .putBoolean("colored_logo_enabled", target.optBoolean("coloredLogoEnabled", false))
+                    .putBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, screenCaptureSwitch.isChecked)
+                    .putString("profile_settings_apply_preset_name", name)
+                    .apply()
+                applySettingsTheme(themeId)
+                persistPresets()
+                reloadPresets()
+                toast("Profile '$name' saved. Returning to BIFROST to apply it.")
+                finish()
+            }.show()
     }
 
     private fun persistPresets() {
@@ -303,7 +386,35 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private fun applyThemeSelection(position: Int) {
         val id = if (position == 1) "oled_purple" else "classic"
         prefs.edit().putString("selected_ui_theme", id).apply()
-        toast("${if (position == 1) "OLED Purple" else "Classic"} selected. Return to BIFROST to apply the theme.")
+        if (!bindingPreset) {
+            presets.optJSONObject(selectedPreset)?.put("uiThemeId", id)
+            persistPresets()
+        }
+        applySettingsTheme(id)
+    }
+
+    private fun applySettingsTheme(themeId: String) {
+        val root = findViewById<View>(android.R.id.content) ?: return
+        val purple = themeId == "oled_purple"
+        val background = android.graphics.Color.parseColor(if (purple) "#10091A" else "#0A0E1A")
+        val card = android.graphics.Color.parseColor(if (purple) "#1B1029" else "#12182B")
+        val surface = android.graphics.Color.parseColor(if (purple) "#2A1740" else "#1A2236")
+        val accent = android.graphics.Color.parseColor(if (purple) "#C084FC" else "#6366F1")
+        root.setBackgroundColor(background)
+        fun tint(view: View) {
+            when (view) {
+                is com.google.android.material.card.MaterialCardView -> view.setCardBackgroundColor(card)
+                is MaterialButton -> {
+                    view.backgroundTintList = ColorStateList.valueOf(surface)
+                    view.strokeColor = ColorStateList.valueOf(accent)
+                }
+                is TextView -> view.setTextColor(getColor(R.color.bifrost_text))
+            }
+            if (view is android.view.ViewGroup) {
+                for (i in 0 until view.childCount) tint(view.getChildAt(i))
+            }
+        }
+        tint(root)
     }
 
     private fun setupEnumSpinner(spinner: Spinner, items: List<String>) {
