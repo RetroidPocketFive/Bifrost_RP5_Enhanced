@@ -155,22 +155,32 @@ class ProfileSettingsActivity : AppCompatActivity() {
             val videoFile = videoName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
             val imageName = profile.optString("wallpaperImageFileName").orEmpty()
             val imageFile = imageName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+            val iconName = profile.optString("customImageFileName").orEmpty()
+            val iconFile = iconName.takeIf { it.isNotBlank() }?.let { File(File(filesDir, "preset_icons"), it) }
             val hasVideo = videoFile?.isFile == true && videoFile.length() > 0L
             val hasImage = imageFile?.isFile == true && imageFile.length() > 0L
-            if (!hasVideo && !hasImage) {
-                toast("Choose a video or upload an image for this profile first.")
+            val hasIconImage = iconFile?.isFile == true && iconFile.length() > 0L
+            val hasIconColorChange = selectedProfileColor != android.graphics.Color.WHITE
+            if (!hasVideo && !hasImage && !hasIconImage && !hasIconColorChange) {
+                toast("Choose a wallpaper or customise the profile icon first.")
                 return@setOnClickListener
             }
 
-            // This action must actually apply the wallpaper, not just report that it is ready.
-            // Persist the selected profile's visual fields, then let MainActivity render them
-            // after it resumes with the home screen visible.
+            // This action applies whichever profile visuals are configured, including icon-only
+            // changes. Persist the visual fields, then let MainActivity render them on resume.
             profile.put("profileIconColor", selectedProfileColor)
             prefs.edit()
                 .putString("presets_json", presets.toString())
                 .putString("profile_settings_apply_preset_name", profile.optString("name"))
                 .apply()
-            toast("Applying this profile's wallpaper and icon in BIFROST.")
+            val applied = when {
+                hasVideo -> "video wallpaper"
+                hasImage -> "image wallpaper"
+                hasIconImage && hasIconColorChange -> "icon image and colour"
+                hasIconImage -> "icon image"
+                else -> "icon colour"
+            }
+            toast("Applying profile $applied in BIFROST.")
             finish()
         }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
