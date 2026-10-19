@@ -522,14 +522,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 val oldVideo = profile.optString("wallpaperVideoFileName").takeIf { it.isNotBlank() }
                 profile.remove("wallpaperImageFileName")
                 profile.remove("wallpaperVideoFileName")
-                listOfNotNull(oldImage, oldVideo).distinct().forEach { name ->
-                    val usedElsewhere = (0 until presets.length()).any { index ->
-                        val other = presets.optJSONObject(index)
-                        other?.optString("wallpaperImageFileName") == name ||
-                            other?.optString("wallpaperVideoFileName") == name
-                    }
-                    if (!usedElsewhere) File(filesDir, name).delete()
-                }
+                // Keep the original files intact until Save is pressed; Cancel/exit must discard this draft.
                 toast("Wallpaper reset in the editor. Press Save to keep this change.")
             }
             .show()
