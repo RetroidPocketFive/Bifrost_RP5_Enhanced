@@ -242,18 +242,14 @@ class ProfileSettingsActivity : AppCompatActivity() {
         screenCaptureSwitch.setOnCheckedChangeListener { _, _ -> }
         coloredLogoSwitch.setOnCheckedChangeListener { _, _ -> }
         videoWallpaperSwitch.setOnCheckedChangeListener { _, checked ->
-            if (!bindingPreset) {
-                prefs.edit().putBoolean("profile_settings_video_wallpaper_requested", checked).apply()
-                if (checked && LiveWallpaperSettingsManager.getVideoUri(prefs) == null) {
-                    toast("Choose a video below, then tap Apply Wallpaper.")
-                }
+            if (!bindingPreset && checked && LiveWallpaperSettingsManager.getVideoUri(prefs) == null) {
+                toast("Choose a video below, then press Save to keep the setting.")
             }
         }
         fpsSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                 if (!bindingPreset) {
-                    val fps = listOf(24, 30, 60).getOrElse(position) { 30 }
-                    LiveWallpaperSettingsManager.setTargetFps(prefs, fps)
+                    // FPS remains a draft until Save is pressed.
                 }
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
