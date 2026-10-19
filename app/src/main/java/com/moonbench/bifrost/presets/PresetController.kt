@@ -429,6 +429,8 @@ class PresetController(
             previous?.let {
                 if (it.has("uiThemeId")) obj.put("uiThemeId", it.optString("uiThemeId"))
                 if (it.has("coloredLogoEnabled")) obj.put("coloredLogoEnabled", it.optBoolean("coloredLogoEnabled"))
+                if (it.has("wallpaperImageFileName")) obj.put("wallpaperImageFileName", it.optString("wallpaperImageFileName"))
+                if (it.has("wallpaperVideoFileName")) obj.put("wallpaperVideoFileName", it.optString("wallpaperVideoFileName"))
             }
             obj.put("name", preset.name)
             obj.put("animationType", preset.animationType.name)
