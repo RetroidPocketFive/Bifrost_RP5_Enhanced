@@ -403,7 +403,8 @@ class PresetController(
                     customEmoji = customEmoji,
                     customImageFileName = customImageFileName,
                     appIconPackageName = appIconPackageName,
-                    ownerPackage = ownerPackage
+                    ownerPackage = ownerPackage,
+                    profileIconColor = obj.optInt("profileIconColor").takeIf { obj.has("profileIconColor") }
                 )
             )
         }
@@ -463,6 +464,7 @@ class PresetController(
             preset.customImageFileName?.let { obj.put("customImageFileName", it) }
             preset.appIconPackageName?.let { obj.put("appIconPackageName", it) }
             preset.ownerPackage?.let { obj.put("ownerPackage", it) }
+            preset.profileIconColor?.let { obj.put("profileIconColor", it) }
             array.put(obj)
         }
 
