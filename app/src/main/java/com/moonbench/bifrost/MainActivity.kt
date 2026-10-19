@@ -2633,13 +2633,18 @@ class MainActivity : AppCompatActivity() {
                 enableRainbowBackground(LEDService.isRunning)
             }
 
+            var requestedVisualProfileName: String? = null
             if (::presetController.isInitialized) {
                 presetController.reloadFromPrefs()
                 val pendingPresetName = prefs.getString("profile_settings_apply_preset_name", null)
                 if (!pendingPresetName.isNullOrBlank()) {
-                    prefs.edit().remove("profile_settings_apply_preset_name").apply()
+                    prefs.edit()
+                        .remove("profile_settings_apply_preset_name")
+                        .putString("last_preset_name", pendingPresetName)
+                        .apply()
                     val targetIndex = presetController.getPresets().indexOfFirst { it.name == pendingPresetName }
                     if (targetIndex >= 0) {
+                        requestedVisualProfileName = pendingPresetName
                         presetController.applyPresetAt(targetIndex)
                         applyPresetUiPreferences(pendingPresetName)
                     }
@@ -2647,7 +2652,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (::presetController.isInitialized) {
-                val activeName = prefs.getString("last_preset_name", null)
+                val activeName = requestedVisualProfileName ?: prefs.getString("last_preset_name", null)
                 if (!activeName.isNullOrBlank()) applyPresetUiPreferences(activeName)
             }
 
@@ -2662,7 +2667,7 @@ class MainActivity : AppCompatActivity() {
 
             // Apply the active profile wallpaper after restoring the global theme;
             // theme restoration can otherwise replace an image wallpaper background.
-            val wallpaperProfileName = prefs.getString("last_preset_name", null)
+            val wallpaperProfileName = requestedVisualProfileName ?: prefs.getString("last_preset_name", null)
             if (!wallpaperProfileName.isNullOrBlank()) {
                 val wallpaperProfiles = runCatching {
                     JSONArray(prefs.getString("presets_json", "[]"))
