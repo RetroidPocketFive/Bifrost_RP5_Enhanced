@@ -47,6 +47,7 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.VideoView
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
@@ -157,6 +158,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var manageAppsButton: MaterialButton
     private lateinit var settingsOverlay: View
     private lateinit var homeContainer: View
+    private var profileWallpaperVideoView: VideoView? = null
     private lateinit var homeSettingsButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
     private lateinit var homeExitButton: MaterialButton
@@ -1979,12 +1981,48 @@ class MainActivity : AppCompatActivity() {
                 applyHeaderLogoPreference()
             }
         }
-        applyProfileWallpaper(profile.optString("wallpaperImageFileName", ""))
+        applyProfileWallpaper(
+            profile.optString("wallpaperImageFileName", ""),
+            profile.optString("wallpaperVideoFileName", "")
+        )
     }
 
-    private fun applyProfileWallpaper(fileName: String) {
+    private fun applyProfileWallpaper(imageFileName: String, videoFileName: String) {
         if (!::homeContainer.isInitialized) return
-        val imageFile = fileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        val container = homeContainer as? FrameLayout ?: return
+        profileWallpaperVideoView?.let { old ->
+            runCatching { old.stopPlayback() }
+            container.removeView(old)
+        }
+        profileWallpaperVideoView = null
+
+        val videoFile = videoFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        if (videoFile != null && videoFile.isFile && videoFile.length() > 0L) {
+            val videoView = VideoView(this)
+            videoView.setOnPreparedListener { player ->
+                player.isLooping = true
+                player.setVolume(0f, 0f)
+                videoView.start()
+            }
+            videoView.setOnErrorListener { _, _, _ ->
+                Log.w("BifrostWallpaper", "Unable to play this profile's in-app video wallpaper")
+                true
+            }
+            profileWallpaperVideoView = videoView
+            container.addView(
+                videoView,
+                0,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+            )
+            videoView.setVideoURI(Uri.fromFile(videoFile))
+            container.background = ColorDrawable(Color.BLACK)
+            return
+        }
+
+        val imageFile = imageFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
         val bitmap = imageFile?.takeIf { it.isFile && it.length() > 0L }?.let {
             runCatching { BitmapFactory.decodeFile(it.absolutePath) }.getOrNull()
         }
