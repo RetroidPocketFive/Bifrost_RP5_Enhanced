@@ -220,7 +220,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         fpsSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val fps = listOf(24, 30, 60).getOrElse(position) { 30 }
-                prefs.edit().putInt("live_wallpaper_target_fps", fps).apply()
+                LiveWallpaperSettingsManager.setTargetFps(prefs, fps)
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
@@ -229,7 +229,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
         coloredLogoSwitch.isChecked = prefs.getBoolean("colored_logo_enabled", false)
         screenCaptureSwitch.isChecked = prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
         videoWallpaperSwitch.isChecked = prefs.getBoolean("profile_settings_video_wallpaper_requested", false)
-        fpsSpinner.setSelection(listOf(24, 30, 60).indexOf(prefs.getInt("live_wallpaper_target_fps", 30)).coerceAtLeast(0))
+        fpsSpinner.setSelection(listOf(24, 30, 60).indexOf(LiveWallpaperSettingsManager.getTargetFps(prefs).let { current ->
+            listOf(24, 30, 60).minByOrNull { kotlin.math.abs(it - current) } ?: 30
+        }).coerceAtLeast(0))
     }
 
     override fun onResume() {
