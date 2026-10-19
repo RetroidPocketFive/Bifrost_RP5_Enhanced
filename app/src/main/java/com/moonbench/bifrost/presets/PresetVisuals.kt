@@ -18,7 +18,8 @@ data class PresetVisualSpec(
     val builtInIcon: PresetIcon,
     val customEmoji: String? = null,
     val customImageFileName: String? = null,
-    val appIconPackageName: String? = null
+    val appIconPackageName: String? = null,
+    val iconColor: Int? = null
 )
 
 object PresetVisuals {
@@ -28,7 +29,8 @@ object PresetVisuals {
             builtInIcon = preset.icon,
             customEmoji = preset.customEmoji,
             customImageFileName = preset.customImageFileName,
-            appIconPackageName = preset.appIconPackageName
+            appIconPackageName = preset.appIconPackageName,
+            iconColor = preset.profileIconColor
         )
     }
 
@@ -95,7 +97,7 @@ object PresetVisuals {
         val drawable = spec.builtInIcon.drawableRes
             ?.let { AppCompatResources.getDrawable(context, it) }
             ?.mutate()
-        drawable?.setTint(ContextCompat.getColor(context, R.color.bifrost_icon))
+        drawable?.setTint(spec.iconColor ?: ContextCompat.getColor(context, R.color.bifrost_icon))
         iconView.setImageDrawable(drawable)
     }
 }
