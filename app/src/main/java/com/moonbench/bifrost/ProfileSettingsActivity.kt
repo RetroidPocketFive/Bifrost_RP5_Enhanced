@@ -399,8 +399,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 persistPresets()
                 restoreDefaultsPending = false
                 reloadPresets()
-                toast("Profile '$name' saved. Returning to BIFROST to apply it.")
-                finish()
+                toast("Profile '$name' saved.")
             }.show()
     }
 
@@ -498,7 +497,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
     companion object {
         private const val MAX_VIDEO_WALLPAPER_BYTES = 100L * 1024L * 1024L
