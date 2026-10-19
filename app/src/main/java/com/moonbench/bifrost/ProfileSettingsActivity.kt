@@ -147,7 +147,14 @@ class ProfileSettingsActivity : AppCompatActivity() {
             val fileName = profile?.optString("wallpaperVideoFileName").orEmpty()
             val videoFile = if (fileName.isNotBlank()) File(filesDir, fileName) else null
             if (videoFile == null || !videoFile.isFile || videoFile.length() == 0L) {
-                toast("This profile has no video wallpaper. Choose a video first.")
+                val imageName = profile?.optString("wallpaperImageFileName").orEmpty()
+                val imageFile = if (imageName.isNotBlank()) File(filesDir, imageName) else null
+                if (imageFile != null && imageFile.isFile && imageFile.length() > 0L) {
+                    toast("Image wallpaper saved for this profile. Select this profile on the BIFROST home screen to display it.")
+                    finish()
+                } else {
+                    toast("Choose a video or upload an image for this profile first.")
+                }
                 return@setOnClickListener
             }
             LiveWallpaperSettingsManager.setVideoUri(prefs, Uri.fromFile(videoFile))
@@ -156,6 +163,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).apply {
                 putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, component)
             }
+            toast("Opening Android's live-wallpaper preview. Confirm with Set wallpaper on that screen.")
             runCatching { startActivity(intent) }.onFailure {
                 prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
                 toast("Android could not open the live-wallpaper preview.")
