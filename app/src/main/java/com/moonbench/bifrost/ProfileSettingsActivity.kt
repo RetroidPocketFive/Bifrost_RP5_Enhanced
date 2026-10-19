@@ -50,36 +50,44 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private var selectedProfileColor: Int = android.graphics.Color.WHITE
     private val videoWallpaperPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri == null) return@registerForActivityResult
-        val localUri = runCatching {
-            val target = File(filesDir, "live_wallpaper_video.mp4")
+        val profile = presets.optJSONObject(selectedPreset)
+        if (profile == null) { toast("Create or select a saved profile first."); return@registerForActivityResult }
+        val fileName = "profile_video_" + System.currentTimeMillis() + ".mp4"
+        val imported = runCatching {
+            val target = File(filesDir, fileName)
             contentResolver.openInputStream(uri).use { input ->
                 requireNotNull(input) { "Unable to read video" }
                 target.outputStream().use { output -> input.copyTo(output) }
             }
-            Uri.fromFile(target)
+            fileName
         }.getOrNull()
-        if (localUri == null) {
+        if (imported == null) {
             toast("Could not import the selected video.")
         } else {
-            LiveWallpaperSettingsManager.setVideoUri(prefs, localUri)
-            prefs.edit().putBoolean("static_image_wallpaper_applied", false).apply()
-            toast("Video wallpaper selected. Tap Apply Wallpaper to activate it.")
+            profile.put("wallpaperVideoFileName", imported)
+            persistPresets()
+            toast("Video saved to this profile. Press Apply Wallpaper and confirm in Android's wallpaper preview.")
         }
     }
     private val wallpaperImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri == null) return@registerForActivityResult
-        val applied = runCatching {
+        val profile = presets.optJSONObject(selectedPreset)
+        if (profile == null) { toast("Create or select a saved profile first."); return@registerForActivityResult }
+        val fileName = "profile_wallpaper_" + System.currentTimeMillis() + ".img"
+        val imported = runCatching {
+            val target = File(filesDir, fileName)
             contentResolver.openInputStream(uri).use { input ->
                 requireNotNull(input) { "Unable to read image" }
-                WallpaperManager.getInstance(this).setStream(input, null, true, WallpaperManager.FLAG_SYSTEM)
+                target.outputStream().use { output -> input.copyTo(output) }
             }
-            true
-        }.getOrDefault(false)
-        if (applied) {
-            prefs.edit().putBoolean("static_image_wallpaper_applied", true).apply()
-            toast("Image wallpaper applied.")
+            fileName
+        }.getOrNull()
+        if (imported == null) {
+            toast("Could not import the selected image.")
         } else {
-            toast("Could not apply the selected image wallpaper.")
+            profile.put("wallpaperImageFileName", imported)
+            persistPresets()
+            toast("Image saved to this profile as its BIFROST background.")
         }
     }
     private val profileImagePicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -124,7 +132,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.profileSettingsSaveButton).setOnClickListener { saveSelectedPreset() }
         findViewById<MaterialButton>(R.id.profileSettingsEditButton).setOnClickListener { renameSelectedPreset() }
-        findViewById<MaterialButton>(R.id.profileSettingsRestoreButton).setOnClickListener { loadSelectedPreset() }
+        findViewById<MaterialButton>(R.id.profileSettingsRestoreButton).setOnClickListener { restoreSelectedPresetDefaults() }
         findViewById<MaterialButton>(R.id.profileSettingsDeleteButton).setOnClickListener { deleteSelectedPreset() }
 
         findViewById<MaterialButton>(R.id.profileSettingsIconColorButton).setOnClickListener { chooseProfileColor() }
@@ -135,10 +143,14 @@ class ProfileSettingsActivity : AppCompatActivity() {
             wallpaperImagePicker.launch("image/*")
         }
         findViewById<MaterialButton>(R.id.profileSettingsApplyWallpaperButton).setOnClickListener {
-            if (LiveWallpaperSettingsManager.getVideoUri(prefs) == null) {
-                toast("Choose a video first, or use Upload Image Wallpaper.")
+            val profile = presets.optJSONObject(selectedPreset)
+            val fileName = profile?.optString("wallpaperVideoFileName").orEmpty()
+            val videoFile = if (fileName.isNotBlank()) File(filesDir, fileName) else null
+            if (videoFile == null || !videoFile.isFile || videoFile.length() == 0L) {
+                toast("This profile has no video wallpaper. Choose a video first.")
                 return@setOnClickListener
             }
+            LiveWallpaperSettingsManager.setVideoUri(prefs, Uri.fromFile(videoFile))
             prefs.edit().putBoolean("live_wallpaper_apply_in_progress", true).apply()
             val component = ComponentName(this, VideoLiveWallpaperService::class.java)
             val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).apply {
@@ -146,7 +158,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             }
             runCatching { startActivity(intent) }.onFailure {
                 prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
-                toast("Unable to open the wallpaper chooser.")
+                toast("Android could not open the live-wallpaper preview.")
             }
         }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
@@ -251,6 +263,53 @@ class ProfileSettingsActivity : AppCompatActivity() {
         if (names.isNotEmpty()) presetSpinner.setSelection(selectedPreset, false)
         bindingPreset = false
         loadSelectedPreset()
+    }
+
+    private fun restoreSelectedPresetDefaults() {
+        val profile = presets.optJSONObject(selectedPreset) ?: run {
+            toast("Select a saved profile first.")
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Restore profile defaults")
+            .setMessage("Reset this profile's settings, theme, logo, icon and wallpaper selections to their defaults? Other profiles will not be changed.")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Restore") { _, _ ->
+                val name = profile.optString("name", "Profile")
+                val defaults = JSONObject()
+                defaults.put("name", name)
+                defaults.put("animationType", LedAnimationType.AMBIENT.name)
+                defaults.put("performanceProfile", PerformanceProfile.HIGH.name)
+                defaults.put("color", android.graphics.Color.WHITE)
+                defaults.put("rightColor", android.graphics.Color.WHITE)
+                defaults.put("fadeEndColor", android.graphics.Color.WHITE)
+                defaults.put("fadeEndRightColor", android.graphics.Color.WHITE)
+                defaults.put("brightness", 255)
+                defaults.put("speed", 0.5)
+                defaults.put("smoothness", 0.5)
+                defaults.put("sensitivity", 0.5)
+                defaults.put("saturationBoost", 0.0)
+                defaults.put("useCustomSampling", LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
+                defaults.put("useSingleColor", false)
+                defaults.put("breatheWhenCharging", false)
+                defaults.put("indicateChargingSpeed", false)
+                defaults.put("flashWhenReady", false)
+                defaults.put("isAppProfileDefault", profile.optBoolean("isAppProfileDefault", false))
+                defaults.put("ragnarokAccepted", profile.optBoolean("ragnarokAccepted", false))
+                defaults.put("icon", "LIGHT")
+                defaults.put("uiThemeId", "classic")
+                defaults.put("coloredLogoEnabled", false)
+                presets.put(selectedPreset, defaults)
+                prefs.edit()
+                    .putString("selected_ui_theme", "classic")
+                    .putBoolean("colored_logo_enabled", false)
+                    .putBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
+                    .putString("profile_settings_apply_preset_name", name)
+                    .apply()
+                persistPresets()
+                loadSelectedPreset()
+                toast("Defaults restored for '$name'.")
+            }.show()
     }
 
     private fun loadSelectedPreset() {
