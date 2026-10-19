@@ -177,9 +177,17 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 if (chooserOpened) {
                     toast("Opened Android's wallpaper chooser. Select BIFROST Video Wallpaper if it is listed.")
                 } else {
-                    prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
-                    val detail = previewError.message?.takeIf { message -> message.isNotBlank() }
-                    toast("This Android build has no live-wallpaper chooser activity, so video wallpaper cannot be activated from BIFROST. Your video is saved to this profile.")
+                    // Retroid firmware may omit the dedicated live-wallpaper chooser but still expose
+                    // the generic wallpaper settings entry point.
+                    val genericWallpaperIntent = Intent(Intent.ACTION_SET_WALLPAPER)
+                    val genericChooserOpened = runCatching { startActivity(genericWallpaperIntent) }.isSuccess
+                    if (genericChooserOpened) {
+                        toast("Opened Android wallpaper settings. If BIFROST Video Wallpaper is not listed, this firmware does not expose a live-wallpaper picker.")
+                    } else {
+                        prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
+                        val detail = previewError.message?.takeIf { message -> message.isNotBlank() }
+                        toast("Android on this device does not provide a wallpaper chooser activity. The video is saved to this profile, but Android cannot apply it from here.")
+                    }
                 }
             }
         }
