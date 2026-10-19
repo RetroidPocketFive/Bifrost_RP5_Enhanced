@@ -33,6 +33,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private var presets = JSONArray()
     private var selectedPreset = 0
     private var bindingPreset = false
+    private var restoreDefaultsPending = false
 
     private lateinit var presetSpinner: Spinner
     private lateinit var performanceSpinner: Spinner
@@ -227,16 +228,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
         saturation.setOnSeekBarChangeListener(change)
         intensity.setOnSeekBarChangeListener(change)
         singleColorSwitch.setOnCheckedChangeListener { _, _ -> }
-        screenCaptureSwitch.setOnCheckedChangeListener { _, checked ->
-            prefs.edit().putBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, checked).apply()
-        }
-        coloredLogoSwitch.setOnCheckedChangeListener { _, checked ->
-            prefs.edit().putBoolean("colored_logo_enabled", checked).apply()
-            if (!bindingPreset) {
-                presets.optJSONObject(selectedPreset)?.put("coloredLogoEnabled", checked)
-                persistPresets()
-            }
-        }
+        screenCaptureSwitch.setOnCheckedChangeListener { _, _ -> }
+        coloredLogoSwitch.setOnCheckedChangeListener { _, _ -> }
         videoWallpaperSwitch.setOnCheckedChangeListener { _, checked ->
             prefs.edit().putBoolean("profile_settings_video_wallpaper_requested", checked).apply()
             if (checked && LiveWallpaperSettingsManager.getVideoUri(prefs) == null) {
@@ -286,48 +279,26 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
         AlertDialog.Builder(this)
             .setTitle("Restore profile defaults")
-            .setMessage("Reset this profile's settings, theme, logo, icon and wallpaper selections to their defaults? Other profiles will not be changed.")
+            .setMessage("Reset the settings shown on this screen to defaults? Nothing will be saved until you press Save.")
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Restore") { _, _ ->
-                val name = profile.optString("name", "Profile")
-                val defaults = JSONObject()
-                defaults.put("name", name)
-                defaults.put("animationType", LedAnimationType.AMBIENT.name)
-                defaults.put("performanceProfile", PerformanceProfile.HIGH.name)
-                defaults.put("color", android.graphics.Color.WHITE)
-                defaults.put("rightColor", android.graphics.Color.WHITE)
-                defaults.put("profileIconColor", android.graphics.Color.WHITE)
-                defaults.put("fadeEndColor", android.graphics.Color.WHITE)
-                defaults.put("fadeEndRightColor", android.graphics.Color.WHITE)
-                defaults.put("brightness", 255)
-                defaults.put("speed", 0.5)
-                defaults.put("smoothness", 0.5)
-                defaults.put("sensitivity", 0.5)
-                defaults.put("saturationBoost", 0.0)
-                defaults.put("useCustomSampling", LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
-                defaults.put("useSingleColor", false)
-                defaults.put("breatheWhenCharging", false)
-                defaults.put("indicateChargingSpeed", false)
-                defaults.put("flashWhenReady", false)
-                defaults.put("isAppProfileDefault", profile.optBoolean("isAppProfileDefault", false))
-                defaults.put("ragnarokAccepted", profile.optBoolean("ragnarokAccepted", false))
-                defaults.put("icon", "LIGHT")
-                defaults.put("uiThemeId", "classic")
-                defaults.put("coloredLogoEnabled", false)
-                presets.put(selectedPreset, defaults)
-                persistPresets()
-                val activeName = prefs.getString("last_preset_name", null)
-                if (activeName.equals(name, ignoreCase = true)) {
-                    prefs.edit()
-                        .putString("selected_ui_theme", "classic")
-                        .putBoolean("colored_logo_enabled", false)
-                        .putBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
-                        .putString("profile_settings_apply_preset_name", name)
-                        .apply()
-                }
-                loadSelectedPreset()
-                toast("Defaults restored for '$name'.")
-            }.show()
+                restoreDefaultsPending = true
+                bindingPreset = true
+                performanceSpinner.setSelection(PerformanceProfile.values().indexOf(PerformanceProfile.HIGH).coerceAtLeast(0))
+                animationSpinner.setSelection(LedAnimationType.values().indexOf(LedAnimationType.AMBIENT).coerceAtLeast(0))
+                themeSpinner.setSelection(0, false)
+                coloredLogoSwitch.isChecked = false
+                screenCaptureSwitch.isChecked = LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION
+                reactivity.progress = 50
+                saturation.progress = 0
+                intensity.progress = 255
+                singleColorSwitch.isChecked = false
+                selectedProfileColor = android.graphics.Color.WHITE
+                applySettingsTheme("classic")
+                bindingPreset = false
+                toast("Defaults shown. Press Save to keep these changes; exit without saving to discard them.")
+            }
+            .show()
     }
 
     private fun loadSelectedPreset() {
@@ -383,6 +354,24 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 val target = if (existingIndex != null) presets.optJSONObject(existingIndex) else JSONObject()
                 if (target == null) { toast("Could not create the profile."); return@setPositiveButton }
                 target.put("name", name)
+                if (restoreDefaultsPending) {
+                    target.put("color", android.graphics.Color.WHITE)
+                    target.put("rightColor", android.graphics.Color.WHITE)
+                    target.put("fadeEndColor", android.graphics.Color.WHITE)
+                    target.put("fadeEndRightColor", android.graphics.Color.WHITE)
+                    target.put("sensitivity", 0.5)
+                    target.put("breatheWhenCharging", false)
+                    target.put("indicateChargingSpeed", false)
+                    target.put("flashWhenReady", false)
+                    target.put("icon", "LIGHT")
+                    target.remove("customEmoji")
+                    target.remove("customImageFileName")
+                    target.remove("appIconPackageName")
+                    target.remove("wallpaperImageFileName")
+                    target.remove("wallpaperVideoFileName")
+                    target.put("uiThemeId", "classic")
+                    target.put("coloredLogoEnabled", false)
+                }
                 target.put("animationType", LedAnimationType.values()[animationSpinner.selectedItemPosition].name)
                 target.put("performanceProfile", PerformanceProfile.values()[performanceSpinner.selectedItemPosition].name)
                 target.put("color", target.optInt("color", android.graphics.Color.WHITE))
@@ -421,6 +410,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     .apply()
                 applySettingsTheme(themeId)
                 persistPresets()
+                restoreDefaultsPending = false
                 reloadPresets()
                 toast("Profile '$name' saved. Returning to BIFROST to apply it.")
                 finish()
@@ -468,11 +458,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
     private fun applyThemeSelection(position: Int) {
         val id = if (position == 1) "oled_purple" else "classic"
-        prefs.edit().putString("selected_ui_theme", id).apply()
-        if (!bindingPreset) {
-            presets.optJSONObject(selectedPreset)?.put("uiThemeId", id)
-            persistPresets()
-        }
+        // Preview the theme in this editor; the profile is only changed by Save.
         applySettingsTheme(id)
     }
 
