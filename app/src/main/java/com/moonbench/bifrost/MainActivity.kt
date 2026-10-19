@@ -88,6 +88,7 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -1955,6 +1956,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun applyPresetUiPreferences(presetName: String) {
+        val profiles = runCatching { JSONArray(prefs.getString("presets_json", "[]")) }.getOrDefault(JSONArray())
+        val profile = (0 until profiles.length())
+            .mapNotNull { profiles.optJSONObject(it) }
+            .firstOrNull { it.optString("name") == presetName } ?: return
+        val themeId = profile.optString("uiThemeId", "")
+        if (themeId == "classic" || themeId == "oled_purple") {
+            prefs.edit().putString(PREF_SELECTED_UI_THEME, themeId).apply()
+            val theme = builtInThemes.firstOrNull { it.id == themeId }
+            if (theme != null && theme.id != selectedUiTheme.id) {
+                applySelectedTheme(theme, persistSelection = false)
+            }
+        }
+        if (profile.has("coloredLogoEnabled")) {
+            val colored = profile.optBoolean("coloredLogoEnabled", false)
+            prefs.edit().putBoolean(PREF_COLORED_LOGO_ENABLED, colored).apply()
+            if (isColoredLogoEnabled != colored) {
+                isColoredLogoEnabled = colored
+                applyHeaderLogoPreference()
+            }
+        }
+    }
+
     private fun selectPresetFromCoverFlow(index: Int, animate: Boolean, applyPreset: Boolean = true) {
         if (!::presetController.isInitialized) return
         if (applyPreset && ::appProfileManager.isInitialized && appProfileManager.isEnabled) return
@@ -1974,6 +1998,7 @@ class MainActivity : AppCompatActivity() {
  
         if (applyPreset) {
             presetController.applyPresetAt(selectedIndex)
+            applyPresetUiPreferences(selectedPreset.name)
         }
      }
 
@@ -2525,7 +2550,10 @@ class MainActivity : AppCompatActivity() {
                 if (!pendingPresetName.isNullOrBlank()) {
                     prefs.edit().remove("profile_settings_apply_preset_name").apply()
                     val targetIndex = presetController.getPresets().indexOfFirst { it.name == pendingPresetName }
-                    if (targetIndex >= 0) presetController.applyPresetAt(targetIndex)
+                    if (targetIndex >= 0) {
+                        presetController.applyPresetAt(targetIndex)
+                        applyPresetUiPreferences(pendingPresetName)
+                    }
                 }
             }
 
