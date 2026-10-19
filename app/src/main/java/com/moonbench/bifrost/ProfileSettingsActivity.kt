@@ -59,14 +59,16 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 requireNotNull(input) { "Unable to read video" }
                 target.outputStream().use { output -> input.copyTo(output) }
             }
+            require(target.length() <= MAX_VIDEO_WALLPAPER_BYTES) { "Video exceeds the 100 MB limit" }
             fileName
         }.getOrNull()
         if (imported == null) {
-            toast("Could not import the selected video.")
+            File(filesDir, fileName).delete()
+            toast("Could not import video. Use MP4/H.264 video up to 100 MB.")
         } else {
             profile.put("wallpaperVideoFileName", imported)
             persistPresets()
-            toast("Video saved to this profile. Press Apply Wallpaper and confirm in Android's wallpaper preview.")
+            toast("Video saved to this profile. Use MP4/H.264 up to 100 MB; then press Apply Wallpaper.")
         }
     }
     private val wallpaperImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -142,6 +144,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.profileSettingsPickImageWallpaperButton).setOnClickListener {
             wallpaperImagePicker.launch("image/*")
         }
+        findViewById<MaterialButton>(R.id.profileSettingsResetWallpaperButton).setOnClickListener {
+            resetSelectedProfileWallpaper()
+        }
         findViewById<MaterialButton>(R.id.profileSettingsApplyWallpaperButton).setOnClickListener {
             val profile = presets.optJSONObject(selectedPreset)
             val fileName = profile?.optString("wallpaperVideoFileName").orEmpty()
@@ -166,7 +171,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
             toast("Opening Android's live-wallpaper preview. Confirm with Set wallpaper on that screen.")
             runCatching { startActivity(intent) }.onFailure {
                 prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
-                toast("Android could not open the live-wallpaper preview.")
+                val detail = it.message?.takeIf { message -> message.isNotBlank() }
+                toast("Android could not open live-wallpaper preview" + (detail?.let { message -> ": $message" } ?: ". Check that Android supports live wallpapers."))
             }
         }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
@@ -499,5 +505,38 @@ class ProfileSettingsActivity : AppCompatActivity() {
         spinner.adapter = adapter
     }
     private fun label(value: String) = value.lowercase().split('_').joinToString(" ") { it.replaceFirstChar(Char::uppercase) }
-    private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+    private fun resetSelectedProfileWallpaper() {
+        val profile = presets.optJSONObject(selectedPreset)
+        if (profile == null) {
+            toast("Select a saved profile first.")
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Reset wallpaper")
+            .setMessage("Remove this profile's selected image and video wallpaper and use the default BIFROST background?")
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Reset") { _, _ ->
+                val oldImage = profile.optString("wallpaperImageFileName").takeIf { it.isNotBlank() }
+                val oldVideo = profile.optString("wallpaperVideoFileName").takeIf { it.isNotBlank() }
+                profile.remove("wallpaperImageFileName")
+                profile.remove("wallpaperVideoFileName")
+                persistPresets()
+                listOfNotNull(oldImage, oldVideo).distinct().forEach { name ->
+                    val usedElsewhere = (0 until presets.length()).any { index ->
+                        val other = presets.optJSONObject(index)
+                        other?.optString("wallpaperImageFileName") == name ||
+                            other?.optString("wallpaperVideoFileName") == name
+                    }
+                    if (!usedElsewhere) File(filesDir, name).delete()
+                }
+                toast("Wallpaper reset to the default for this profile.")
+            }
+            .show()
+    }
+
+    private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+
+    companion object {
+        private const val MAX_VIDEO_WALLPAPER_BYTES = 100L * 1024L * 1024L
+    }
 }
