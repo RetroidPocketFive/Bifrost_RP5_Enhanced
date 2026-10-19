@@ -68,8 +68,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             toast("Could not import video. Use MP4/H.264 video up to 100 MB.")
         } else {
             profile.put("wallpaperVideoFileName", imported)
-            persistPresets()
-            toast("Video saved to this profile. Use MP4/H.264 up to 100 MB; then press Apply Wallpaper.")
+            toast("Video selected for this profile. Press Save to keep it; then Apply Wallpaper.")
         }
     }
     private val wallpaperImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -89,8 +88,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             toast("Could not import the selected image.")
         } else {
             profile.put("wallpaperImageFileName", imported)
-            persistPresets()
-            toast("Image saved to this profile as its BIFROST background.")
+            toast("Image selected as this profile's BIFROST background. Press Save to keep it.")
         }
     }
     private val profileImagePicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -101,8 +99,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         target.remove("customEmoji")
         target.put("customImageFileName", fileName)
         target.remove("appIconPackageName")
-        persistPresets()
-        toast("Profile icon image saved.")
+        toast("Profile icon image selected. Press Save to keep this change.")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -185,8 +182,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                         toast("Opened Android wallpaper settings. If BIFROST Video Wallpaper is not listed, this firmware does not expose a live-wallpaper picker.")
                     } else {
                         prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
-                        val detail = previewError.message?.takeIf { message -> message.isNotBlank() }
-                        toast("Android on this device does not provide a wallpaper chooser activity. The video is saved to this profile, but Android cannot apply it from here.")
+                        toast("This Android build has no live-wallpaper preview/chooser activity, so it cannot apply video wallpaper through Android. Your video remains selected in the editor; press Save to keep it.")
                     }
                 }
             }
@@ -472,8 +468,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         AlertDialog.Builder(this).setTitle("Profile icon colour").setItems(names) { _, which ->
             selectedProfileColor = colors[which]
             val p = presets.optJSONObject(selectedPreset)
-            if (p != null) { p.put("profileIconColor", selectedProfileColor); persistPresets() }
-            toast("Profile icon colour saved for this profile.")
+            toast("Profile icon colour selected. Press Save to keep this change.")
         }.show()
     }
 
@@ -527,7 +522,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 val oldVideo = profile.optString("wallpaperVideoFileName").takeIf { it.isNotBlank() }
                 profile.remove("wallpaperImageFileName")
                 profile.remove("wallpaperVideoFileName")
-                persistPresets()
                 listOfNotNull(oldImage, oldVideo).distinct().forEach { name ->
                     val usedElsewhere = (0 until presets.length()).any { index ->
                         val other = presets.optJSONObject(index)
@@ -536,7 +530,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     }
                     if (!usedElsewhere) File(filesDir, name).delete()
                 }
-                toast("Wallpaper reset to the default for this profile.")
+                toast("Wallpaper reset in the editor. Press Save to keep this change.")
             }
             .show()
     }
