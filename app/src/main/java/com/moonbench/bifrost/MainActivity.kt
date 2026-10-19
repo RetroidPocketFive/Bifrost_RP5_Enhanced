@@ -12,6 +12,8 @@ import android.content.res.ColorStateList
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.ColorDrawable
 import android.hardware.display.DisplayManager
@@ -1976,6 +1978,20 @@ class MainActivity : AppCompatActivity() {
                 isColoredLogoEnabled = colored
                 applyHeaderLogoPreference()
             }
+        }
+        applyProfileWallpaper(profile.optString("wallpaperImageFileName", ""))
+    }
+
+    private fun applyProfileWallpaper(fileName: String) {
+        if (!::homeContainer.isInitialized) return
+        val imageFile = fileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        val bitmap = imageFile?.takeIf { it.isFile && it.length() > 0L }?.let {
+            runCatching { BitmapFactory.decodeFile(it.absolutePath) }.getOrNull()
+        }
+        homeContainer.background = if (bitmap != null) {
+            BitmapDrawable(resources, bitmap).apply { gravity = Gravity.FILL }
+        } else {
+            ColorDrawable(selectedUiTheme.backgroundColor)
         }
     }
 
