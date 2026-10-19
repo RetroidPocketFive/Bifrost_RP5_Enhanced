@@ -290,6 +290,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 defaults.put("performanceProfile", PerformanceProfile.HIGH.name)
                 defaults.put("color", android.graphics.Color.WHITE)
                 defaults.put("rightColor", android.graphics.Color.WHITE)
+                defaults.put("profileIconColor", android.graphics.Color.WHITE)
                 defaults.put("fadeEndColor", android.graphics.Color.WHITE)
                 defaults.put("fadeEndRightColor", android.graphics.Color.WHITE)
                 defaults.put("brightness", 255)
@@ -330,7 +331,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             saturation.progress = (p.optDouble("saturationBoost", 0.0) * 100).toInt().coerceIn(0, 100)
             intensity.progress = p.optInt("brightness", 255).coerceIn(0, 255)
             singleColorSwitch.isChecked = p.optBoolean("useSingleColor", false)
-            selectedProfileColor = p.optInt("color", android.graphics.Color.WHITE)
+            selectedProfileColor = p.optInt("profileIconColor", android.graphics.Color.WHITE)
         } else {
             performanceSpinner.setSelection(PerformanceProfile.values().indexOf(PerformanceProfile.HIGH))
             animationSpinner.setSelection(LedAnimationType.values().indexOf(LedAnimationType.AMBIENT))
@@ -375,8 +376,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 target.put("name", name)
                 target.put("animationType", LedAnimationType.values()[animationSpinner.selectedItemPosition].name)
                 target.put("performanceProfile", PerformanceProfile.values()[performanceSpinner.selectedItemPosition].name)
-                target.put("color", selectedProfileColor)
-                target.put("rightColor", selectedProfileColor)
+                target.put("color", target.optInt("color", android.graphics.Color.WHITE))
+                target.put("rightColor", target.optInt("rightColor", target.optInt("color", android.graphics.Color.WHITE)))
+                target.put("profileIconColor", selectedProfileColor)
                 target.put("fadeEndColor", target.optInt("fadeEndColor", android.graphics.Color.WHITE))
                 target.put("fadeEndRightColor", target.optInt("fadeEndRightColor", android.graphics.Color.WHITE))
                 target.put("brightness", intensity.progress)
@@ -450,8 +452,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
         AlertDialog.Builder(this).setTitle("Profile icon colour").setItems(names) { _, which ->
             selectedProfileColor = colors[which]
             val p = presets.optJSONObject(selectedPreset)
-            if (p != null) { p.put("color", selectedProfileColor); p.put("rightColor", selectedProfileColor); persistPresets() }
-            toast("Profile icon colour saved.")
+            if (p != null) { p.put("profileIconColor", selectedProfileColor); persistPresets() }
+            toast("Profile icon colour saved for this profile.")
         }.show()
     }
 
