@@ -238,9 +238,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
         screenCaptureSwitch.setOnCheckedChangeListener { _, _ -> }
         coloredLogoSwitch.setOnCheckedChangeListener { _, _ -> }
         videoWallpaperSwitch.setOnCheckedChangeListener { _, checked ->
-            prefs.edit().putBoolean("profile_settings_video_wallpaper_requested", checked).apply()
-            if (checked && LiveWallpaperSettingsManager.getVideoUri(prefs) == null) {
-                toast("Choose a video below, then tap Apply Wallpaper.")
+            if (!bindingPreset) {
+                prefs.edit().putBoolean("profile_settings_video_wallpaper_requested", checked).apply()
+                if (checked && LiveWallpaperSettingsManager.getVideoUri(prefs) == null) {
+                    toast("Choose a video below, then tap Apply Wallpaper.")
+                }
             }
         }
         fpsSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
@@ -296,6 +298,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 themeSpinner.setSelection(0, false)
                 coloredLogoSwitch.isChecked = false
                 screenCaptureSwitch.isChecked = LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION
+                videoWallpaperSwitch.isChecked = false
+                fpsSpinner.setSelection(1, false)
                 reactivity.progress = 50
                 saturation.progress = 0
                 intensity.progress = 255
@@ -413,9 +417,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     .putString("selected_ui_theme", themeId)
                     .putBoolean("colored_logo_enabled", target.optBoolean("coloredLogoEnabled", false))
                     .putBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, screenCaptureSwitch.isChecked)
+                    .putBoolean("profile_settings_video_wallpaper_requested", videoWallpaperSwitch.isChecked)
                     .putString("profile_settings_apply_preset_name", name)
                     .apply()
                 applySettingsTheme(themeId)
+                LiveWallpaperSettingsManager.setTargetFps(prefs, listOf(24, 30, 60).getOrElse(fpsSpinner.selectedItemPosition) { 30 })
                 persistPresets()
                 restoreDefaultsPending = false
                 reloadPresets()
