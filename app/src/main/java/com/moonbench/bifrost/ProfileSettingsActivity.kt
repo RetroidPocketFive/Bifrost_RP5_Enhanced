@@ -239,7 +239,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        reloadPresets()
+        // Keep this editor's unsaved draft intact when returning from Android's
+        // image/video picker. reloadPresets() here re-reads persisted JSON and
+        // discards the just-picked filename and any other pending editor changes.
     }
 
     private fun reloadPresets() {
