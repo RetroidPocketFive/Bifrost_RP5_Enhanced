@@ -414,7 +414,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     view.backgroundTintList = ColorStateList.valueOf(surface)
                     view.strokeColor = ColorStateList.valueOf(accent)
                 }
-                is TextView -> view.setTextColor(getColor(R.color.bifrost_text))
             }
             if (view is android.view.ViewGroup) {
                 for (i in 0 until view.childCount) tint(view.getChildAt(i))
