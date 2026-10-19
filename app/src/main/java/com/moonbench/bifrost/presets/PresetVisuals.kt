@@ -3,6 +3,7 @@ package com.moonbench.bifrost
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.PorterDuff
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import android.widget.ImageView
@@ -64,6 +65,11 @@ object PresetVisuals {
             iconView.visibility = android.view.View.VISIBLE
             iconView.scaleType = ImageView.ScaleType.CENTER_CROP
             iconView.setImageBitmap(loadedImage)
+            if (spec.iconColor != null) {
+                iconView.setColorFilter(spec.iconColor, PorterDuff.Mode.SRC_IN)
+            } else {
+                iconView.clearColorFilter()
+            }
             return
         }
 
@@ -92,6 +98,11 @@ object PresetVisuals {
             iconView.visibility = android.view.View.VISIBLE
             iconView.scaleType = ImageView.ScaleType.FIT_CENTER
             iconView.setImageDrawable(appIconDrawable)
+            if (spec.iconColor != null) {
+                iconView.setColorFilter(spec.iconColor, PorterDuff.Mode.SRC_IN)
+            } else {
+                iconView.clearColorFilter()
+            }
             return
         }
 
@@ -103,6 +114,7 @@ object PresetVisuals {
             ?.let { AppCompatResources.getDrawable(context, it) }
             ?.mutate()
         drawable?.setTint(spec.iconColor ?: ContextCompat.getColor(context, R.color.bifrost_icon))
+        iconView.clearColorFilter()
         iconView.setImageDrawable(drawable)
     }
 }
