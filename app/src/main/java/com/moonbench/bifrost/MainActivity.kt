@@ -1990,11 +1990,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyProfileWallpaper(imageFileName: String, videoFileName: String) {
-        if (!::homeContainer.isInitialized || !::profileWallpaperContainer.isInitialized) return
+        if (!::homeContainer.isInitialized || !::profileWallpaperContainer.isInitialized) {
+            Log.w("BifrostWallpaper", "Cannot apply wallpaper before the home views are initialized")
+            return
+        }
+
         val container = profileWallpaperContainer
         profileWallpaperVideoView?.let { old ->
             runCatching { old.stopPlayback() }
-            container.removeView(old)
+            (old.parent as? ViewGroup)?.removeView(old)
         }
         profileWallpaperVideoView = null
 
@@ -2006,10 +2010,18 @@ class MainActivity : AppCompatActivity() {
                     player.isLooping = true
                     player.setVolume(0f, 0f)
                     start()
+                    Log.i("BifrostWallpaper", "Playing profile video wallpaper: ${videoFile.name}")
                 }
                 setOnErrorListener { _, what, extra ->
-                    Log.w("BifrostWallpaper", "Unable to play profile video wallpaper (what=$what, extra=$extra)")
-                    Toast.makeText(this@MainActivity, "This profile's video wallpaper could not be played.", Toast.LENGTH_LONG).show()
+                    Log.e(
+                        "BifrostWallpaper",
+                        "Video wallpaper playback failed (file=${videoFile.name}, what=$what, extra=$extra)"
+                    )
+                    Toast.makeText(
+                        this@MainActivity,
+                        "BIFROST could not play this profile's video wallpaper. Try an MP4/H.264 file.",
+                        Toast.LENGTH_LONG
+                    ).show()
                     true
                 }
             }
@@ -2022,26 +2034,39 @@ class MainActivity : AppCompatActivity() {
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
             )
-            videoView.setVideoURI(Uri.fromFile(videoFile))
-            homeContainer.setBackgroundColor(Color.TRANSPARENT)
             container.background = ColorDrawable(Color.BLACK)
+            homeContainer.setBackgroundColor(Color.TRANSPARENT)
+            videoView.setVideoURI(Uri.fromFile(videoFile))
             return
         }
 
         val imageFile = imageFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
-        val bitmap = imageFile?.takeIf { it.isFile && it.length() > 0L }?.let {
-            runCatching { BitmapFactory.decodeFile(it.absolutePath) }.getOrNull()
+        val bitmap = imageFile?.takeIf { it.isFile && it.length() > 0L }?.let { file ->
+            runCatching { BitmapFactory.decodeFile(file.absolutePath) }
+                .onFailure {
+                    Log.e("BifrostWallpaper", "Could not decode wallpaper image ${file.name}", it)
+                }
+                .getOrNull()
         }
+
         if (bitmap != null) {
             container.background = BitmapDrawable(resources, bitmap).apply {
                 gravity = Gravity.FILL
             }
             homeContainer.setBackgroundColor(Color.TRANSPARENT)
+            Log.i("BifrostWallpaper", "Applied profile image wallpaper: ${imageFile?.name}")
         } else {
             container.background = ColorDrawable(selectedUiTheme.backgroundColor)
             homeContainer.setBackgroundColor(Color.TRANSPARENT)
+            if (imageFileName.isNotBlank()) {
+                Log.e(
+                    "BifrostWallpaper",
+                    "Wallpaper image file missing or unreadable: $imageFileName"
+                )
+            }
         }
     }
+
 
     private data class HeaderThemePalette(
         val introHueStart: Float,
