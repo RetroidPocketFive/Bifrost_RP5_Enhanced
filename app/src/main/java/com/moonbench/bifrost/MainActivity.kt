@@ -1989,10 +1989,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyProfileWallpaper(imageFileName: String, videoFileName: String) {
         if (!::homeContainer.isInitialized) return
-        val container = homeContainer as? FrameLayout ?: return
+        // homeContainer is a LinearLayout inside the activity's root FrameLayout.
+        // Keep the VideoView as the root's first child so it sits behind the home UI.
+        val root = homeContainer.parent as? FrameLayout ?: return
         profileWallpaperVideoView?.let { old ->
             runCatching { old.stopPlayback() }
-            container.removeView(old)
+            (old.parent as? ViewGroup)?.removeView(old)
         }
         profileWallpaperVideoView = null
 
@@ -2004,12 +2006,12 @@ class MainActivity : AppCompatActivity() {
                 player.setVolume(0f, 0f)
                 videoView.start()
             }
-            videoView.setOnErrorListener { _, _, _ ->
-                Log.w("BifrostWallpaper", "Unable to play this profile's in-app video wallpaper")
+            videoView.setOnErrorListener { _, what, extra ->
+                Log.w("BifrostWallpaper", "Unable to play this profile's in-app video wallpaper (what=$what, extra=$extra)")
                 true
             }
             profileWallpaperVideoView = videoView
-            container.addView(
+            root.addView(
                 videoView,
                 0,
                 FrameLayout.LayoutParams(
@@ -2017,8 +2019,9 @@ class MainActivity : AppCompatActivity() {
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
             )
+            // The wallpaper is behind the homeContainer, so its background must be transparent.
+            homeContainer.background = ColorDrawable(Color.TRANSPARENT)
             videoView.setVideoURI(Uri.fromFile(videoFile))
-            container.background = ColorDrawable(Color.BLACK)
             return
         }
 
