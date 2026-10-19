@@ -1989,9 +1989,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyProfileWallpaper(imageFileName: String, videoFileName: String) {
         if (!::homeContainer.isInitialized) return
-        // homeContainer is a LinearLayout inside the activity's root FrameLayout.
-        // Keep the VideoView as the root's first child so it sits behind the home UI.
-        val root = homeContainer.parent as? FrameLayout ?: return
+        // The home UI is a LinearLayout inside the activity root FrameLayout.
+        // Render wallpaper on/behind the root, rather than casting the LinearLayout to FrameLayout.
+        val root = homeContainer.parent as? FrameLayout ?: run {
+            Log.w("BifrostWallpaper", "Cannot apply profile wallpaper: home root is not a FrameLayout")
+            return
+        }
+
         profileWallpaperVideoView?.let { old ->
             runCatching { old.stopPlayback() }
             (old.parent as? ViewGroup)?.removeView(old)
@@ -2000,15 +2004,19 @@ class MainActivity : AppCompatActivity() {
 
         val videoFile = videoFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
         if (videoFile != null && videoFile.isFile && videoFile.length() > 0L) {
-            val videoView = VideoView(this)
-            videoView.setOnPreparedListener { player ->
-                player.isLooping = true
-                player.setVolume(0f, 0f)
-                videoView.start()
-            }
-            videoView.setOnErrorListener { _, what, extra ->
-                Log.w("BifrostWallpaper", "Unable to play this profile's in-app video wallpaper (what=$what, extra=$extra)")
-                true
+            val videoView = VideoView(this).apply {
+                setOnPreparedListener { player ->
+                    player.isLooping = true
+                    player.setVolume(0f, 0f)
+                    start()
+                }
+                setOnErrorListener { _, what, extra ->
+                    Log.e(
+                        "BifrostWallpaper",
+                        "Video wallpaper playback failed (file=${videoFile.name}, what=$what, extra=$extra)"
+                    )
+                    true
+                }
             }
             profileWallpaperVideoView = videoView
             root.addView(
@@ -2019,22 +2027,32 @@ class MainActivity : AppCompatActivity() {
                     FrameLayout.LayoutParams.MATCH_PARENT
                 )
             )
-            // The wallpaper is behind the homeContainer, so its background must be transparent.
+            root.background = ColorDrawable(Color.BLACK)
+            // Transparent home container lets the wallpaper layer show through the gaps in the UI.
             homeContainer.background = ColorDrawable(Color.TRANSPARENT)
             videoView.setVideoURI(Uri.fromFile(videoFile))
             return
         }
 
         val imageFile = imageFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
-        val bitmap = imageFile?.takeIf { it.isFile && it.length() > 0L }?.let {
-            runCatching { BitmapFactory.decodeFile(it.absolutePath) }.getOrNull()
+        val bitmap = imageFile?.takeIf { it.isFile && it.length() > 0L }?.let { file ->
+            runCatching { BitmapFactory.decodeFile(file.absolutePath) }
+                .onFailure { Log.e("BifrostWallpaper", "Unable to decode profile wallpaper image: ${file.name}", it) }
+                .getOrNull()
         }
-        homeContainer.background = if (bitmap != null) {
-            BitmapDrawable(resources, bitmap).apply { gravity = Gravity.FILL }
+
+        if (bitmap != null) {
+            root.background = BitmapDrawable(resources, bitmap).apply { gravity = Gravity.FILL }
+            homeContainer.background = ColorDrawable(Color.TRANSPARENT)
         } else {
-            ColorDrawable(selectedUiTheme.backgroundColor)
+            root.background = ColorDrawable(selectedUiTheme.backgroundColor)
+            homeContainer.background = ColorDrawable(Color.TRANSPARENT)
+            if (imageFileName.isNotBlank()) {
+                Log.w("BifrostWallpaper", "Profile wallpaper image missing or unreadable: $imageFileName")
+            }
         }
     }
+
 
     private fun selectPresetFromCoverFlow(index: Int, animate: Boolean, applyPreset: Boolean = true) {
         if (!::presetController.isInitialized) return
