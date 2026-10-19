@@ -72,6 +72,11 @@ object PresetVisuals {
             iconView.setImageDrawable(null)
             iconView.visibility = android.view.View.GONE
             emojiView.text = emojiValue
+            // Emoji-based preset icons use TextView rendering, so drawable tinting
+            // alone cannot apply the profile's selected icon colour.
+            emojiView.setTextColor(
+                spec.iconColor ?: ContextCompat.getColor(context, R.color.bifrost_icon)
+            )
             emojiView.visibility = android.view.View.VISIBLE
             return
         }
