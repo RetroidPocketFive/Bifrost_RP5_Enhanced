@@ -403,7 +403,8 @@ class PresetController(
                     customEmoji = customEmoji,
                     customImageFileName = customImageFileName,
                     appIconPackageName = appIconPackageName,
-                    ownerPackage = ownerPackage
+                    ownerPackage = ownerPackage,
+                    profileIconColor = obj.optInt("profileIconColor").takeIf { obj.has("profileIconColor") }
                 )
             )
         }
@@ -413,9 +414,26 @@ class PresetController(
 
     private fun savePresetsToPrefs() {
         val array = JSONArray()
+        // Preserve Profile Settings metadata that is not part of LedPreset yet.
+        // The home-screen preset controller rewrites this JSON, so without this
+        // merge the per-profile theme and logo choice would silently disappear.
+        val previousProfiles = runCatching {
+            JSONArray(prefs.getString(PREF_KEY_PRESETS, "[]"))
+        }.getOrDefault(JSONArray())
 
         presets.forEach { preset ->
             val obj = JSONObject()
+            val previous = (0 until previousProfiles.length())
+                .asSequence()
+                .mapNotNull { previousProfiles.optJSONObject(it) }
+                .firstOrNull { it.optString("name").equals(preset.name, ignoreCase = true) }
+            previous?.let {
+                if (it.has("uiThemeId")) obj.put("uiThemeId", it.optString("uiThemeId"))
+                if (it.has("coloredLogoEnabled")) obj.put("coloredLogoEnabled", it.optBoolean("coloredLogoEnabled"))
+                if (it.has("wallpaperImageFileName")) obj.put("wallpaperImageFileName", it.optString("wallpaperImageFileName"))
+                if (it.has("wallpaperVideoFileName")) obj.put("wallpaperVideoFileName", it.optString("wallpaperVideoFileName"))
+                if (it.has("profileIconColor")) obj.put("profileIconColor", it.optInt("profileIconColor"))
+            }
             obj.put("name", preset.name)
             obj.put("animationType", preset.animationType.name)
             obj.put("performanceProfile", preset.performanceProfile.name)
@@ -446,6 +464,7 @@ class PresetController(
             preset.customImageFileName?.let { obj.put("customImageFileName", it) }
             preset.appIconPackageName?.let { obj.put("appIconPackageName", it) }
             preset.ownerPackage?.let { obj.put("ownerPackage", it) }
+            preset.profileIconColor?.let { obj.put("profileIconColor", it) }
             array.put(obj)
         }
 

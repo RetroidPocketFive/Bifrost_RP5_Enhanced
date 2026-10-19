@@ -3,6 +3,7 @@ package com.moonbench.bifrost
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.PorterDuff
 import android.net.Uri
 import android.webkit.MimeTypeMap
 import android.widget.ImageView
@@ -18,7 +19,8 @@ data class PresetVisualSpec(
     val builtInIcon: PresetIcon,
     val customEmoji: String? = null,
     val customImageFileName: String? = null,
-    val appIconPackageName: String? = null
+    val appIconPackageName: String? = null,
+    val iconColor: Int? = null
 )
 
 object PresetVisuals {
@@ -28,7 +30,8 @@ object PresetVisuals {
             builtInIcon = preset.icon,
             customEmoji = preset.customEmoji,
             customImageFileName = preset.customImageFileName,
-            appIconPackageName = preset.appIconPackageName
+            appIconPackageName = preset.appIconPackageName,
+            iconColor = preset.profileIconColor
         )
     }
 
@@ -62,6 +65,11 @@ object PresetVisuals {
             iconView.visibility = android.view.View.VISIBLE
             iconView.scaleType = ImageView.ScaleType.CENTER_CROP
             iconView.setImageBitmap(loadedImage)
+            if (spec.iconColor != null) {
+                iconView.setColorFilter(spec.iconColor, PorterDuff.Mode.SRC_IN)
+            } else {
+                iconView.clearColorFilter()
+            }
             return
         }
 
@@ -70,6 +78,11 @@ object PresetVisuals {
             iconView.setImageDrawable(null)
             iconView.visibility = android.view.View.GONE
             emojiView.text = emojiValue
+            // Emoji-based preset icons use TextView rendering, so drawable tinting
+            // alone cannot apply the profile's selected icon colour.
+            emojiView.setTextColor(
+                spec.iconColor ?: ContextCompat.getColor(context, R.color.bifrost_icon)
+            )
             emojiView.visibility = android.view.View.VISIBLE
             return
         }
@@ -85,6 +98,11 @@ object PresetVisuals {
             iconView.visibility = android.view.View.VISIBLE
             iconView.scaleType = ImageView.ScaleType.FIT_CENTER
             iconView.setImageDrawable(appIconDrawable)
+            if (spec.iconColor != null) {
+                iconView.setColorFilter(spec.iconColor, PorterDuff.Mode.SRC_IN)
+            } else {
+                iconView.clearColorFilter()
+            }
             return
         }
 
@@ -95,7 +113,8 @@ object PresetVisuals {
         val drawable = spec.builtInIcon.drawableRes
             ?.let { AppCompatResources.getDrawable(context, it) }
             ?.mutate()
-        drawable?.setTint(ContextCompat.getColor(context, R.color.bifrost_icon))
+        drawable?.setTint(spec.iconColor ?: ContextCompat.getColor(context, R.color.bifrost_icon))
+        iconView.clearColorFilter()
         iconView.setImageDrawable(drawable)
     }
 }

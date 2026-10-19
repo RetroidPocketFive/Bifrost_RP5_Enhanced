@@ -43,6 +43,11 @@
         android:usesCleartextTraffic="false"
         android:theme="@style/Theme.Bifrost">
         <activity
+            android:name=".ProfileSettingsActivity"
+            android:exported="false"
+            android:label="Profile Settings" />
+
+        <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
             android:exported="true">

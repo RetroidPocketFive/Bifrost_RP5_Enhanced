@@ -12,6 +12,8 @@ import android.content.res.ColorStateList
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.ColorDrawable
 import android.hardware.display.DisplayManager
@@ -45,6 +47,7 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.VideoView
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
@@ -88,6 +91,7 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import org.json.JSONArray
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -154,6 +158,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var manageAppsButton: MaterialButton
     private lateinit var settingsOverlay: View
     private lateinit var homeContainer: View
+    private lateinit var profileWallpaperContainer: FrameLayout
+    private var profileWallpaperVideoView: VideoView? = null
     private lateinit var homeSettingsButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
     private lateinit var homeExitButton: MaterialButton
@@ -161,6 +167,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tabBehaviorSettings: MaterialButton
     private lateinit var tabThemesSettings: MaterialButton
     private lateinit var settingsOwnershipHint: TextView
+    private lateinit var settingsPageTitle: TextView
+    private lateinit var settingsPageDescription: TextView
+    private lateinit var settingsHeaderBackButton: MaterialButton
     private lateinit var liveWallpaperTabButton: MaterialButton
     private lateinit var mainSettingsScroll: ScrollView
     private lateinit var liveWallpaperSettingsScroll: ScrollView
@@ -181,6 +190,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var activePresetProfileText: TextView
     private lateinit var modeCard: MaterialCardView
     private lateinit var appProfileCard: MaterialCardView
+    private lateinit var defaultFallbackCard: MaterialCardView
     private lateinit var colorCard: MaterialCardView
     private lateinit var animationCard: MaterialCardView
     private lateinit var performanceCard: MaterialCardView
@@ -189,6 +199,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var miscellaneousCard: MaterialCardView
     private lateinit var miscellaneousToggleButton: MaterialButton
     private lateinit var miscellaneousPlaceholderText: TextView
+    private lateinit var miscellaneousOptionsContainer: View
     private lateinit var systemStatusContainer: View
     private lateinit var bifrostLogoView: ImageView
     private lateinit var bifrostTitleText: TextView
@@ -702,6 +713,7 @@ class MainActivity : AppCompatActivity() {
 
         settingsOverlay = findViewById(R.id.settingsOverlay)
         homeContainer = findViewById(R.id.homeContainer)
+        profileWallpaperContainer = findViewById(R.id.profileWallpaperContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
         findViewById<MaterialButton>(R.id.openLibrarySettingsButton).setOnClickListener {
@@ -739,14 +751,19 @@ class MainActivity : AppCompatActivity() {
         tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
         tabThemesSettings = findViewById(R.id.tabThemesSettings)
         settingsOwnershipHint = findViewById(R.id.settingsOwnershipHint)
+        settingsPageTitle = findViewById(R.id.settingsPageTitle)
+        settingsPageDescription = findViewById(R.id.settingsPageDescription)
+        settingsHeaderBackButton = findViewById(R.id.settingsHeaderBackButton)
+        settingsHeaderBackButton.setOnClickListener { requestCloseSettingsOverlay() }
         liveWallpaperTabButton = findViewById(R.id.liveWallpaperTabButton)
         mainSettingsScroll = findViewById(R.id.mainSettingsScroll)
         miscellaneousCard = findViewById(R.id.miscellaneousCard)
         miscellaneousToggleButton = findViewById(R.id.miscellaneousToggleButton)
         miscellaneousPlaceholderText = findViewById(R.id.miscellaneousPlaceholderText)
+        miscellaneousOptionsContainer = findViewById(R.id.miscellaneousOptionsContainer)
         miscellaneousToggleButton.setOnClickListener {
-            val expanded = miscellaneousPlaceholderText.visibility != View.VISIBLE
-            miscellaneousPlaceholderText.visibility = if (expanded) View.VISIBLE else View.GONE
+            val expanded = miscellaneousOptionsContainer.visibility != View.VISIBLE
+            miscellaneousOptionsContainer.visibility = if (expanded) View.VISIBLE else View.GONE
             miscellaneousToggleButton.setIconResource(if (expanded) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float)
         }
         liveWallpaperSettingsScroll = findViewById(R.id.liveWallpaperSettingsScroll)
@@ -846,6 +863,7 @@ class MainActivity : AppCompatActivity() {
         manageAppsButton = findViewById(R.id.manageAppsButton)
         modeCard = findViewById(R.id.modeCard)
         appProfileCard = findViewById(R.id.appProfileCard)
+        defaultFallbackCard = findViewById(R.id.defaultFallbackCard)
         colorCard = findViewById(R.id.colorCard)
         animationCard = findViewById(R.id.animationCard)
         performanceCard = findViewById(R.id.performanceCard)
@@ -980,8 +998,7 @@ class MainActivity : AppCompatActivity() {
             openSettingsOverlay()
         }
         findViewById<MaterialButton>(R.id.homeProfileSettingsButton).setOnClickListener {
-            setSettingsTab(SettingsTab.UI)
-            openSettingsOverlay()
+            startActivity(Intent(this, ProfileSettingsActivity::class.java))
         }
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
@@ -1033,6 +1050,19 @@ class MainActivity : AppCompatActivity() {
         val showingThemes = tab == SettingsTab.THEMES
         val showingLiveWallpaper = tab == SettingsTab.LIVE_WALLPAPER
 
+        settingsPageTitle.text = when (tab) {
+            SettingsTab.UI -> "PROFILE SETTINGS"
+            SettingsTab.BEHAVIOR -> "BIFROST SETTINGS"
+            SettingsTab.THEMES -> "THEMES"
+            SettingsTab.LIVE_WALLPAPER -> "WALLPAPER"
+        }
+        settingsPageDescription.text = when (tab) {
+            SettingsTab.UI -> "Configure the selected preset and its behaviour."
+            SettingsTab.BEHAVIOR -> "Configure application behaviour and global preferences."
+            SettingsTab.THEMES -> "Customise the BIFROST interface appearance."
+            SettingsTab.LIVE_WALLPAPER -> "Configure app-wide wallpaper playback."
+        }
+
         settingsOwnershipHint.text = when (tab) {
             SettingsTab.UI -> "These controls tune the selected preset. When closing settings, choose Save to keep your changes or Don’t Save to discard them."
             SettingsTab.BEHAVIOR -> "These controls affect Bifrost globally, including startup, system behaviour and app profiles."
@@ -1047,6 +1077,7 @@ class MainActivity : AppCompatActivity() {
 
         settingsSystemStatusCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
         appProfileCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
+        defaultFallbackCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
         miscellaneousCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
 
         val thorCard = findViewById<View>(R.id.thorSettingsCard)
@@ -1931,6 +1962,112 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun applyPresetUiPreferences(presetName: String) {
+        val profiles = runCatching { JSONArray(prefs.getString("presets_json", "[]")) }.getOrDefault(JSONArray())
+        val profile = (0 until profiles.length())
+            .mapNotNull { profiles.optJSONObject(it) }
+            .firstOrNull { it.optString("name") == presetName } ?: return
+        val themeId = profile.optString("uiThemeId", "")
+        if (themeId == "classic" || themeId == "oled_purple") {
+            prefs.edit().putString(PREF_SELECTED_UI_THEME, themeId).apply()
+            val theme = builtInThemes.firstOrNull { it.id == themeId }
+            if (theme != null && theme.id != selectedUiTheme.id) {
+                applySelectedTheme(theme, persistSelection = false)
+            }
+        }
+        if (profile.has("coloredLogoEnabled")) {
+            val colored = profile.optBoolean("coloredLogoEnabled", false)
+            prefs.edit().putBoolean(PREF_COLORED_LOGO_ENABLED, colored).apply()
+            if (isColoredLogoEnabled != colored) {
+                isColoredLogoEnabled = colored
+                applyHeaderLogoPreference()
+            }
+        }
+        applyProfileWallpaper(
+            profile.optString("wallpaperImageFileName", ""),
+            profile.optString("wallpaperVideoFileName", "")
+        )
+    }
+
+    private fun applyProfileWallpaper(imageFileName: String, videoFileName: String) {
+        if (!::homeContainer.isInitialized || !::profileWallpaperContainer.isInitialized) {
+            Log.w("BifrostWallpaper", "Cannot apply wallpaper before the home views are initialized")
+            return
+        }
+
+        val container = profileWallpaperContainer
+        profileWallpaperVideoView?.let { old ->
+            runCatching { old.stopPlayback() }
+            (old.parent as? ViewGroup)?.removeView(old)
+        }
+        profileWallpaperVideoView = null
+
+        val videoFile = videoFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        if (videoFile != null && videoFile.isFile && videoFile.length() > 0L) {
+            val videoView = VideoView(this).apply {
+                setBackgroundColor(Color.BLACK)
+                setOnPreparedListener { player ->
+                    player.isLooping = true
+                    player.setVolume(0f, 0f)
+                    start()
+                    Log.i("BifrostWallpaper", "Playing profile video wallpaper: ${videoFile.name}")
+                }
+                setOnErrorListener { _, what, extra ->
+                    Log.e(
+                        "BifrostWallpaper",
+                        "Video wallpaper playback failed (file=${videoFile.name}, what=$what, extra=$extra)"
+                    )
+                    Toast.makeText(
+                        this@MainActivity,
+                        "BIFROST could not play this profile's video wallpaper. Try an MP4/H.264 file.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    true
+                }
+            }
+            profileWallpaperVideoView = videoView
+            container.addView(
+                videoView,
+                0,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+            )
+            container.background = ColorDrawable(Color.BLACK)
+            homeContainer.setBackgroundColor(Color.TRANSPARENT)
+            videoView.setVideoURI(Uri.fromFile(videoFile))
+            return
+        }
+
+        val imageFile = imageFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        val bitmap = imageFile?.takeIf { it.isFile && it.length() > 0L }?.let { file ->
+            runCatching { BitmapFactory.decodeFile(file.absolutePath) }
+                .onFailure {
+                    Log.e("BifrostWallpaper", "Could not decode wallpaper image ${file.name}", it)
+                }
+                .getOrNull()
+        }
+
+        if (bitmap != null) {
+            container.background = BitmapDrawable(resources, bitmap).apply {
+                gravity = Gravity.FILL
+            }
+            homeContainer.setBackgroundColor(Color.TRANSPARENT)
+            Log.i("BifrostWallpaper", "Applied profile image wallpaper: ${imageFile?.name}")
+        } else {
+            container.background = ColorDrawable(selectedUiTheme.backgroundColor)
+            homeContainer.setBackgroundColor(Color.TRANSPARENT)
+            if (imageFileName.isNotBlank()) {
+                Log.e(
+                    "BifrostWallpaper",
+                    "Wallpaper image file missing or unreadable: $imageFileName"
+                )
+            }
+        }
+    }
+
+
     private fun selectPresetFromCoverFlow(index: Int, animate: Boolean, applyPreset: Boolean = true) {
         if (!::presetController.isInitialized) return
         if (applyPreset && ::appProfileManager.isInitialized && appProfileManager.isEnabled) return
@@ -1950,6 +2087,7 @@ class MainActivity : AppCompatActivity() {
  
         if (applyPreset) {
             presetController.applyPresetAt(selectedIndex)
+            applyPresetUiPreferences(selectedPreset.name)
         }
      }
 
@@ -2495,8 +2633,54 @@ class MainActivity : AppCompatActivity() {
                 enableRainbowBackground(LEDService.isRunning)
             }
 
+            var requestedVisualProfileName: String? = null
             if (::presetController.isInitialized) {
                 presetController.reloadFromPrefs()
+                val pendingPresetName = prefs.getString("profile_settings_apply_preset_name", null)
+                if (!pendingPresetName.isNullOrBlank()) {
+                    prefs.edit()
+                        .remove("profile_settings_apply_preset_name")
+                        .putString("last_preset_name", pendingPresetName)
+                        .apply()
+                    val targetIndex = presetController.getPresets().indexOfFirst { it.name == pendingPresetName }
+                    if (targetIndex >= 0) {
+                        requestedVisualProfileName = pendingPresetName
+                        presetController.applyPresetAt(targetIndex)
+                        applyPresetUiPreferences(pendingPresetName)
+                    }
+                }
+            }
+
+            if (::presetController.isInitialized) {
+                val activeName = requestedVisualProfileName ?: prefs.getString("last_preset_name", null)
+                if (!activeName.isNullOrBlank()) applyPresetUiPreferences(activeName)
+            }
+
+            val themeId = prefs.getString(PREF_SELECTED_UI_THEME, builtInThemes.first().id)
+            val restoredTheme = builtInThemes.firstOrNull { it.id == themeId } ?: builtInThemes.first()
+            if (restoredTheme.id != selectedUiTheme.id) applySelectedTheme(restoredTheme, persistSelection = false)
+            val coloredLogo = prefs.getBoolean(PREF_COLORED_LOGO_ENABLED, false)
+            if (isColoredLogoEnabled != coloredLogo) {
+                isColoredLogoEnabled = coloredLogo
+                applyHeaderLogoPreference()
+            }
+
+            // Apply the active profile wallpaper after restoring the global theme;
+            // theme restoration can otherwise replace an image wallpaper background.
+            val wallpaperProfileName = requestedVisualProfileName ?: prefs.getString("last_preset_name", null)
+            if (!wallpaperProfileName.isNullOrBlank()) {
+                val wallpaperProfiles = runCatching {
+                    JSONArray(prefs.getString("presets_json", "[]"))
+                }.getOrDefault(JSONArray())
+                val wallpaperProfile = (0 until wallpaperProfiles.length())
+                    .mapNotNull { wallpaperProfiles.optJSONObject(it) }
+                    .firstOrNull { it.optString("name") == wallpaperProfileName }
+                if (wallpaperProfile != null) {
+                    applyProfileWallpaper(
+                        wallpaperProfile.optString("wallpaperImageFileName", ""),
+                        wallpaperProfile.optString("wallpaperVideoFileName", "")
+                    )
+                }
             }
 
             if (prefs.getBoolean(PREF_LIVE_WALLPAPER_RESTORE_SETTINGS, false)) {
