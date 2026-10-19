@@ -170,10 +170,17 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, component)
             }
             toast("Opening Android's live-wallpaper preview. Confirm with Set wallpaper on that screen.")
-            runCatching { startActivity(intent) }.onFailure {
-                prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
-                val detail = it.message?.takeIf { message -> message.isNotBlank() }
-                toast("Android could not open live-wallpaper preview" + (detail?.let { message -> ": $message" } ?: ". Check that Android supports live wallpapers."))
+            runCatching { startActivity(intent) }.onFailure { previewError ->
+                // Some Android builds do not expose the direct live-wallpaper preview activity.
+                val chooserIntent = Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)
+                val chooserOpened = runCatching { startActivity(chooserIntent) }.isSuccess
+                if (chooserOpened) {
+                    toast("Opened Android's wallpaper chooser. Select BIFROST Video Wallpaper if it is listed.")
+                } else {
+                    prefs.edit().putBoolean("live_wallpaper_apply_in_progress", false).apply()
+                    val detail = previewError.message?.takeIf { message -> message.isNotBlank() }
+                    toast("This Android build has no live-wallpaper chooser activity, so video wallpaper cannot be activated from BIFROST. Your video is saved to this profile.")
+                }
             }
         }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
@@ -205,7 +212,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
         presetSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (!bindingPreset) { selectedPreset = position; loadSelectedPreset() }
+                if (!bindingPreset) { restoreDefaultsPending = false; selectedPreset = position; loadSelectedPreset() }
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
