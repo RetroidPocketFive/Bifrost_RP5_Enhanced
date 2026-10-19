@@ -409,9 +409,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
     }
 
     private fun persistPresets() {
-        prefs.edit().putString("presets_json", presets.toString())
-            .putString("last_preset_name", presets.optJSONObject(selectedPreset)?.optString("name", "") ?: "")
-            .apply()
+        // Editing a profile must not silently change which profile is active.
+        prefs.edit().putString("presets_json", presets.toString()).apply()
     }
 
     private fun renameSelectedPreset() {
