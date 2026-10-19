@@ -158,6 +158,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var manageAppsButton: MaterialButton
     private lateinit var settingsOverlay: View
     private lateinit var homeContainer: View
+    private lateinit var profileWallpaperContainer: FrameLayout
     private var profileWallpaperVideoView: VideoView? = null
     private lateinit var homeSettingsButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
@@ -712,6 +713,1835 @@ class MainActivity : AppCompatActivity() {
 
         settingsOverlay = findViewById(R.id.settingsOverlay)
         homeContainer = findViewById(R.id.homeContainer)
+        profileWallpaperContainer = findViewById(R.id.profileWallpaperContainer)
+        homeSettingsButton = findViewById(R.id.homeSettingsButton)
+        closeSettingsButton = findViewById(R.id.closeSettingsButton)
+        findViewById<MaterialButton>(R.id.openLibrarySettingsButton).setOnClickListener {
+            startActivity(Intent(this, BifrostLibrarySettingsActivity::class.java))
+        }
+        homeExitButton = findViewById<MaterialButton?>(R.id.homeExitButton)
+            ?: MaterialButton(this).apply {
+                id = R.id.homeExitButton
+                text = "EXIT"
+                contentDescription = "Close Bifrost"
+                tooltipText = "Close Bifrost"
+                minHeight = 48
+                setOnClickListener { finishAndRemoveTask() }
+            }.also { fallbackButton ->
+                val maintenanceRow = findViewById<LinearLayout?>(R.id.homeMaintenanceRow)
+                if (maintenanceRow != null) {
+                    val wrapper = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                            marginStart = 4
+                        }
+                    }
+                    wrapper.addView(fallbackButton, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 48))
+                    wrapper.addView(TextView(this).apply {
+                        text = "Close Bifrost"
+                        gravity = Gravity.CENTER
+                        textSize = 9f
+                        setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text_secondary))
+                        setPadding(0, 2, 0, 0)
+                    }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
+                    maintenanceRow.addView(wrapper)
+                }
+            }
+        tabUiSettings = findViewById(R.id.tabUiSettings)
+        tabBehaviorSettings = findViewById(R.id.tabBehaviorSettings)
+        tabThemesSettings = findViewById(R.id.tabThemesSettings)
+        settingsOwnershipHint = findViewById(R.id.settingsOwnershipHint)
+        settingsPageTitle = findViewById(R.id.settingsPageTitle)
+        settingsPageDescription = findViewById(R.id.settingsPageDescription)
+        settingsHeaderBackButton = findViewById(R.id.settingsHeaderBackButton)
+        settingsHeaderBackButton.setOnClickListener { requestCloseSettingsOverlay() }
+        liveWallpaperTabButton = findViewById(R.id.liveWallpaperTabButton)
+        mainSettingsScroll = findViewById(R.id.mainSettingsScroll)
+        miscellaneousCard = findViewById(R.id.miscellaneousCard)
+        miscellaneousToggleButton = findViewById(R.id.miscellaneousToggleButton)
+        miscellaneousPlaceholderText = findViewById(R.id.miscellaneousPlaceholderText)
+        miscellaneousOptionsContainer = findViewById(R.id.miscellaneousOptionsContainer)
+        miscellaneousToggleButton.setOnClickListener {
+            val expanded = miscellaneousOptionsContainer.visibility != View.VISIBLE
+            miscellaneousOptionsContainer.visibility = if (expanded) View.VISIBLE else View.GONE
+            miscellaneousToggleButton.setIconResource(if (expanded) android.R.drawable.arrow_up_float else android.R.drawable.arrow_down_float)
+        }
+        liveWallpaperSettingsScroll = findViewById(R.id.liveWallpaperSettingsScroll)
+        liveWallpaperVideoPathText = findViewById(R.id.liveWallpaperVideoPathText)
+        liveWallpaperPickVideoButton = findViewById(R.id.liveWallpaperPickVideoButton)
+        liveWallpaperPickImageButton = MaterialButton(this).apply {
+            text = "PICK IMAGE"
+            setOnClickListener { liveWallpaperImagePickerLauncher.launch("image/*") }
+        }
+        (liveWallpaperPickVideoButton.parent as? LinearLayout)?.addView(liveWallpaperPickImageButton, 0, LinearLayout.LayoutParams(0, 40, 1f).apply { marginEnd = 4 })
+        liveWallpaperApplyButton = findViewById(R.id.liveWallpaperApplyButton)
+        liveWallpaperRemoveButton = findViewById(R.id.liveWallpaperRemoveButton)
+        liveWallpaperPerformanceSpinner = findViewById(R.id.liveWallpaperPerformanceSpinner)
+        liveWallpaperFpsSeekBar = findViewById(R.id.liveWallpaperFpsSeekBar)
+        liveWallpaperFpsValueText = findViewById(R.id.liveWallpaperFpsValueText)
+        presetCoverFlowScroll = findViewById(R.id.presetCoverFlowScroll)
+        presetCoverFlowContainer = findViewById(R.id.presetCoverFlowContainer)
+        activePresetInfoCard = findViewById(R.id.activePresetInfoCard)
+        activePresetNameText = findViewById(R.id.activePresetNameText)
+        activePresetStatusBadge = findViewById(R.id.activePresetStatusBadge)
+        activePresetAnimationText = findViewById(R.id.activePresetAnimationText)
+        activePresetProfileText = findViewById(R.id.activePresetProfileText)
+
+        serviceToggle = findViewById(R.id.serviceToggle)
+        autoStartupSwitch = findViewById(R.id.autoStartupSwitch)
+        pluggedBatteryOverrideSwitch = findViewById(R.id.pluggedBatteryOverrideSwitch)
+        persistentNotificationSwitch = findViewById(R.id.persistentNotificationSwitch)
+        adaptiveBrightnessSwitch = findViewById(R.id.adaptiveBrightnessSwitch)
+        lowBatteryAlertSwitch = findViewById(R.id.lowBatteryAlertSwitch)
+        lowBatteryAlertOptionsContainer = findViewById(R.id.lowBatteryAlertOptionsContainer)
+        lowBatteryChargingOptionRow = findViewById(R.id.lowBatteryChargingOptionRow)
+        lowBatteryAlertSeekBar = findViewById(R.id.lowBatteryAlertSeekBar)
+        lowBatteryAlertValueText = findViewById(R.id.lowBatteryAlertValueText)
+        disableLowBatteryAlertWhileChargingSwitch = findViewById(
+            R.id.disableLowBatteryAlertWhileChargingSwitch
+        )
+        externalApiSwitch = findViewById(R.id.externalApiSwitch)
+        animationSpinner = findViewById(R.id.animationSpinner)
+        profileSpinner = findViewById(R.id.profileSpinner)
+        presetSpinner = findViewById(R.id.presetSpinner)
+        themeSpinner = findViewById(R.id.themeSpinner)
+        exportThemeButton = findViewById(R.id.exportThemeButton)
+        importThemeButton = findViewById(R.id.importThemeButton)
+        savePresetButton = findViewById(R.id.savePresetButton)
+        modifyPresetButton = findViewById(R.id.modifyPresetButton)
+        deletePresetButton = findViewById(R.id.deletePresetButton)
+        customizePresetArtworkButton = findViewById(R.id.customizePresetArtworkButton)
+        exportPresetsButton = findViewById(R.id.exportPresetsButton)
+        importPresetsButton = findViewById(R.id.importPresetsButton)
+        colorButton = findViewById(R.id.colorButton)
+        rightColorButton = findViewById(R.id.rightColorButton)
+        fadeEndColorButton = findViewById(R.id.fadeEndColorButton)
+        fadeEndRightColorButton = findViewById(R.id.fadeEndRightColorButton)
+        batteryLowColorButton = findViewById(R.id.batteryLowColorButton)
+        batteryMidColorButton = findViewById(R.id.batteryMidColorButton)
+        batteryHighColorButton = findViewById(R.id.batteryHighColorButton)
+        cpuCoolColorButton = findViewById(R.id.cpuCoolColorButton)
+        cpuWarmColorButton = findViewById(R.id.cpuWarmColorButton)
+        cpuHotColorButton = findViewById(R.id.cpuHotColorButton)
+        brightnessSeekBar = findViewById(R.id.brightnessSeekBar)
+        speedSeekBar = findViewById(R.id.speedSeekBar)
+        smoothnessSeekBar = findViewById(R.id.smoothnessSeekBar)
+        sensitivitySeekBar = findViewById(R.id.sensitivitySeekBar)
+        saturationBoostSeekBar = findViewById(R.id.saturationBoostSeekBar)
+        customSamplingSwitch = findViewById(R.id.customSamplingSwitch)
+        findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
+            startActivity(Intent(this, Rp5CalibrationMenuActivity::class.java))
+        }
+        findViewById<MaterialButton>(R.id.editSampleAreaColorWheelButton).setOnClickListener {
+            startActivity(Intent(this, EditSampleAreaActivity::class.java)
+                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_COLOR_WHEEL))
+        }
+        findViewById<MaterialButton>(R.id.editSampleAreaLiveButton).setOnClickListener {
+            startActivity(Intent(this, EditSampleAreaActivity::class.java)
+                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_LIVE))
+        }
+        findViewById<MaterialButton>(R.id.editSampleAreaStillButton).setOnClickListener {
+            startActivity(Intent(this, EditSampleAreaActivity::class.java)
+                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_STILL))
+        }
+        singleColorSwitch = findViewById(R.id.singleColorSwitch)
+        ambilightUseMediaProjectionSwitch = findViewById(R.id.ambilightUseMediaProjectionSwitch)
+        breatheWhenChargingSwitch = findViewById(R.id.breatheWhenChargingSwitch)
+        chargingSpeedIndicatorSwitch = findViewById(R.id.chargingSpeedIndicatorSwitch)
+        flashWhenReadySwitch = findViewById(R.id.flashWhenReadySwitch)
+        appProfileSwitch = findViewById(R.id.appProfileSwitch)
+        coloredLogoSwitch = findViewById(R.id.coloredLogoSwitch)
+        homeAppProfileSwitch = findViewById(R.id.homeAppProfileSwitch)
+        val appProfileDefaultSwitchId = resources.getIdentifier(
+            "appProfileDefaultSwitch",
+            "id",
+            packageName
+        )
+        check(appProfileDefaultSwitchId != 0) { "Missing appProfileDefaultSwitch id" }
+        appProfileDefaultSwitch = findViewById(appProfileDefaultSwitchId)
+        assignAppButton = findViewById(R.id.assignAppButton)
+        manageAppsButton = findViewById(R.id.manageAppsButton)
+        modeCard = findViewById(R.id.modeCard)
+        appProfileCard = findViewById(R.id.appProfileCard)
+        defaultFallbackCard = findViewById(R.id.defaultFallbackCard)
+        colorCard = findViewById(R.id.colorCard)
+        animationCard = findViewById(R.id.animationCard)
+        performanceCard = findViewById(R.id.performanceCard)
+        themesCard = findViewById(R.id.themesCard)
+        settingsSystemStatusCard = findViewById(R.id.settingsSystemStatusCard)
+        systemStatusContainer = findViewById(R.id.systemStatusContainer)
+        bifrostLogoView = findViewById(R.id.homeBifrostLogoView)
+        bifrostTitleText = findViewById(R.id.homeBifrostTitleText)
+        bifrostTitleLabel = bifrostTitleText.text.toString()
+
+        serviceController = ServiceController(
+            activity = this,
+            handler = mainHandler,
+            debounceDelay = DEBOUNCE_DELAY,
+            restartDelay = SERVICE_RESTART_DELAY
+        )
+
+        serviceController.onNeedsMediaProjectionCheck = {
+            handleMediaProjectionRequirement()
+        }
+
+        setupHomeSurface()
+        setupBackNavigationHandler()
+        setupAnimationSpinner()
+        setupProfileSpinner()
+        setupColorButton()
+        setupBrightnessSeekBar()
+        setupSpeedSeekBar()
+        setupSmoothnessSeekBar()
+        setupSensitivitySeekBar()
+        setupSaturationBoostSeekBar()
+        setupCustomSamplingSwitch()
+        setupSingleColorSwitch()
+        setupAmbilightCaptureSwitch()
+        setupBreatheWhenChargingSwitch()
+        setupChargingSpeedIndicatorSwitch()
+        setupFlashWhenReadySwitch()
+        appProfileManager = AppProfileManager(prefs)
+        setupAppProfileFeature()
+        setupAutoStartupSwitch()
+        setupPluggedBatteryOverrideSwitch()
+        setupPersistentNotificationSwitch()
+        setupAdaptiveBrightnessSwitch()
+        setupLowBatteryAlertSwitch()
+        setupLowBatteryAlertSeekBar()
+        setupDisableLowBatteryAlertWhileChargingSwitch()
+        setupExternalApiSwitch()
+        setupPluginStore()
+        setupThorScreenPreference()
+        setupSettingsTabs()
+        setupThemeFeature()
+        setupLiveWallpaperFeature()
+        setupColoredLogoSwitch()
+        setupRainbowTitleText()
+        setupPresetFeature()
+        updateParameterVisibility()
+        enableRainbowBackground(LEDService.isRunning)
+        showFirstLaunchAlertIfNeeded()
+
+        // Plugin store: one-time first-launch prompt to opt into update checks
+        // (off by default), then run the check if it was enabled. Posted so it
+        // layers above any first-launch alert rather than racing it.
+        window.decorView.post {
+            PluginLaunchManager.maybePromptForUpdateChecks(this)
+            PluginLaunchManager.maybeCheckAtLaunch(this) { updates ->
+                Toast.makeText(
+                    this,
+                    "${updates.size} plugin update(s) available — open the Plugin Store",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        serviceToggle.setOnCheckedChangeListener { _, isChecked ->
+            if (serviceController.isServiceTransitioning) return@setOnCheckedChangeListener
+
+            serviceController.cancelPendingOperations()
+            isAwaitingPermissionResult = isChecked
+            enableRainbowBackground(isChecked)
+
+            if (isChecked) {
+                if (!LEDService.isRunning) {
+                    playBifrostHeaderAnimation()
+                }
+                handleStartWithCurrentSelection()
+            } else {
+                serviceController.stopDebounced()
+            }
+        }
+
+        maybeAutoStartHeimdallOnLaunch()
+        handleTileStartIntent(intent)
+        maybeOfferCrashReport()
+
+        isAppInitialized = true
+
+        // Handle the case where the activity was freshly created from a projection-prompt
+        // notification tap (service is running but activity wasn't alive).
+        handleAppProfileProjectionIntent(intent)
+    }
+
+    private fun setupBackNavigationHandler() {
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (::settingsOverlay.isInitialized && settingsOverlay.visibility == View.VISIBLE) {
+                        requestCloseSettingsOverlay()
+                        return
+                    }
+
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        )
+    }
+
+    private fun setupHomeSurface() {
+        // The home-screen gear/logo are the app-wide Bifrost settings entry points.
+        bifrostLogoView.setOnClickListener {
+            setSettingsTab(SettingsTab.BEHAVIOR)
+            openSettingsOverlay()
+        }
+        bifrostTitleText.setOnClickListener {
+            setSettingsTab(SettingsTab.BEHAVIOR)
+            openSettingsOverlay()
+        }
+        homeSettingsButton.setOnClickListener {
+            setSettingsTab(SettingsTab.BEHAVIOR)
+            openSettingsOverlay()
+        }
+        findViewById<MaterialButton>(R.id.homeProfileSettingsButton).setOnClickListener {
+            startActivity(Intent(this, ProfileSettingsActivity::class.java))
+        }
+        findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
+            confirmClearCache()
+        }
+        closeSettingsButton.setOnClickListener { requestCloseSettingsOverlay() }
+        homeExitButton.setOnClickListener { finishAndRemoveTask() }
+        customizePresetArtworkButton.setOnClickListener {
+            openSelectedPresetArtworkEditor(it)
+        }
+
+        presetCoverFlowScroll.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    isCoverFlowTouching = true
+                    cancelPendingCoverFlowSnap()
+                }
+
+                MotionEvent.ACTION_UP,
+                MotionEvent.ACTION_CANCEL -> {
+                    isCoverFlowTouching = false
+                    scheduleCoverFlowSnap()
+                }
+            }
+            false
+        }
+
+        presetCoverFlowScroll.setOnScrollChangeListener { _, _, _, _, _ ->
+            updateCoverFlowCardTransforms()
+            if (!::appProfileManager.isInitialized || !appProfileManager.isEnabled) {
+                if (!isCoverFlowTouching) {
+                    scheduleCoverFlowSnap()
+                }
+            }
+        }
+    }
+
+    private fun setupSettingsTabs() {
+        tabUiSettings.setOnClickListener { setSettingsTab(SettingsTab.UI) }
+        tabBehaviorSettings.setOnClickListener { setSettingsTab(SettingsTab.BEHAVIOR) }
+        tabThemesSettings.setOnClickListener { setSettingsTab(SettingsTab.THEMES) }
+        liveWallpaperTabButton.setOnClickListener { setSettingsTab(SettingsTab.LIVE_WALLPAPER) }
+        setSettingsTab(currentSettingsTab)
+    }
+
+    private fun setSettingsTab(tab: SettingsTab) {
+        currentSettingsTab = tab
+        val showingUi = tab == SettingsTab.UI
+        val showingBehavior = tab == SettingsTab.BEHAVIOR
+        val showingThemes = tab == SettingsTab.THEMES
+        val showingLiveWallpaper = tab == SettingsTab.LIVE_WALLPAPER
+
+        settingsPageTitle.text = when (tab) {
+            SettingsTab.UI -> "PROFILE SETTINGS"
+            SettingsTab.BEHAVIOR -> "BIFROST SETTINGS"
+            SettingsTab.THEMES -> "THEMES"
+            SettingsTab.LIVE_WALLPAPER -> "WALLPAPER"
+        }
+        settingsPageDescription.text = when (tab) {
+            SettingsTab.UI -> "Configure the selected preset and its behaviour."
+            SettingsTab.BEHAVIOR -> "Configure application behaviour and global preferences."
+            SettingsTab.THEMES -> "Customise the BIFROST interface appearance."
+            SettingsTab.LIVE_WALLPAPER -> "Configure app-wide wallpaper playback."
+        }
+
+        settingsOwnershipHint.text = when (tab) {
+            SettingsTab.UI -> "These controls tune the selected preset. When closing settings, choose Save to keep your changes or Don’t Save to discard them."
+            SettingsTab.BEHAVIOR -> "These controls affect Bifrost globally, including startup, system behaviour and app profiles."
+            SettingsTab.THEMES -> "Themes change the app's interface appearance, not the LED settings stored in a preset."
+            SettingsTab.LIVE_WALLPAPER -> "Wallpaper playback settings are app-wide and remain separate from LED presets."
+        }
+
+        modeCard.visibility = if (showingUi) View.VISIBLE else View.GONE
+        colorCard.visibility = if (showingUi) View.VISIBLE else View.GONE
+        animationCard.visibility = if (showingUi) View.VISIBLE else View.GONE
+        performanceCard.visibility = if (showingUi) View.VISIBLE else View.GONE
+
+        settingsSystemStatusCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
+        appProfileCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
+        defaultFallbackCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
+        miscellaneousCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
+
+        val thorCard = findViewById<View>(R.id.thorSettingsCard)
+        thorCard?.visibility = if (showingBehavior && DeviceInfo.isAynThor) View.VISIBLE else View.GONE
+
+        themesCard.visibility = if (showingThemes) View.VISIBLE else View.GONE
+
+        mainSettingsScroll.visibility = if (showingLiveWallpaper) View.GONE else View.VISIBLE
+        liveWallpaperSettingsScroll.visibility = if (showingLiveWallpaper) View.VISIBLE else View.GONE
+        if (showingLiveWallpaper) {
+            refreshLiveWallpaperActionButtons()
+        }
+
+        updateSettingsTabButtonStyles()
+    }
+
+    private fun updateSettingsTabButtonStyles() {
+        updateSettingsTabButtonState(tabUiSettings, currentSettingsTab == SettingsTab.UI)
+        updateSettingsTabButtonState(tabBehaviorSettings, currentSettingsTab == SettingsTab.BEHAVIOR)
+        updateSettingsTabButtonState(tabThemesSettings, currentSettingsTab == SettingsTab.THEMES)
+        updateSettingsTabButtonState(liveWallpaperTabButton, currentSettingsTab == SettingsTab.LIVE_WALLPAPER)
+    }
+
+    private fun updateSettingsTabButtonState(button: MaterialButton, selected: Boolean) {
+        val selectedTint = ColorStateList.valueOf(selectedUiTheme.accentColor)
+        val unselectedTint = ColorStateList.valueOf(selectedUiTheme.surfaceColor)
+        button.backgroundTintList = if (selected) selectedTint else unselectedTint
+        button.setTextColor(if (selected) Color.WHITE else selectedUiTheme.textColor)
+        button.strokeColor = ColorStateList.valueOf(selectedUiTheme.accentLightColor)
+    }
+
+    private fun setupThemeFeature() {
+        val adapter = ArrayAdapter(this, R.layout.item_spinner_bifrost, builtInThemes.map { it.label })
+        adapter.setDropDownViewResource(R.layout.item_spinner_dropdown_bifrost)
+        themeSpinner.adapter = adapter
+
+        val selectedThemeId = prefs.getString(PREF_SELECTED_UI_THEME, builtInThemes.first().id)
+        val selectedIndex = builtInThemes.indexOfFirst { it.id == selectedThemeId }.takeIf { it >= 0 } ?: 0
+        selectedUiTheme = builtInThemes[selectedIndex]
+        themeSpinner.setSelection(selectedIndex, false)
+        applySelectedTheme(selectedUiTheme, persistSelection = false)
+
+        themeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val theme = builtInThemes.getOrNull(position) ?: return
+                applySelectedTheme(theme, persistSelection = true)
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+
+    private fun applySelectedTheme(theme: UiTheme, persistSelection: Boolean) {
+        selectedUiTheme = theme
+        if (persistSelection) {
+            prefs.edit().putString(PREF_SELECTED_UI_THEME, theme.id).apply()
+        }
+        applyUiTheme(theme)
+    }
+
+    private fun applyUiTheme(theme: UiTheme) {
+        setupStatusBar()
+        findViewById<View>(android.R.id.content)?.setBackgroundColor(theme.backgroundColor)
+        homeContainer.setBackgroundColor(theme.backgroundColor)
+        settingsOverlay.setBackgroundColor(theme.backgroundColor)
+        applyThemeToViewTree(homeContainer, theme)
+        applyThemeToViewTree(settingsOverlay, theme)
+        applyHeaderLogoPreference()
+        updateSettingsTabButtonStyles()
+    }
+
+    private fun applyThemeToViewTree(view: View, theme: UiTheme) {
+        when (view) {
+            is MaterialCardView -> {
+                view.setCardBackgroundColor(theme.cardColor)
+                view.strokeColor = theme.accentColor
+            }
+
+            is MaterialButton -> {
+                view.backgroundTintList = ColorStateList.valueOf(theme.surfaceColor)
+                view.setTextColor(theme.textColor)
+                view.iconTint = ColorStateList.valueOf(theme.textColor)
+                view.strokeColor = ColorStateList.valueOf(theme.accentColor)
+            }
+        }
+
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) {
+                applyThemeToViewTree(view.getChildAt(index), theme)
+            }
+        }
+    }
+
+    private fun setupLiveWallpaperFeature() {
+        liveWallpaperPickVideoButton.setOnClickListener {
+            liveWallpaperVideoPickerLauncher.launch(arrayOf("video/*"))
+        }
+
+        liveWallpaperApplyButton.setOnClickListener {
+            openLiveWallpaperChooser(requireVideo = true)
+        }
+
+        liveWallpaperRemoveButton.setOnClickListener {
+            removeLiveWallpaper()
+        }
+
+        val modes = LiveWallpaperSettingsManager.PerformanceMode.values().toList()
+        val modeLabels = modes.map { it.name.replace("_", " ") }
+        val adapter = ArrayAdapter(this, R.layout.item_spinner_bifrost, modeLabels)
+        adapter.setDropDownViewResource(R.layout.item_spinner_dropdown_bifrost)
+        liveWallpaperPerformanceSpinner.adapter = adapter
+
+        val selectedMode = LiveWallpaperSettingsManager.getPerformanceMode(prefs)
+        liveWallpaperPerformanceSpinner.setSelection(modes.indexOf(selectedMode).coerceAtLeast(0), false)
+        liveWallpaperPerformanceSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val mode = modes.getOrNull(position) ?: return
+                LiveWallpaperSettingsManager.setPerformanceMode(prefs, mode)
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
+        liveWallpaperFpsSeekBar.max = 105
+        val currentFps = LiveWallpaperSettingsManager.getTargetFps(prefs)
+        liveWallpaperFpsSeekBar.progress = currentFps - 15
+        liveWallpaperFpsValueText.text = currentFps.toString()
+        liveWallpaperFpsSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                val fps = progress + 15
+                liveWallpaperFpsValueText.text = fps.toString()
+                if (fromUser) {
+                    LiveWallpaperSettingsManager.setTargetFps(prefs, fps)
+                }
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+        })
+
+        refreshLiveWallpaperVideoSummary()
+        refreshLiveWallpaperActionButtons()
+    }
+
+    private fun syncLiveWallpaperAppliedState(): Boolean {
+        val fromSystem = isBifrostLiveWallpaperActive()
+        if (fromSystem) {
+            LiveWallpaperSettingsManager.setWallpaperApplied(prefs, true)
+            return true
+        }
+        return LiveWallpaperSettingsManager.isWallpaperApplied(prefs)
+    }
+
+    private fun scheduleLiveWallpaperApplyStateSync(initialDelayMs: Long = 120L) {
+        liveWallpaperApplyStateSyncRunnable?.let(mainHandler::removeCallbacks)
+        var attempts = 0
+        val runnable = object : Runnable {
+            override fun run() {
+                val isApplied = syncLiveWallpaperAppliedState()
+                refreshLiveWallpaperActionButtons()
+
+                if (isApplied || attempts >= LIVE_WALLPAPER_STATE_SYNC_MAX_RETRIES) {
+                    prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_APPLY_IN_PROGRESS, false).apply()
+                    return
+                }
+
+                attempts += 1
+                mainHandler.postDelayed(this, LIVE_WALLPAPER_STATE_SYNC_DELAY_MS)
+            }
+        }
+        liveWallpaperApplyStateSyncRunnable = runnable
+        mainHandler.postDelayed(runnable, initialDelayMs)
+    }
+
+    private fun refreshLiveWallpaperActionButtons() {
+        val isWallpaperApplied = LiveWallpaperSettingsManager.isWallpaperApplied(prefs) || syncLiveWallpaperAppliedState()
+        liveWallpaperPickVideoButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
+        liveWallpaperPickImageButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
+        liveWallpaperApplyButton.visibility = if (isWallpaperApplied) View.GONE else View.VISIBLE
+        liveWallpaperRemoveButton.visibility = if (isWallpaperApplied) View.VISIBLE else View.GONE
+    }
+
+    private fun refreshLiveWallpaperVideoSummary() {
+        val uri = LiveWallpaperSettingsManager.getVideoUri(prefs)
+        val staticApplied = prefs.getBoolean("static_image_wallpaper_applied", false)
+        liveWallpaperVideoPathText.text = if (staticApplied) {
+            "Static image wallpaper applied"
+        } else if (uri == null) {
+            "No video selected"
+        } else {
+            uri.lastPathSegment ?: uri.toString()
+        }
+    }
+
+    private fun setStaticImageWallpaper(uri: Uri): Boolean {
+        return runCatching {
+            contentResolver.openInputStream(uri).use { input ->
+                requireNotNull(input) { "Unable to open image" }
+                WallpaperManager.getInstance(this).setStream(input, null, true, WallpaperManager.FLAG_SYSTEM)
+            }
+            true
+        }.getOrDefault(false)
+    }
+
+    private fun removeLiveWallpaper() {
+        val wallpaperManager = WallpaperManager.getInstance(this)
+        val removed = runCatching {
+            wallpaperManager.clear(WallpaperManager.FLAG_SYSTEM)
+        }.isSuccess || runCatching {
+            wallpaperManager.clear()
+        }.isSuccess
+
+        LiveWallpaperSettingsManager.clearVideoUri(prefs)
+        deleteLocalLiveWallpaperVideoIfExists()
+        LiveWallpaperSettingsManager.setWallpaperApplied(prefs, false)
+        prefs.edit().putBoolean("static_image_wallpaper_applied", false).apply()
+        prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_APPLY_IN_PROGRESS, false).apply()
+        prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_RESTORE_SETTINGS, false).apply()
+        refreshLiveWallpaperVideoSummary()
+        refreshLiveWallpaperActionButtons()
+
+        if (!removed) {
+            runCatching {
+                startActivity(Intent(Intent.ACTION_SET_WALLPAPER))
+            }
+        }
+    }
+
+    private fun importLiveWallpaperVideoToAppStorage(sourceUri: Uri): Uri? {
+        val targetFile = File(filesDir, LIVE_WALLPAPER_LOCAL_VIDEO_FILE)
+        return runCatching {
+            contentResolver.openInputStream(sourceUri).use { input ->
+                requireNotNull(input) { "Unable to open selected video" }
+                targetFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            Uri.fromFile(targetFile)
+        }.onFailure {
+            runCatching { targetFile.delete() }
+        }.getOrNull()
+    }
+
+    private fun deleteLocalLiveWallpaperVideoIfExists() {
+        val file = File(filesDir, LIVE_WALLPAPER_LOCAL_VIDEO_FILE)
+        if (file.exists()) {
+            runCatching { file.delete() }
+        }
+    }
+
+    private fun openLiveWallpaperChooser(requireVideo: Boolean) {
+        val uri = LiveWallpaperSettingsManager.getVideoUri(prefs)
+        if (requireVideo && uri == null) {
+            Toast.makeText(this, "Pick a video first", Toast.LENGTH_SHORT).show()
+            setSettingsTab(SettingsTab.LIVE_WALLPAPER)
+            return
+        }
+        prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_APPLY_IN_PROGRESS, true).apply()
+        prefs.edit()
+            .putBoolean(
+                PREF_LIVE_WALLPAPER_RESTORE_SETTINGS,
+                ::settingsOverlay.isInitialized && settingsOverlay.visibility == View.VISIBLE
+            )
+            .apply()
+        val component = ComponentName(this, VideoLiveWallpaperService::class.java)
+        val targetedIntent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).apply {
+            putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, component)
+        }
+        val fallbackIntent = Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)
+        try {
+            liveWallpaperApplyLauncher.launch(targetedIntent)
+        } catch (e: Exception) {
+            try {
+                liveWallpaperApplyLauncher.launch(fallbackIntent)
+            } catch (e2: Exception) {
+                prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_APPLY_IN_PROGRESS, false).apply()
+                prefs.edit().putBoolean(PREF_LIVE_WALLPAPER_RESTORE_SETTINGS, false).apply()
+                Toast.makeText(this, "Unable to open wallpaper chooser", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun isBifrostLiveWallpaperActive(): Boolean {
+        val info = WallpaperManager.getInstance(this).wallpaperInfo ?: return false
+        val expectedComponent = ComponentName(this, VideoLiveWallpaperService::class.java)
+        val activeComponent = info.component
+        if (activeComponent == expectedComponent) return true
+
+        val serviceName = info.serviceName
+        val matches = info.packageName == packageName && (
+            serviceName == VideoLiveWallpaperService::class.java.name ||
+                serviceName.endsWith(".${VideoLiveWallpaperService::class.java.simpleName}")
+            )
+        Log.d(
+            "LiveWallpaperState",
+            "expected=${expectedComponent.flattenToShortString()} active=${activeComponent?.flattenToShortString()} package=${info.packageName} service=$serviceName matches=$matches"
+        )
+        return matches
+    }
+
+    private fun setupColoredLogoSwitch() {
+        isColoredLogoEnabled = prefs.getBoolean(PREF_COLORED_LOGO_ENABLED, false)
+        coloredLogoSwitch.isChecked = isColoredLogoEnabled
+        applyHeaderLogoPreference()
+
+        coloredLogoSwitch.setOnCheckedChangeListener { _, isChecked ->
+            isColoredLogoEnabled = isChecked
+            prefs.edit().putBoolean(PREF_COLORED_LOGO_ENABLED, isChecked).apply()
+            applyHeaderLogoPreference()
+            if (isChecked) {
+                playBifrostHeaderAnimation()
+            }
+        }
+    }
+
+    private fun setupRainbowTitleText() {
+        if (bifrostTitleLabel.isBlank()) return
+
+        bifrostLogoView.setOnClickListener {
+            if (isColoredLogoEnabled) {
+                playBifrostHeaderAnimation()
+            }
+        }
+        bifrostTitleText.setOnClickListener {
+            if (isColoredLogoEnabled) {
+                playBifrostHeaderAnimation()
+            }
+        }
+
+        if (isColoredLogoEnabled) {
+            playBifrostHeaderAnimation()
+        } else {
+            applyHeaderLogoPreference()
+        }
+    }
+
+    private fun applyHeaderLogoPreference() {
+        if (bifrostTitleLabel.isBlank()) return
+
+        titleIntroAnimator?.cancel()
+        headerSettleAnimator?.cancel()
+        titleIntroAnimator = null
+        headerSettleAnimator = null
+
+        bifrostLogoView.rotation = 0f
+        bifrostLogoView.scaleX = 1f
+        bifrostLogoView.scaleY = 1f
+        bifrostLogoView.translationY = 0f
+        bifrostLogoView.alpha = 1f
+
+        if (isColoredLogoEnabled) {
+            applyWatercolorTitlePhase(
+                bifrostTitleLabel,
+                selectedUiTheme.headerPalette.settlePhaseDegrees
+            )
+            bifrostLogoView.clearColorFilter()
+        } else {
+            bifrostTitleText.text = bifrostTitleLabel
+            bifrostTitleText.setTextColor(selectedUiTheme.textColor)
+            bifrostLogoView.clearColorFilter()
+        }
+    }
+
+    private fun cancelPendingCoverFlowSnap() {
+        coverFlowSnapRunnable?.let(mainHandler::removeCallbacks)
+        coverFlowSnapRunnable = null
+    }
+
+    private fun scheduleCoverFlowSnap() {
+        if (!::presetController.isInitialized) return
+        if (::appProfileManager.isInitialized && appProfileManager.isEnabled) return
+
+        cancelPendingCoverFlowSnap()
+        lastCoverFlowScrollXForSnap = presetCoverFlowScroll.scrollX
+
+        coverFlowSnapRunnable = object : Runnable {
+            override fun run() {
+                if (isCoverFlowTouching) {
+                    cancelPendingCoverFlowSnap()
+                    return
+                }
+
+                val currentX = presetCoverFlowScroll.scrollX
+                if (currentX != lastCoverFlowScrollXForSnap) {
+                    lastCoverFlowScrollXForSnap = currentX
+                    mainHandler.postDelayed(this, COVER_FLOW_SNAP_SETTLE_DELAY_MS)
+                    return
+                }
+
+                if (suppressNextCoverFlowSnap) {
+                    suppressNextCoverFlowSnap = false
+                }
+
+                snapCoverFlowToNearestPreset()
+                cancelPendingCoverFlowSnap()
+            }
+        }
+
+        mainHandler.postDelayed(coverFlowSnapRunnable!!, COVER_FLOW_SNAP_SETTLE_DELAY_MS)
+    }
+
+    private fun openSettingsOverlay() {
+        if (settingsOverlay.visibility == View.VISIBLE || isSettingsOverlayAnimating) return
+
+        isSettingsOverlayAnimating = true
+        val startOffset = getSettingsSlideDistancePx()
+
+        settingsOverlay.apply {
+            visibility = View.VISIBLE
+            alpha = 0f
+            translationX = startOffset
+            isClickable = true
+        }
+
+        homeContainer.animate().cancel()
+        homeContainer.animate()
+            .alpha(SETTINGS_HOME_DIM_ALPHA)
+            .setDuration(SETTINGS_OPEN_DURATION_MS)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+
+        settingsOverlay.animate()
+            .alpha(1f)
+            .translationX(0f)
+            .setDuration(SETTINGS_OPEN_DURATION_MS)
+            .setInterpolator(OvershootInterpolator(0.72f))
+            .withEndAction {
+                isSettingsOverlayAnimating = false
+            }
+            .start()
+    }
+
+    private fun closeSettingsOverlay() {
+        if (settingsOverlay.visibility != View.VISIBLE || isSettingsOverlayAnimating) return
+
+        isSettingsOverlayAnimating = true
+        val targetOffset = getSettingsSlideDistancePx()
+
+        homeContainer.animate().cancel()
+        homeContainer.animate()
+            .alpha(1f)
+            .setDuration(SETTINGS_CLOSE_DURATION_MS)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
+
+        settingsOverlay.animate()
+            .alpha(0f)
+            .translationX(targetOffset)
+            .setDuration(SETTINGS_CLOSE_DURATION_MS)
+            .setInterpolator(AccelerateInterpolator(1.15f))
+            .withEndAction {
+                settingsOverlay.visibility = View.GONE
+                settingsOverlay.alpha = 1f
+                settingsOverlay.translationX = 0f
+                isSettingsOverlayAnimating = false
+                refreshCoverFlowFromPresets()
+            }
+            .start()
+    }
+
+    private fun promptCloseSettingsWithSaveChoice() {
+        val dialog = BifrostAlertDialog()
+        dialog.show(
+            activity = this,
+            title = getString(R.string.settings_close_confirm_title),
+            subtitle = getString(R.string.settings_close_confirm_subtitle),
+            body = null,
+            positiveLabelResId = R.string.action_save,
+            negativeLabelResId = R.string.action_dont_save,
+            cancelable = true,
+            onConfirm = {
+                presetController.saveCurrentConfigToSelectedPreset()
+                closeSettingsOverlay()
+            },
+            onCancel = {
+                closeSettingsOverlay()
+            }
+        )
+    }
+
+    private fun requestCloseSettingsOverlay() {
+        if (!::presetController.isInitialized || !presetController.hasUnsavedChangesForSelectedPreset()) {
+            closeSettingsOverlay()
+            return
+        }
+        promptCloseSettingsWithSaveChoice()
+    }
+
+    private fun openSelectedPresetArtworkEditor(anchor: View) {
+        if (!::presetController.isInitialized) return
+        val presets = presetController.getPresets()
+        if (presets.isEmpty()) return
+
+        val selectedIndex = presetSpinner.selectedItemPosition
+        if (selectedIndex !in presets.indices) {
+            Toast.makeText(this, "Select a preset first", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        showPresetArtworkMenu(anchor, selectedIndex)
+    }
+
+    private fun startAppProfileSync() {
+        if (!::presetController.isInitialized) return
+        stopAppProfileSync()
+        appProfileSyncRunnable = object : Runnable {
+            override fun run() {
+                if (!::appProfileManager.isInitialized || !appProfileManager.isEnabled) {
+                    stopAppProfileSync()
+                    return
+                }
+
+                val lastPresetName = prefs.getString(PREF_KEY_LAST_PRESET, null)
+                if (!lastPresetName.isNullOrBlank()) {
+                    val presets = presetController.getPresets()
+                    val index = presets.indexOfFirst { it.name == lastPresetName }
+                    if (index in presets.indices) {
+                        selectedCoverFlowIndex = index
+                        val selectedPreset = presets[index]
+                        activePresetNameText.text = selectedPreset.name
+                        activePresetAnimationText.text =
+                            formatCardAnimationLabel(selectedPreset.animationType.name)
+                        activePresetProfileText.text =
+                            formatCardProfileLabel(selectedPreset.performanceProfile.name)
+                    }
+                }
+
+                mainHandler.postDelayed(this, APP_PROFILE_SYNC_INTERVAL_MS)
+            }
+        }
+        appProfileSyncRunnable?.let(mainHandler::post)
+    }
+
+    private fun stopAppProfileSync() {
+        appProfileSyncRunnable?.let(mainHandler::removeCallbacks)
+        appProfileSyncRunnable = null
+    }
+
+    private fun getSettingsSlideDistancePx(): Float {
+        val width = settingsOverlay.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+        return (width * 0.24f).coerceAtLeast(dpToPx(72).toFloat())
+    }
+
+    private fun refreshCoverFlowFromPresets() {
+        if (!::presetController.isInitialized) return
+
+        val autoSwitchEnabled = ::appProfileManager.isInitialized && appProfileManager.isEnabled
+        val presets = presetController.getPresets()
+        val tileSizePx = dpToPx(COVER_FLOW_TILE_SIZE_DP)
+        val tileGapPx = dpToPx(COVER_FLOW_TILE_GAP_DP)
+        if (presets.isEmpty()) {
+            presetCoverFlowContainer.removeAllViews()
+            presetCoverFlowContainer.addView(createCreatePresetActionCard(tileSizePx, tileGapPx))
+            activePresetNameText.text = "No presets"
+            activePresetAnimationText.text = "Animation: -"
+            activePresetProfileText.text = "Profile: -"
+            selectedCoverFlowIndex = 0
+
+            presetCoverFlowScroll.post {
+                val sidePadding = ((presetCoverFlowScroll.width - tileSizePx) / 2).coerceAtLeast(dpToPx(12))
+                presetCoverFlowContainer.setPadding(sidePadding, 0, sidePadding, 0)
+                centerPresetCard(0, animate = false)
+                updateCoverFlowCardTransforms()
+            }
+
+            updateManualPresetSwitchingUi(appProfileManager.isEnabled)
+            return
+        }
+
+        presetCoverFlowContainer.removeAllViews()
+        presets.forEachIndexed { index, preset ->
+            var longPressTriggered = false
+            var longPressRunnable: Runnable? = null
+            var movedTooMuchForTap = false
+            val touchSlop = ViewConfiguration.get(this).scaledTouchSlop
+            var downX = 0f
+            var downY = 0f
+
+            val triggerCardLongPress: () -> Unit = {
+                if (!isCoverFlowDragging) {
+                    suppressNextCoverFlowSnap = true
+                    selectPresetFromCoverFlow(index, animate = true, applyPreset = false)
+                    presetController.selectPresetForEditing(index)
+                    openSettingsOverlay()
+                }
+            }
+
+            val card = MaterialCardView(this).apply {
+                tag = index
+                val layoutParams = LinearLayout.LayoutParams(tileSizePx, tileSizePx).apply {
+                    marginEnd = tileGapPx
+                }
+                this.layoutParams = layoutParams
+                radius = dpToPx(16).toFloat()
+                cardElevation = 0f
+                setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_card))
+                setStrokeColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_accent))
+                strokeWidth = dpToPx(1)
+                setOnClickListener {
+                    if (autoSwitchEnabled) return@setOnClickListener
+                    if (isCoverFlowDragging) return@setOnClickListener
+                    suppressNextCoverFlowSnap = true
+                    selectPresetFromCoverFlow(index, animate = true)
+                }
+                setOnLongClickListener {
+                    triggerCardLongPress()
+                    true
+                }
+                setOnTouchListener { view, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            longPressTriggered = false
+                            movedTooMuchForTap = false
+                            downX = event.x
+                            downY = event.y
+                            parent?.requestDisallowInterceptTouchEvent(true)
+                            longPressRunnable?.let(mainHandler::removeCallbacks)
+                            longPressRunnable = Runnable {
+                                if (!longPressTriggered) {
+                                    triggerCardLongPress()
+                                    longPressTriggered = true
+                                }
+                            }
+                            mainHandler.postDelayed(
+                                longPressRunnable!!,
+                                ViewConfiguration.getLongPressTimeout().toLong()
+                            )
+                        }
+
+                        MotionEvent.ACTION_MOVE -> {
+                            val movedTooMuch = abs(event.x - downX) > touchSlop || abs(event.y - downY) > touchSlop
+                            if (movedTooMuch) {
+                                movedTooMuchForTap = true
+                                parent?.requestDisallowInterceptTouchEvent(false)
+                                longPressRunnable?.let(mainHandler::removeCallbacks)
+                                longPressRunnable = null
+                            }
+                        }
+
+                        MotionEvent.ACTION_UP,
+                        MotionEvent.ACTION_CANCEL -> {
+                            parent?.requestDisallowInterceptTouchEvent(false)
+                            longPressRunnable?.let(mainHandler::removeCallbacks)
+                            longPressRunnable = null
+                            if (event.actionMasked == MotionEvent.ACTION_UP && longPressTriggered) {
+                                // Consume ACTION_UP after long press to avoid triggering the tap handler.
+                                return@setOnTouchListener true
+                            }
+
+                            if (
+                                event.actionMasked == MotionEvent.ACTION_UP &&
+                                !movedTooMuchForTap &&
+                                !autoSwitchEnabled &&
+                                !isCoverFlowDragging
+                            ) {
+                                view.performClick()
+                                return@setOnTouchListener true
+                            }
+                        }
+                    }
+                    false
+                }
+                setOnDragListener { dragTarget, event ->
+                    if (autoSwitchEnabled) return@setOnDragListener true
+                    val fromIndex = event.localState as? Int ?: return@setOnDragListener false
+                    val toIndex = dragTarget.tag as? Int ?: return@setOnDragListener false
+
+                    when (event.action) {
+                        DragEvent.ACTION_DRAG_STARTED -> {
+                            isCoverFlowDragging = true
+                            true
+                        }
+
+                        DragEvent.ACTION_DRAG_ENTERED -> {
+                            if (toIndex != fromIndex) {
+                                strokeWidth = dpToPx(3)
+                            }
+                            true
+                        }
+
+                        DragEvent.ACTION_DRAG_EXITED -> {
+                            updateCoverFlowCardTransforms()
+                            true
+                        }
+
+                        DragEvent.ACTION_DROP -> {
+                            if (toIndex != fromIndex) {
+                                val moved = presetController.movePreset(fromIndex, toIndex)
+                                if (moved) {
+                                    suppressNextCoverFlowSnap = true
+                                    refreshCoverFlowFromPresets()
+                                }
+                            }
+                            true
+                        }
+
+                        DragEvent.ACTION_DRAG_ENDED -> {
+                            isCoverFlowDragging = false
+                            updateCoverFlowCardTransforms()
+                            true
+                        }
+
+                        else -> true
+                    }
+                }
+            }
+
+            val content = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dpToPx(14), dpToPx(10), dpToPx(14), dpToPx(10))
+                background = ContextCompat.getDrawable(this@MainActivity, R.drawable.card_glow_bg)
+                isClickable = true
+                isLongClickable = true
+                setOnClickListener {
+                    card.performClick()
+                }
+                setOnLongClickListener {
+                    card.performLongClick()
+                }
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+
+            val name = TextView(this).apply {
+                text = preset.name
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL
+                textAlignment = View.TEXT_ALIGNMENT_CENTER
+                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text))
+                textSize = 16f
+                setTypeface(typeface, android.graphics.Typeface.BOLD)
+                maxLines = 1
+            }
+
+            val centerIconContainer = LinearLayout(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    0,
+                    1f
+                )
+                gravity = android.view.Gravity.CENTER
+            }
+
+            val emojiView = TextView(this).apply {
+                textSize = 72f
+                gravity = android.view.Gravity.CENTER
+                visibility = View.GONE
+            }
+
+            val drawableIconView = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(dpToPx(74), dpToPx(74))
+                visibility = View.VISIBLE
+            }
+
+            PresetVisuals.bind(
+                context = this,
+                spec = PresetVisuals.fromPreset(preset),
+                iconView = drawableIconView,
+                emojiView = emojiView,
+                targetSizePx = dpToPx(74)
+            )
+
+            centerIconContainer.addView(emojiView)
+            centerIconContainer.addView(drawableIconView)
+            content.addView(name)
+            content.addView(centerIconContainer)
+            card.addView(content)
+            presetCoverFlowContainer.addView(card)
+        }
+
+        // Keep a persistent trailing action tile to create a new preset from the home flow.
+        presetCoverFlowContainer.addView(createCreatePresetActionCard(tileSizePx, tileGapPx))
+
+        selectedCoverFlowIndex = if (::appProfileManager.isInitialized && appProfileManager.isEnabled) {
+            val lastPresetName = prefs.getString(PREF_KEY_LAST_PRESET, null)
+            lastPresetName?.let { name ->
+                presets.indexOfFirst { it.name == name }.takeIf { it >= 0 }
+            } ?: presetSpinner.selectedItemPosition
+        } else {
+            presetSpinner.selectedItemPosition
+        }.coerceIn(0, presets.lastIndex)
+
+        val selectedPreset = presets[selectedCoverFlowIndex]
+        activePresetNameText.text = selectedPreset.name
+        activePresetAnimationText.text = formatCardAnimationLabel(selectedPreset.animationType.name)
+        activePresetProfileText.text = formatCardProfileLabel(selectedPreset.performanceProfile.name)
+
+        presetCoverFlowScroll.post {
+            val sidePadding = ((presetCoverFlowScroll.width - tileSizePx) / 2).coerceAtLeast(dpToPx(12))
+            presetCoverFlowContainer.setPadding(sidePadding, 0, sidePadding, 0)
+            centerPresetCard(selectedCoverFlowIndex, animate = false)
+            updateCoverFlowCardTransforms()
+        }
+
+        syncAppProfileDefaultSwitch()
+
+        updateManualPresetSwitchingUi(appProfileManager.isEnabled)
+    }
+
+    private fun createCreatePresetActionCard(tileSizePx: Int, tileGapPx: Int): MaterialCardView {
+        val card = MaterialCardView(this).apply {
+            tag = COVER_FLOW_CREATE_TAG
+            layoutParams = LinearLayout.LayoutParams(tileSizePx, tileSizePx).apply {
+                marginEnd = tileGapPx
+            }
+            radius = dpToPx(16).toFloat()
+            cardElevation = 0f
+            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_card))
+            setStrokeColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_accent))
+            strokeWidth = dpToPx(1)
+            setOnClickListener {
+                if (::appProfileManager.isInitialized && appProfileManager.isEnabled) return@setOnClickListener
+                launchCreatePresetFromCoverFlow()
+            }
+        }
+
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.card_glow_bg)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+            setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12))
+        }
+
+        val plusBubble = TextView(this).apply {
+            text = "+"
+            gravity = android.view.Gravity.CENTER
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text))
+            textSize = 34f
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_surface))
+                setStroke(dpToPx(2), ContextCompat.getColor(this@MainActivity, R.color.bifrost_accent))
+            }
+            layoutParams = LinearLayout.LayoutParams(dpToPx(88), dpToPx(88))
+            contentDescription = "Create new preset"
+        }
+
+        val label = TextView(this).apply {
+            text = "NEW PRESET"
+            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text_secondary))
+            textSize = 11f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            letterSpacing = 0.06f
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = dpToPx(12)
+            }
+        }
+
+        content.addView(plusBubble)
+        content.addView(label)
+        card.addView(content)
+        return card
+    }
+
+    private fun launchCreatePresetFromCoverFlow() {
+        if (!::presetController.isInitialized) return
+
+        if (settingsOverlay.visibility != View.VISIBLE) {
+            openSettingsOverlay()
+        }
+
+        val triggerCreatePreset: () -> Unit = {
+            if (settingsOverlay.visibility == View.VISIBLE) {
+                presetController.showSaveAsNewPresetDialogFromHomePlus()
+            }
+        }
+
+        if (isSettingsOverlayAnimating) {
+            mainHandler.postDelayed(triggerCreatePreset, SETTINGS_OPEN_DURATION_MS + 40L)
+        } else {
+            mainHandler.post(triggerCreatePreset)
+        }
+    }
+
+    private fun applyPresetUiPreferences(presetName: String) {
+        val profiles = runCatching { JSONArray(prefs.getString("presets_json", "[]")) }.getOrDefault(JSONArray())
+        val profile = (0 until profiles.length())
+            .mapNotNull { profiles.optJSONObject(it) }
+            .firstOrNull { it.optString("name") == presetName } ?: return
+        val themeId = profile.optString("uiThemeId", "")
+        if (themeId == "classic" || themeId == "oled_purple") {
+            prefs.edit().putString(PREF_SELECTED_UI_THEME, themeId).apply()
+            val theme = builtInThemes.firstOrNull { it.id == themeId }
+            if (theme != null && theme.id != selectedUiTheme.id) {
+                applySelectedTheme(theme, persistSelection = false)
+            }
+        }
+        if (profile.has("coloredLogoEnabled")) {
+            val colored = profile.optBoolean("coloredLogoEnabled", false)
+            prefs.edit().putBoolean(PREF_COLORED_LOGO_ENABLED, colored).apply()
+            if (isColoredLogoEnabled != colored) {
+                isColoredLogoEnabled = colored
+                applyHeaderLogoPreference()
+            }
+        }
+        applyProfileWallpaper(
+            profile.optString("wallpaperImageFileName", ""),
+            profile.optString("wallpaperVideoFileName", "")
+        )
+    }
+
+    private fun applyProfileWallpaper(imageFileName: String, videoFileName: String) {
+        if (!::homeContainer.isInitialized || !::profileWallpaperContainer.isInitialized) return
+        val container = profileWallpaperContainer
+        profileWallpaperVideoView?.let { old ->
+            runCatching { old.stopPlayback() }
+            container.removeView(old)
+        }
+        profileWallpaperVideoView = null
+
+        val videoFile = videoFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        if (videoFile != null && videoFile.isFile && videoFile.length() > 0L) {
+            val videoView = VideoView(this).apply {
+                setBackgroundColor(Color.BLACK)
+                setOnPreparedListener { player ->
+                    player.isLooping = true
+                    player.setVolume(0f, 0f)
+                    start()
+                }
+                setOnErrorListener { _, what, extra ->
+                    Log.w("BifrostWallpaper", "Unable to play profile video wallpaper (what=$what, extra=$extra)")
+                    Toast.makeText(this@MainActivity, "This profile's video wallpaper could not be played.", Toast.LENGTH_LONG).show()
+                    true
+                }
+            }
+            profileWallpaperVideoView = videoView
+            container.addView(
+                videoView,
+                0,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    FrameLayout.LayoutParams.MATCH_PARENT
+                )
+            )
+            videoView.setVideoURI(Uri.fromFile(videoFile))
+            homeContainer.setBackgroundColor(Color.TRANSPARENT)
+            container.background = ColorDrawable(Color.BLACK)
+            return
+        }
+
+        val imageFile = imageFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        val bitmap = imageFile?.takeIf { it.isFile && it.length() > 0L }?.let {
+            runCatching { BitmapFactory.decodeFile(it.absolutePath) }.getOrNull()
+        }
+        if (bitmap != null) {
+            container.background = BitmapDrawable(resources, bitmap).apply {
+                gravity = Gravity.FILL
+            }
+            homeContainer.setBackgroundColor(Color.TRANSPARENT)
+        } else {
+            container.background = ColorDrawable(selectedUiTheme.backgroundColor)
+            homeContainer.setBackgroundColor(Color.TRANSPARENT)
+        }
+    }
+
+    private data class HeaderThemePalette(
+        val introHueStart: Float,
+        val introHueSpan: Float,
+        val introSaturation: Float,
+        val introValue: Float,
+        val settleHueStart: Float,
+        val settleHueSpan: Float,
+        val settleHueWobbleAmplitude: Float,
+        val settleSaturationBase: Float,
+        val settleSaturationWave: Float,
+        val settleValueBase: Float,
+        val settleValueWave: Float,
+        val settleAlphaBase: Int,
+        val settleAlphaWave: Int,
+        val settlePhaseDegrees: Float
+    )
+
+    private data class UiTheme(
+        val id: String,
+        val label: String,
+        val backgroundColor: Int,
+        val cardColor: Int,
+        val surfaceColor: Int,
+        val textColor: Int,
+        val accentColor: Int,
+        val accentLightColor: Int,
+        val headerPalette: HeaderThemePalette
+    )
+
+    companion object {
+        var mediaProjectionResultCode: Int? = null
+        var mediaProjectionData: Intent? = null
+        private const val DEBOUNCE_DELAY = 500L
+        private const val SERVICE_RESTART_DELAY = 400L
+        private const val SETTINGS_OPEN_DURATION_MS = 300L
+        private const val SETTINGS_CLOSE_DURATION_MS = 210L
+        private const val SETTINGS_HOME_DIM_ALPHA = 0.84f
+        private const val COVER_FLOW_TILE_SIZE_DP = 176
+        private const val COVER_FLOW_TILE_GAP_DP = 10
+        private const val COVER_FLOW_CREATE_TAG = -1
+        private const val COVER_FLOW_SNAP_SETTLE_DELAY_MS = 100L
+        private const val APP_PROFILE_SYNC_INTERVAL_MS = 1200L
+        private const val PREF_KEY_LAST_PRESET = "last_preset_name"
+        private const val PREF_APP_PROFILE_INFO_SHOWN = "app_profile_info_shown"
+
+        // Note: this key is shared with PresetController for backward compatibility.
+        // Do not change unless updating persistence logic across components.
+
+        private const val TITLE_INTRO_ANIMATION_MS = 3200L
+        private const val PREF_FIRST_LAUNCH_ALERT_SHOWN = "first_launch_alert_shown"
+        private const val PREF_THOR_BOTTOM_SCREEN = "thor_bottom_screen"
+        private const val PREF_THOR_AMBIENT_BOTTOM_SCREEN = "thor_ambient_bottom_screen"
+        private const val PREF_AMBILIGHT_USE_MEDIA_PROJECTION = LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION
+        private const val PREF_BATTERY_OVERRIDE_WHEN_PLUGGED = "battery_override_when_plugged"
+        private const val PREF_LOW_BATTERY_ALERT_ENABLED = "low_battery_alert_enabled"
+        private const val PREF_LOW_BATTERY_ALERT_THRESHOLD = "low_battery_alert_threshold"
+        private const val PREF_DISABLE_LOW_BATTERY_ALERT_WHILE_CHARGING = "disable_low_battery_alert_while_charging"
+        private const val PREF_PERSISTENT_NOTIFICATION = "persistent_notification_enabled"
+        private const val PREF_ADAPTIVE_BRIGHTNESS = "adaptive_brightness_enabled"
+        private const val PREF_SELECTED_UI_THEME = "selected_ui_theme"
+        private const val PREF_COLORED_LOGO_ENABLED = "colored_logo_enabled"
+        private const val PREF_STARTUP_GUIDE_DONE = "startup_guide_done"
+        private const val PREF_LIVE_WALLPAPER_RESTORE_SETTINGS = "live_wallpaper_restore_settings"
+        private const val PREF_LIVE_WALLPAPER_APPLY_IN_PROGRESS = "live_wallpaper_apply_in_progress"
+        private const val LIVE_WALLPAPER_LOCAL_VIDEO_FILE = "live_wallpaper_video.mp4"
+        private const val LIVE_WALLPAPER_STATE_SYNC_MAX_RETRIES = 12
+        private const val LIVE_WALLPAPER_STATE_SYNC_DELAY_MS = 250L
+        private const val AUTOSTART_PERMISSION_CHANNEL_ID = "bifrost_autostart_permission"
+        private const val AUTOSTART_PERMISSION_NOTIFICATION_ID = 4245
+        private const val EXTRA_DISPLAY_RELAUNCH_ATTEMPT = "display_relaunch_attempt"
+        private const val MAX_DISPLAY_RELAUNCH_ATTEMPTS = 3
+        private const val COLOR_OVERRIDE_UNSET = Int.MIN_VALUE
+        private const val EXTRA_BATTERY_LOW_COLOR_OVERRIDE = "batteryLowColorOverride"
+        private const val EXTRA_BATTERY_MID_COLOR_OVERRIDE = "batteryMidColorOverride"
+        private const val EXTRA_BATTERY_HIGH_COLOR_OVERRIDE = "batteryHighColorOverride"
+        private const val EXTRA_CPU_COOL_COLOR_OVERRIDE = "cpuCoolColorOverride"
+        private const val EXTRA_CPU_WARM_COLOR_OVERRIDE = "cpuWarmColorOverride"
+        private const val EXTRA_CPU_HOT_COLOR_OVERRIDE = "cpuHotColorOverride"
+
+        private val DEFAULT_BATTERY_LOW_COLOR = Color.rgb(255, 0, 0)
+        private val DEFAULT_BATTERY_MID_COLOR = Color.rgb(255, 255, 0)
+        private val DEFAULT_BATTERY_HIGH_COLOR = Color.rgb(0, 255, 0)
+        private val DEFAULT_CPU_COOL_COLOR = Color.rgb(0, 120, 255)
+        private val DEFAULT_CPU_WARM_COLOR = Color.rgb(255, 215, 0)
+        private val DEFAULT_CPU_HOT_COLOR = Color.rgb(255, 0, 0)
+
+        const val EXTRA_GRANT_PROJECTION_FOR_APP_PROFILE = "grant_projection_for_app_profile"
+        const val EXTRA_START_FROM_TILE = "start_from_tile"
+    }
+
+    private var selectedAnimationType: LedAnimationType = LedAnimationType.AMBIENT
+    private var selectedProfile: PerformanceProfile = PerformanceProfile.HIGH
+    private var selectedColor: Int = Color.WHITE
+    private var selectedRightColor: Int = Color.WHITE
+    private var selectedFadeEndColor: Int = FadeTransitionAnimation.DEFAULT_END_COLOR
+    private var selectedFadeEndRightColor: Int = FadeTransitionAnimation.DEFAULT_END_COLOR
+    private var isSuppressingAmbilightCaptureCallback = false
+    private var selectedBatteryLowColorOverride: Int? = null
+    private var selectedBatteryMidColorOverride: Int? = null
+    private var selectedBatteryHighColorOverride: Int? = null
+    private var selectedCpuCoolColorOverride: Int? = null
+    private var selectedCpuWarmColorOverride: Int? = null
+    private var selectedCpuHotColorOverride: Int? = null
+    private var selectedBrightness: Int = 255
+    private var selectedSpeed: Float = 0.5f
+    private var selectedSmoothness: Float = 0.5f
+    private var selectedSensitivity: Float = 0.5f
+    private var selectedSaturationBoost: Float = 0.0f
+    private var selectedUseCustomSampling: Boolean = false
+    private var selectedUseSingleColor: Boolean = false
+    private var selectedBreatheWhenCharging: Boolean = false
+    private var selectedIndicateChargingSpeed: Boolean = false
+    private var selectedFlashWhenReady: Boolean = false
+    private var selectedBatteryOverrideWhenPlugged: Boolean = false
+    private var selectedLowBatteryAlertEnabled: Boolean = false
+    private var selectedLowBatteryAlertThreshold: Int = 20
+    private var selectedDisableLowBatteryAlertWhileCharging: Boolean = false
+    private var selectedPersistentNotification: Boolean = true
+    private var selectedAdaptiveBrightness: Boolean = false
+    private var isAwaitingPermissionResult = false
+    private var isUpdatingFromPreset = false
+    private var isGrantingProjectionForAppProfile = false
+    private var rainbowDrawable: AnimatedRainbowDrawable? = null
+    private var titleIntroAnimator: ValueAnimator? = null
+    private var headerSettleAnimator: ValueAnimator? = null
+    private var isAppInitialized = false
+    private var bifrostTitleLabel: String = ""
+    private var selectedCoverFlowIndex: Int = 0
+    private var coverFlowSnapRunnable: Runnable? = null
+    private var suppressNextCoverFlowSnap: Boolean = false
+    private var isCoverFlowDragging: Boolean = false
+    private var isCoverFlowTouching: Boolean = false
+    private var lastCoverFlowScrollXForSnap: Int = 0
+    private var isSettingsOverlayAnimating: Boolean = false
+    private var currentSettingsTab: SettingsTab = SettingsTab.UI
+    private var isColoredLogoEnabled: Boolean = false
+    private var isSyncingAppProfileSwitches: Boolean = false
+    private var isSyncingAppProfileDefaultSwitch: Boolean = false
+    private var pendingPresetArtworkIndex: Int? = null
+    private var presetArtworkSheetDialog: BottomSheetDialog? = null
+    private var appProfileSyncRunnable: Runnable? = null
+    private var resumeStateSyncRunnable: Runnable? = null
+    private var liveWallpaperApplyStateSyncRunnable: Runnable? = null
+    private var pendingBackupExportOptions: BackupArchiveTransfer.CategoryOptions? = null
+    private var pendingBackupImportOptions: BackupArchiveTransfer.CategoryOptions? = null
+    private val liveWallpaperPrefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key != "live_wallpaper_is_applied") return@OnSharedPreferenceChangeListener
+        if (!isAppInitialized) return@OnSharedPreferenceChangeListener
+        runOnUiThread {
+            refreshLiveWallpaperActionButtons()
+        }
+    }
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private lateinit var presetController: PresetController
+    private lateinit var serviceController: ServiceController
+    private val colorPickerDialog = ColorPickerDialog()
+    private val ragnarokWarningDialog = RagnarokWarningDialog()
+    private lateinit var appProfileManager: AppProfileManager
+    private val builtInThemes = listOf(
+        UiTheme(
+            id = "classic",
+            label = "Classic",
+            backgroundColor = Color.parseColor("#0A0E1A"),
+            cardColor = Color.parseColor("#12182B"),
+            surfaceColor = Color.parseColor("#1A2236"),
+            textColor = Color.parseColor("#E8EEFF"),
+            accentColor = Color.parseColor("#6366F1"),
+            accentLightColor = Color.parseColor("#818CF8"),
+            headerPalette = HeaderThemePalette(
+                introHueStart = 0f,
+                introHueSpan = 360f,
+                introSaturation = 0.82f,
+                introValue = 1f,
+                settleHueStart = 18f,
+                settleHueSpan = 300f,
+                settleHueWobbleAmplitude = 10f,
+                settleSaturationBase = 0.28f,
+                settleSaturationWave = 0.14f,
+                settleValueBase = 0.92f,
+                settleValueWave = 0.08f,
+                settleAlphaBase = 224,
+                settleAlphaWave = 31,
+                settlePhaseDegrees = 18f
+            )
+        ),
+        UiTheme(
+            id = "oled_purple",
+            label = "OLED Purple",
+            backgroundColor = Color.parseColor("#000000"),
+            cardColor = Color.parseColor("#000000"),
+            surfaceColor = Color.parseColor("#000000"),
+            textColor = Color.parseColor("#C084FC"),
+            accentColor = Color.parseColor("#A855F7"),
+            accentLightColor = Color.parseColor("#C084FC"),
+            headerPalette = HeaderThemePalette(
+                introHueStart = 264f,
+                introHueSpan = 64f,
+                introSaturation = 0.9f,
+                introValue = 0.98f,
+                settleHueStart = 272f,
+                settleHueSpan = 48f,
+                settleHueWobbleAmplitude = 5f,
+                settleSaturationBase = 0.5f,
+                settleSaturationWave = 0.16f,
+                settleValueBase = 0.76f,
+                settleValueWave = 0.2f,
+                settleAlphaBase = 236,
+                settleAlphaWave = 19,
+                settlePhaseDegrees = 12f
+            )
+        )
+    )
+    private var selectedUiTheme: UiTheme = builtInThemes.first()
+
+    private val launchNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (!isGranted) {
+                Toast.makeText(
+                    this,
+                    "Notification permission is required for this app to function",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            initializeApp()
+        }
+
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                if (needsAccessibilityPermission(selectedAnimationType) && !BifrostAccessibilityService.isEnabled(this)) {
+                    Toast.makeText(this, "Enable Accessibility for Ambilight features", Toast.LENGTH_LONG).show()
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                } else if (requiresProjectionToken(selectedAnimationType)) {
+                    if (mediaProjectionResultCode != null && mediaProjectionData != null) {
+                        serviceController.startDebounced { createLedServiceIntent() }
+                    } else {
+                        requestScreenCapturePermission()
+                    }
+                } else {
+                    serviceController.startDebounced { createLedServiceIntent() }
+                }
+            } else {
+                isAwaitingPermissionResult = false
+                serviceToggle.isChecked = false
+                Toast.makeText(
+                    this,
+                    "Notification permission required for Foreground Service",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+    private val screenCaptureLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK && result.data != null) {
+                mediaProjectionResultCode = result.resultCode
+                mediaProjectionData = result.data
+
+                if (isGrantingProjectionForAppProfile) {
+                    isGrantingProjectionForAppProfile = false
+                    // Supply projection to the running service without restarting it.
+                    // The correct preset will be applied when the user returns to the
+                    // mapped app (the periodic check will resolve it automatically).
+                    if (LEDService.isRunning) {
+                        val supplyIntent = Intent(this, LEDService::class.java).apply {
+                            action = LEDService.ACTION_SUPPLY_PROJECTION
+                            putExtra("resultCode", mediaProjectionResultCode)
+                            putExtra("data", mediaProjectionData)
+                        }
+                        startService(supplyIntent)
+                    }
+                } else {
+                    serviceController.startDebounced { createLedServiceIntent() }
+                }
+            } else {
+                val wasAppProfileGrant = isGrantingProjectionForAppProfile
+                isGrantingProjectionForAppProfile = false
+                if (!wasAppProfileGrant) {
+                    isAwaitingPermissionResult = false
+                    serviceToggle.isChecked = false
+                }
+                Toast.makeText(
+                    this,
+                    "Screen capture permission required",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+    private val presetImagePickerLauncher =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+            val targetIndex = pendingPresetArtworkIndex
+            pendingPresetArtworkIndex = null
+
+            if (uri == null || targetIndex == null) return@registerForActivityResult
+
+            val storedFileName = runCatching {
+                PresetImageStorage.copyPickedImage(this, uri)
+            }.getOrNull()
+
+            if (storedFileName == null) {
+                Toast.makeText(this, "Couldn't import that image", Toast.LENGTH_SHORT).show()
+                return@registerForActivityResult
+            }
+
+            val updatedPreset = presetController.updatePresetVisual(targetIndex) { preset ->
+                preset.copy(
+                    customEmoji = null,
+                    customImageFileName = storedFileName,
+                    appIconPackageName = null
+                )
+            }
+
+            if (updatedPreset == null) {
+                PresetImageStorage.deleteIfExists(this, storedFileName)
+                Toast.makeText(this, "That preset is no longer available", Toast.LENGTH_SHORT).show()
+                return@registerForActivityResult
+            }
+
+            refreshCoverFlowFromPresets()
+            Toast.makeText(this, "${updatedPreset.name} image updated", Toast.LENGTH_SHORT).show()
+        }
+
+    private val exportPresetsLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            val options = pendingBackupExportOptions ?: BackupArchiveTransfer.CategoryOptions()
+            pendingBackupExportOptions = null
+            exportPresetBundle(uri, options)
+        }
+
+    private val exportThemeLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            exportThemeBundle(uri)
+        }
+
+    private val importPresetsLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            val options = pendingBackupImportOptions ?: BackupArchiveTransfer.CategoryOptions()
+            pendingBackupImportOptions = null
+            importPresetBundle(uri, options)
+        }
+
+    private val importThemeLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            importThemeBundle(uri)
+        }
+
+    private val liveWallpaperVideoPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            val localUri = importLiveWallpaperVideoToAppStorage(uri)
+            if (localUri == null) {
+                Toast.makeText(this, "Unable to import selected video", Toast.LENGTH_SHORT).show()
+                return@registerForActivityResult
+            }
+            LiveWallpaperSettingsManager.setVideoUri(prefs, localUri)
+            refreshLiveWallpaperVideoSummary()
+            Toast.makeText(this, "Live wallpaper video updated", Toast.LENGTH_SHORT).show()
+        }
+
+    private val liveWallpaperImagePickerLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            if (setStaticImageWallpaper(uri)) {
+                prefs.edit().putBoolean("static_image_wallpaper_applied", true).apply()
+                refreshLiveWallpaperVideoSummary()
+                refreshLiveWallpaperActionButtons()
+                Toast.makeText(this, "Image wallpaper applied", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Unable to apply that image as wallpaper", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    private val liveWallpaperApplyLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            scheduleLiveWallpaperApplyStateSync(initialDelayMs = 180L)
+        }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        if (intent.getBooleanExtra("finish", false)) {
+            finishAffinity()
+            return
+        }
+
+        if (shouldLaunchStartupGuide()) {
+            runCatching { startActivity(Intent(this, StartupGuideActivity::class.java)) }
+        }
+
+        setContentView(R.layout.activity_main)
+
+        setupStatusBar()
+
+        if (maybeRelaunchOnCorrectDisplay()) return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                launchNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                return
+            }
+        }
+
+        initializeApp()
+    }
+
+    private fun shouldLaunchStartupGuide(): Boolean {
+        return !prefs.getBoolean(PREF_STARTUP_GUIDE_DONE, false)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleAppProfileProjectionIntent(intent)
+        handleTileStartIntent(intent)
+    }
+
+    private fun maybeOfferCrashReport() {
+        val report = runCatching { CrashReporter.existingReport(this) }.getOrNull() ?: return
+        val body = runCatching { report.readText() }.getOrNull()?.take(8000) ?: return
+
+        BifrostAlertDialog().show(
+            activity = this,
+            title = getString(R.string.crash_report_title),
+            subtitle = getString(R.string.crash_report_subtitle),
+            body = getString(R.string.crash_report_body) + "\n\nUse Share the report, then send the text to the Bifrost RP5 Edition GitHub Issues page or directly to the project maintainer. GitHub Issues: https://github.com/RetroidPocketFive/Bifrost_RP5_Enhanced/issues",
+            positiveLabelResId = R.string.crash_report_share,
+            negativeLabelResId = R.string.crash_report_dismiss,
+            cancelable = true,
+            onConfirm = {
+                CrashReporter.clear(this)
+                val share = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "Bifrost crash report")
+                    putExtra(Intent.EXTRA_TEXT, body)
+                }
+                runCatching { startActivity(Intent.createChooser(share, "Send crash report")) }
+            },
+            onCancel = { CrashReporter.clear(this) }
+        )
+    }
+
+    private fun confirmClearCache() {
+        AlertDialog.Builder(this)
+            .setTitle("CLEAR APP CACHE?")
+            .setMessage("This removes temporary cached files only. Your presets, calibration and settings are kept.")
+            .setNegativeButton("CANCEL", null)
+            .setPositiveButton("CLEAR") { _, _ ->
+                val cleared = runCatching {
+                    cacheDir.deleteRecursively()
+                    externalCacheDir?.deleteRecursively()
+                    cacheDir.mkdirs()
+                    true
+                }.getOrDefault(false)
+                Toast.makeText(this, if (cleared) "App cache cleared" else "Could not clear all cache files", Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
+
+    private fun handleTileStartIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_START_FROM_TILE, false) != true) return
+        intent.removeExtra(EXTRA_START_FROM_TILE)
+
+        if (LEDService.isRunning) return
+        if (!checkNotificationPermission()) return
+
+        serviceToggle.isChecked = true
+    }
+
+    private fun handleAppProfileProjectionIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_GRANT_PROJECTION_FOR_APP_PROFILE, false) != true) return
+        // Consume the flag so it doesn't re-trigger on configuration change.
+        intent.removeExtra(EXTRA_GRANT_PROJECTION_FOR_APP_PROFILE)
+
+        if (!LEDService.isRunning) return
+        if (!::mediaProjectionManager.isInitialized) return
+
+        isGrantingProjectionForAppProfile = true
+        requestScreenCapturePermission()
+    }
+
+    private fun initializeApp() {
+        mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
+        prefs.registerOnSharedPreferenceChangeListener(liveWallpaperPrefsListener)
+
+        settingsOverlay = findViewById(R.id.settingsOverlay)
+        homeContainer = findViewById(R.id.homeContainer)
+        profileWallpaperContainer = findViewById(R.id.profileWallpaperContainer)
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
         findViewById<MaterialButton>(R.id.openLibrarySettingsButton).setOnClickListener {
