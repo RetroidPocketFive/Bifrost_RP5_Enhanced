@@ -71,6 +71,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             // previous image so it cannot be shadowed by the video's higher priority.
             profile.remove("wallpaperImageFileName")
             profile.put("wallpaperVideoFileName", imported)
+            renderWallpaperSelection(profile)
             toast("Video selected as the BIFROST home background. Press Save, then Apply to BIFROST Background.")
         }
     }
@@ -94,6 +95,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             // video-first renderer would keep showing the old video instead.
             profile.remove("wallpaperVideoFileName")
             profile.put("wallpaperImageFileName", imported)
+            renderWallpaperSelection(profile)
             toast("Image selected as the BIFROST home background. Press Save, then Apply to BIFROST Background.")
         }
     }
@@ -183,8 +185,14 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 hasIconImage -> "icon image"
                 else -> "icon colour"
             }
-            toast("Applying profile $applied in BIFROST.")
-            finish()
+            // Update the home background immediately without closing Profile Settings.
+            sendBroadcast(
+                Intent(MainActivity.ACTION_APPLY_PROFILE_WALLPAPER)
+                    .setPackage(packageName)
+                    .putExtra(MainActivity.EXTRA_WALLPAPER_IMAGE, if (hasImage) imageName else "")
+                    .putExtra(MainActivity.EXTRA_WALLPAPER_VIDEO, if (hasVideo) videoName else "")
+            )
+            toast("Applied $applied. Profile Settings will stay open.")
         }
         findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).setOnClickListener {
             if (presets.optJSONObject(selectedPreset) == null) { toast("Create or select a saved profile first."); return@setOnClickListener }
@@ -452,6 +460,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         applySettingsTheme(themeId ?: "classic")
         bindingPreset = false
         renderProfileArtworkEditor()
+        renderWallpaperSelection(p)
     }
 
     private fun saveSelectedPreset() {
@@ -621,6 +630,46 @@ class ProfileSettingsActivity : AppCompatActivity() {
         spinner.adapter = adapter
     }
     private fun label(value: String) = value.lowercase().split('_').joinToString(" ") { it.replaceFirstChar(Char::uppercase) }
+    private fun renderWallpaperSelection(profile: JSONObject?) {
+        val previewRow = findViewById<View>(R.id.profileSettingsWallpaperSelectionPreview)
+        val previewImage = findViewById<android.widget.ImageView>(R.id.profileSettingsWallpaperPreviewImage)
+        val previewName = findViewById<TextView>(R.id.profileSettingsWallpaperPreviewName)
+        val imageName = profile?.optString("wallpaperImageFileName").orEmpty()
+        val videoName = profile?.optString("wallpaperVideoFileName").orEmpty()
+        val isVideo = videoName.isNotBlank()
+        val fileName = if (isVideo) videoName else imageName
+        val file = fileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+
+        if (file == null || !file.isFile || file.length() <= 0L) {
+            previewRow.visibility = View.GONE
+            previewImage.setImageDrawable(null)
+            previewName.text = ""
+            return
+        }
+
+        previewRow.visibility = View.VISIBLE
+        previewName.text = "${if (isVideo) "VIDEO" else "IMAGE"} · ${file.name}"
+        val bitmap = if (isVideo) {
+            val retriever = android.media.MediaMetadataRetriever()
+            try {
+                retriever.setDataSource(file.absolutePath)
+                retriever.getFrameAtTime(1_000_000, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC)
+            } catch (_: Exception) {
+                null
+            } finally {
+                runCatching { retriever.release() }
+            }
+        } else {
+            runCatching { android.graphics.BitmapFactory.decodeFile(file.absolutePath) }.getOrNull()
+        }
+        if (bitmap != null) {
+            previewImage.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+            previewImage.setImageBitmap(bitmap)
+        } else {
+            previewImage.setImageResource(if (isVideo) android.R.drawable.ic_media_play else android.R.drawable.ic_menu_gallery)
+        }
+    }
+
     private fun resetSelectedProfileWallpaper() {
         val profile = presets.optJSONObject(selectedPreset)
         if (profile == null) {
@@ -634,6 +683,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             .setPositiveButton("Reset") { _, _ ->
                 profile.remove("wallpaperImageFileName")
                 profile.remove("wallpaperVideoFileName")
+                renderWallpaperSelection(profile)
                 // Keep the original files intact until Save is pressed; Cancel/exit must discard this draft.
                 toast("Wallpaper reset in the editor. Press Save to keep this change.")
             }
