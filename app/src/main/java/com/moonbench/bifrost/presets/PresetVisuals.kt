@@ -64,9 +64,13 @@ object PresetVisuals {
             emojiView.visibility = android.view.View.GONE
             iconView.visibility = android.view.View.VISIBLE
             iconView.scaleType = ImageView.ScaleType.CENTER_CROP
-            iconView.setImageBitmap(loadedImage)
-            // Uploaded artwork keeps its original pixels and colours; never tint it.
+            // Recycled ImageViews and theme styles can retain an image tint even
+            // after clearing a colour filter. Explicitly clear both before binding
+            // uploaded artwork so the bitmap's original colours remain intact.
             iconView.clearColorFilter()
+            iconView.imageTintList = null
+            iconView.imageTintMode = null
+            iconView.setImageBitmap(loadedImage)
             return
         }
 
