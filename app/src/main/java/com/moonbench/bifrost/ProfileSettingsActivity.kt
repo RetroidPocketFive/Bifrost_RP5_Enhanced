@@ -382,7 +382,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     target.remove("customEmoji")
                     target.remove("customImageFileName")
                     target.remove("appIconPackageName")
-                    findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.presetArtworkEmojiInputLayout).error = null
+                    findViewById<com.google.android.material.textfield.TextInputLayout?>(R.id.presetArtworkEmojiInputLayout)?.error = null
                     renderProfileArtworkEditor()
                     toast("Profile artwork changed. Press Save to keep it.")
                 }
