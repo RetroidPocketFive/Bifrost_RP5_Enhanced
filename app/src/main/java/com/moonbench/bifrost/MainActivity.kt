@@ -355,6 +355,8 @@ class MainActivity : AppCompatActivity() {
     private var isSyncingAppProfileDefaultSwitch: Boolean = false
     private var pendingPresetArtworkIndex: Int? = null
     private var presetArtworkSheetDialog: BottomSheetDialog? = null
+    private var finishAfterProfileArtwork: Boolean = false
+    private var suppressProfileArtworkFinishOnDismiss: Boolean = false
     private var appProfileSyncRunnable: Runnable? = null
     private var resumeStateSyncRunnable: Runnable? = null
     private var liveWallpaperApplyStateSyncRunnable: Runnable? = null
@@ -510,7 +512,10 @@ class MainActivity : AppCompatActivity() {
             val targetIndex = pendingPresetArtworkIndex
             pendingPresetArtworkIndex = null
 
-            if (uri == null || targetIndex == null) return@registerForActivityResult
+            if (uri == null || targetIndex == null) {
+                finishProfileArtworkFlowIfNeeded()
+                return@registerForActivityResult
+            }
 
             val storedFileName = runCatching {
                 PresetImageStorage.copyPickedImage(this, uri)
@@ -518,6 +523,7 @@ class MainActivity : AppCompatActivity() {
 
             if (storedFileName == null) {
                 Toast.makeText(this, "Couldn't import that image", Toast.LENGTH_SHORT).show()
+                finishProfileArtworkFlowIfNeeded()
                 return@registerForActivityResult
             }
 
@@ -532,11 +538,13 @@ class MainActivity : AppCompatActivity() {
             if (updatedPreset == null) {
                 PresetImageStorage.deleteIfExists(this, storedFileName)
                 Toast.makeText(this, "That preset is no longer available", Toast.LENGTH_SHORT).show()
+                finishProfileArtworkFlowIfNeeded()
                 return@registerForActivityResult
             }
 
             refreshCoverFlowFromPresets()
             Toast.makeText(this, "${updatedPreset.name} image updated", Toast.LENGTH_SHORT).show()
+            finishProfileArtworkFlowIfNeeded()
         }
 
     private val exportPresetsLauncher =
@@ -963,6 +971,28 @@ class MainActivity : AppCompatActivity() {
         // Handle the case where the activity was freshly created from a projection-prompt
         // notification tap (service is running but activity wasn't alive).
         handleAppProfileProjectionIntent(intent)
+
+        val artworkPresetName = intent.getStringExtra(EXTRA_PROFILE_ARTWORK_PRESET_NAME)
+        if (!artworkPresetName.isNullOrBlank()) {
+            finishAfterProfileArtwork = true
+            val artworkIndex = presetController.getPresets().indexOfFirst {
+                it.name.equals(artworkPresetName, ignoreCase = true)
+            }
+            if (artworkIndex >= 0) {
+                showPresetArtworkMenu(presetSpinner, artworkIndex)
+            } else {
+                Toast.makeText(this, "Profile '$artworkPresetName' was not found", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+    }
+
+    private fun finishProfileArtworkFlowIfNeeded() {
+        if (finishAfterProfileArtwork) finish()
+    }
+
+    companion object {
+        const val EXTRA_PROFILE_ARTWORK_PRESET_NAME = "com.moonbench.bifrost.extra.PROFILE_ARTWORK_PRESET_NAME"
     }
 
     private fun setupBackNavigationHandler() {
@@ -2402,6 +2432,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         uploadButton.setOnClickListener {
+            // The sheet closes while Android's picker is open; keep this activity alive.
+            suppressProfileArtworkFinishOnDismiss = true
             dialog.dismiss()
             launchPresetImagePicker(index)
         }
@@ -2430,6 +2462,9 @@ class MainActivity : AppCompatActivity() {
         dialog.setOnDismissListener {
             if (presetArtworkSheetDialog === dialog) {
                 presetArtworkSheetDialog = null
+            }
+            if (finishAfterProfileArtwork && !suppressProfileArtworkFinishOnDismiss) {
+                finish()
             }
         }
 
