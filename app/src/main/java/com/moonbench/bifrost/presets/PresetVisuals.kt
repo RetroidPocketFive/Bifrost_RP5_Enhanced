@@ -65,11 +65,8 @@ object PresetVisuals {
             iconView.visibility = android.view.View.VISIBLE
             iconView.scaleType = ImageView.ScaleType.CENTER_CROP
             iconView.setImageBitmap(loadedImage)
-            if (spec.iconColor != null) {
-                iconView.setColorFilter(spec.iconColor, PorterDuff.Mode.SRC_IN)
-            } else {
-                iconView.clearColorFilter()
-            }
+            // Uploaded artwork keeps its original pixels and colours; never tint it.
+            iconView.clearColorFilter()
             return
         }
 
