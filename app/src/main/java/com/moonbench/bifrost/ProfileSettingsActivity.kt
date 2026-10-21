@@ -136,6 +136,18 @@ class ProfileSettingsActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.profileSettingsDeleteButton).setOnClickListener { deleteSelectedPreset() }
 
         findViewById<MaterialButton>(R.id.profileSettingsIconColorButton).setOnClickListener { chooseProfileColor() }
+        findViewById<MaterialButton>(R.id.profileSettingsArtworkButton).setOnClickListener {
+            val current = presets.optJSONObject(selectedPreset)
+            val name = current?.optString("name")?.takeIf { it.isNotBlank() }
+            if (name == null) {
+                toast("Create or select a saved profile first.")
+                return@setOnClickListener
+            }
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .putExtra(MainActivity.EXTRA_PROFILE_ARTWORK_PRESET_NAME, name)
+            )
+        }
         findViewById<MaterialButton>(R.id.profileSettingsPickVideoButton).setOnClickListener {
             videoWallpaperPicker.launch(arrayOf("video/*"))
         }
@@ -261,9 +273,20 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Keep this editor's unsaved draft intact when returning from Android's
-        // image/video picker. reloadPresets() here re-reads persisted JSON and
-        // discards the just-picked filename and any other pending editor changes.
+        // The artwork editor writes the existing preset JSON directly. Merge only
+        // its visual fields back into this draft so pending theme/profile edits survive.
+        val draft = presets.optJSONObject(selectedPreset) ?: return
+        val name = draft.optString("name")
+        if (name.isBlank()) return
+        val persisted = runCatching { JSONArray(prefs.getString("presets_json", "[]")) }.getOrDefault(JSONArray())
+        val latest = (0 until persisted.length())
+            .asSequence()
+            .mapNotNull { persisted.optJSONObject(it) }
+            .firstOrNull { it.optString("name").equals(name, ignoreCase = true) }
+            ?: return
+        listOf("icon", "customEmoji", "customImageFileName", "appIconPackageName").forEach { key ->
+            if (latest.has(key)) draft.put(key, latest.opt(key)) else draft.remove(key)
+        }
     }
 
     private fun reloadPresets() {
