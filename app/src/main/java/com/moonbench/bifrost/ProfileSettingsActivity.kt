@@ -67,8 +67,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
             File(filesDir, fileName).delete()
             toast("Could not import video. Use MP4/H.264 video up to 100 MB.")
         } else {
+            // A profile uses one BIFROST background source at a time. Clear the
+            // previous image so it cannot be shadowed by the video's higher priority.
+            profile.remove("wallpaperImageFileName")
             profile.put("wallpaperVideoFileName", imported)
-            toast("Video selected for this profile. Press Save to keep it; then Apply Wallpaper.")
+            toast("Video selected as the BIFROST home background. Press Save, then Apply to BIFROST Background.")
         }
     }
     private val wallpaperImagePicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -87,8 +90,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
         if (imported == null) {
             toast("Could not import the selected image.")
         } else {
+            // Clear any previously selected video; otherwise MainActivity's
+            // video-first renderer would keep showing the old video instead.
+            profile.remove("wallpaperVideoFileName")
             profile.put("wallpaperImageFileName", imported)
-            toast("Image selected as this profile's BIFROST background. Press Save to keep it.")
+            toast("Image selected as the BIFROST home background. Press Save, then Apply to BIFROST Background.")
         }
     }
     private val profileImagePicker = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
@@ -163,14 +169,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
             val hasVideo = videoFile?.isFile == true && videoFile.length() > 0L
             val hasImage = imageFile?.isFile == true && imageFile.length() > 0L
             val hasIconImage = iconFile?.isFile == true && iconFile.length() > 0L
-            val hasIconColorChange = selectedProfileColor != android.graphics.Color.WHITE
-            if (!hasVideo && !hasImage && !hasIconImage && !hasIconColorChange) {
-                toast("Choose a wallpaper or customise the profile icon first.")
-                return@setOnClickListener
-            }
-
-            // This action applies whichever profile visuals are configured, including icon-only
-            // changes. Persist the visual fields, then let MainActivity render them on resume.
+            // Applying with no image/video restores the default BIFROST background.
+            // Persist this profile before returning so MainActivity can render the
+            // chosen in-app background rather than launching Android's wallpaper UI.
             profile.put("profileIconColor", selectedProfileColor)
             prefs.edit()
                 .putString("presets_json", presets.toString())
@@ -475,6 +476,13 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 }
                 val target = if (existingIndex != null) presets.optJSONObject(existingIndex) else JSONObject()
                 if (target == null) { toast("Could not create the profile."); return@setPositiveButton }
+                // When saving under a new name, carry the selected profile's wallpaper
+                // metadata across; otherwise the imported background is silently lost.
+                if (existingIndex == null && current != null) {
+                    listOf("wallpaperImageFileName", "wallpaperVideoFileName").forEach { key ->
+                        if (current.has(key)) target.put(key, current.opt(key))
+                    }
+                }
                 target.put("name", name)
                 if (restoreDefaultsPending) {
                     target.put("color", android.graphics.Color.WHITE)
@@ -625,8 +633,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
             .setMessage("Remove this profile's selected image and video wallpaper and use the default BIFROST background?")
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Reset") { _, _ ->
-                val oldImage = profile.optString("wallpaperImageFileName").takeIf { it.isNotBlank() }
-                val oldVideo = profile.optString("wallpaperVideoFileName").takeIf { it.isNotBlank() }
                 profile.remove("wallpaperImageFileName")
                 profile.remove("wallpaperVideoFileName")
                 // Keep the original files intact until Save is pressed; Cancel/exit must discard this draft.
