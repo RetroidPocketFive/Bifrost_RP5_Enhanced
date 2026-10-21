@@ -262,23 +262,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
         bindingPreset = false
     }
 
-    override fun onResume() {
-        super.onResume()
-        // The artwork editor writes the existing preset JSON directly. Merge only
-        // its visual fields back into this draft so pending theme/profile edits survive.
-        val draft = presets.optJSONObject(selectedPreset) ?: return
-        val name = draft.optString("name")
-        if (name.isBlank()) return
-        val persisted = runCatching { JSONArray(prefs.getString("presets_json", "[]")) }.getOrDefault(JSONArray())
-        val latest = (0 until persisted.length())
-            .asSequence()
-            .mapNotNull { persisted.optJSONObject(it) }
-            .firstOrNull { it.optString("name").equals(name, ignoreCase = true) }
-            ?: return
-        listOf("icon", "customEmoji", "customImageFileName", "appIconPackageName").forEach { key ->
-            if (latest.has(key)) draft.put(key, latest.opt(key)) else draft.remove(key)
-        }
-    }
 
     private fun reloadPresets() {
         presets = runCatching { JSONArray(prefs.getString("presets_json", "[]")) }.getOrDefault(JSONArray())
