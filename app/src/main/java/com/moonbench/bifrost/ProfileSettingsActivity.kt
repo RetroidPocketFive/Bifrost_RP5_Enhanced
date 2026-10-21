@@ -387,7 +387,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     toast("Profile artwork changed. Press Save to keep it.")
                 }
             }
-            val density = resources.displayMetrics.density
             val frame = android.widget.FrameLayout(this).apply {
                 layoutParams = android.widget.LinearLayout.LayoutParams((42 * density).toInt(), (42 * density).toInt())
             }
