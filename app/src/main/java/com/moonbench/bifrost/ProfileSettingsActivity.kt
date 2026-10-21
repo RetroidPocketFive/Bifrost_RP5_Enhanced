@@ -180,7 +180,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
             val applied = when {
                 hasVideo -> "video wallpaper"
                 hasImage -> "image wallpaper"
-                hasIconImage && hasIconColorChange -> "icon image and colour"
                 hasIconImage -> "icon image"
                 else -> "icon colour"
             }
