@@ -259,6 +259,7 @@ class MainActivity : AppCompatActivity() {
         private const val APP_PROFILE_SYNC_INTERVAL_MS = 1200L
         private const val PREF_KEY_LAST_PRESET = "last_preset_name"
         private const val PREF_APP_PROFILE_INFO_SHOWN = "app_profile_info_shown"
+        const val EXTRA_PROFILE_ARTWORK_PRESET_NAME = "com.moonbench.bifrost.extra.PROFILE_ARTWORK_PRESET_NAME"
 
         // Note: this key is shared with PresetController for backward compatibility.
         // Do not change unless updating persistence logic across components.
@@ -991,9 +992,6 @@ class MainActivity : AppCompatActivity() {
         if (finishAfterProfileArtwork) finish()
     }
 
-    companion object {
-        const val EXTRA_PROFILE_ARTWORK_PRESET_NAME = "com.moonbench.bifrost.extra.PROFILE_ARTWORK_PRESET_NAME"
-    }
 
     private fun setupBackNavigationHandler() {
         onBackPressedDispatcher.addCallback(
