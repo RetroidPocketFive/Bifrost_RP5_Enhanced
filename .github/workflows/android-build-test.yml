@@ -6,6 +6,7 @@ name: Bifrost Android Test APK
     branches:
       - main
       - settings/header-design-system
+      - test/profile-artwork-relocation
     paths:
       - '**.gradle'
       - '**.gradle.kts'
