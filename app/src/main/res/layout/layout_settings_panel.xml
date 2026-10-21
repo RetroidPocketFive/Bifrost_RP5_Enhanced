@@ -190,6 +190,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/customizePresetArtworkButton"
+                android:visibility="gone"
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
