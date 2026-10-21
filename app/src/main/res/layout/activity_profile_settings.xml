@@ -178,19 +178,9 @@
                     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="PROFILE ICON" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Choose an image or colour to identify this saved profile in the preset carousel." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="8dp">
-                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconImageButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choose Image" android:textSize="12sp" app:cornerRadius="10dp"/>
-                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconColorButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:text="Choose Colour" android:textSize="12sp" app:cornerRadius="10dp"/>
-                        </LinearLayout>
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/profileSettingsArtworkButton"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Customize Artwork"
-                            android:contentDescription="Customize the selected profile's preset artwork"
-                            app:cornerRadius="10dp" />
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconImageButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" android:text="Choose Image" android:textSize="12sp" app:cornerRadius="10dp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconColorButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Choose Colour" app:cornerRadius="10dp"/>
+                        <include layout="@layout/sheet_preset_artwork" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
                 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
