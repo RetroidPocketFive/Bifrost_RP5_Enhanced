@@ -99,6 +99,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         target.remove("customEmoji")
         target.put("customImageFileName", fileName)
         target.remove("appIconPackageName")
+        renderProfileArtworkEditor()
         toast("Profile icon image selected. Press Save to keep this change.")
     }
 
@@ -136,18 +137,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.profileSettingsDeleteButton).setOnClickListener { deleteSelectedPreset() }
 
         findViewById<MaterialButton>(R.id.profileSettingsIconColorButton).setOnClickListener { chooseProfileColor() }
-        findViewById<MaterialButton>(R.id.profileSettingsArtworkButton).setOnClickListener {
-            val current = presets.optJSONObject(selectedPreset)
-            val name = current?.optString("name")?.takeIf { it.isNotBlank() }
-            if (name == null) {
-                toast("Create or select a saved profile first.")
-                return@setOnClickListener
-            }
-            startActivity(
-                Intent(this, MainActivity::class.java)
-                    .putExtra(MainActivity.EXTRA_PROFILE_ARTWORK_PRESET_NAME, name)
-            )
-        }
+        setupProfileArtworkEditor()
+
         findViewById<MaterialButton>(R.id.profileSettingsPickVideoButton).setOnClickListener {
             videoWallpaperPicker.launch(arrayOf("video/*"))
         }
@@ -302,6 +293,120 @@ class ProfileSettingsActivity : AppCompatActivity() {
         loadSelectedPreset()
     }
 
+
+    private fun setupProfileArtworkEditor() {
+        findViewById<MaterialButton>(R.id.profileSettingsIconImageButton).visibility = View.GONE
+        findViewById<MaterialButton>(R.id.presetArtworkUploadButton).setOnClickListener {
+            if (presets.optJSONObject(selectedPreset) == null) {
+                toast("Create or select a saved profile first.")
+            } else {
+                profileImagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        }
+        findViewById<MaterialButton>(R.id.presetArtworkApplyEmojiButton).setOnClickListener {
+            val input = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.presetArtworkEmojiInput)
+            val layout = findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.presetArtworkEmojiInputLayout)
+            val value = input.text?.toString()?.trim().orEmpty()
+            if (value.isBlank()) {
+                layout.error = "Enter an emoji or short symbol"
+                return@setOnClickListener
+            }
+            layout.error = null
+            val target = presets.optJSONObject(selectedPreset) ?: return@setOnClickListener
+            target.put("customEmoji", value)
+            target.remove("customImageFileName")
+            target.remove("appIconPackageName")
+            renderProfileArtworkEditor()
+            toast("Profile artwork changed. Press Save to keep it.")
+        }
+        findViewById<MaterialButton>(R.id.presetArtworkResetButton).setOnClickListener {
+            val target = presets.optJSONObject(selectedPreset) ?: return@setOnClickListener
+            target.remove("customEmoji")
+            target.remove("customImageFileName")
+            target.remove("appIconPackageName")
+            renderProfileArtworkEditor()
+            toast("Saved icon restored. Press Save to keep it.")
+        }
+        findViewById<MaterialButton>(R.id.presetArtworkCloseButton).visibility = View.GONE
+    }
+
+    private fun renderProfileArtworkEditor() {
+        val target = presets.optJSONObject(selectedPreset)
+        val title = findViewById<TextView>(R.id.presetArtworkTitle)
+        val nameView = findViewById<TextView>(R.id.presetArtworkPreviewName)
+        val imageView = findViewById<android.widget.ImageView>(R.id.presetArtworkPreviewImage)
+        val emojiView = findViewById<TextView>(R.id.presetArtworkPreviewEmoji)
+        val options = findViewById<android.widget.LinearLayout>(R.id.presetArtworkIconOptions)
+        val reset = findViewById<MaterialButton>(R.id.presetArtworkResetButton)
+        val emojiInput = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.presetArtworkEmojiInput)
+        if (target == null) {
+            title.text = "CUSTOMIZE PROFILE"
+            nameView.text = "No profile selected"
+            imageView.setImageDrawable(null)
+            emojiView.text = null
+            options.removeAllViews()
+            reset.visibility = View.GONE
+            return
+        }
+        val name = target.optString("name", "Profile")
+        title.text = "CUSTOMIZE ${name.uppercase()}"
+        nameView.text = name
+        val customEmoji = target.optString("customEmoji").takeIf { it.isNotBlank() }
+        if (emojiInput.text?.toString() != customEmoji.orEmpty()) emojiInput.setText(customEmoji.orEmpty())
+        val icon = PresetIcon.fromStoredName(target.optString("icon"))
+        val spec = PresetVisualSpec(
+            builtInIcon = icon,
+            customEmoji = customEmoji,
+            customImageFileName = target.optString("customImageFileName").takeIf { it.isNotBlank() },
+            appIconPackageName = target.optString("appIconPackageName").takeIf { it.isNotBlank() },
+            iconColor = target.optInt("profileIconColor", selectedProfileColor)
+        )
+        PresetVisuals.bind(this, spec, imageView, emojiView, (88 * resources.displayMetrics.density).toInt())
+        reset.visibility = if (!spec.customEmoji.isNullOrBlank() || !spec.customImageFileName.isNullOrBlank() || !spec.appIconPackageName.isNullOrBlank()) View.VISIBLE else View.GONE
+        options.removeAllViews()
+        PresetIcon.values().forEach { option ->
+            val selected = spec.customEmoji.isNullOrBlank() && spec.customImageFileName.isNullOrBlank() &&
+                spec.appIconPackageName.isNullOrBlank() && icon == option
+            val density = resources.displayMetrics.density
+            val card = com.google.android.material.card.MaterialCardView(this).apply {
+                layoutParams = android.widget.LinearLayout.LayoutParams((64 * density).toInt(), (64 * density).toInt()).apply { marginEnd = (10 * density).toInt() }
+                radius = 14 * density
+                cardElevation = 0f
+                setCardBackgroundColor(androidx.core.content.ContextCompat.getColor(this@ProfileSettingsActivity, R.color.bifrost_surface))
+                setStrokeColor(androidx.core.content.ContextCompat.getColor(this@ProfileSettingsActivity, if (selected) R.color.bifrost_accent else R.color.bifrost_text_secondary))
+                strokeWidth = if (selected) (2 * density).toInt() else (1 * density).toInt()
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    target.put("icon", option.name)
+                    target.remove("customEmoji")
+                    target.remove("customImageFileName")
+                    target.remove("appIconPackageName")
+                    findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.presetArtworkEmojiInputLayout).error = null
+                    renderProfileArtworkEditor()
+                    toast("Profile artwork changed. Press Save to keep it.")
+                }
+            }
+            val density = resources.displayMetrics.density
+            val frame = android.widget.FrameLayout(this).apply {
+                layoutParams = android.widget.LinearLayout.LayoutParams((42 * density).toInt(), (42 * density).toInt())
+            }
+            val optionImage = android.widget.ImageView(this)
+            val optionEmoji = TextView(this).apply { gravity = android.view.Gravity.CENTER; textSize = 22f; visibility = View.GONE }
+            frame.addView(optionImage, android.widget.FrameLayout.LayoutParams(-1, -1))
+            frame.addView(optionEmoji, android.widget.FrameLayout.LayoutParams(-1, -1))
+            PresetVisuals.bind(this, PresetVisualSpec(option), optionImage, optionEmoji, (42 * density).toInt())
+            val content = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER
+                setPadding((8 * density).toInt(), (8 * density).toInt(), (8 * density).toInt(), (8 * density).toInt())
+                addView(frame)
+            }
+            card.addView(content)
+            options.addView(card)
+        }
+    }
+
     private fun restoreSelectedPresetDefaults() {
         val profile = presets.optJSONObject(selectedPreset) ?: run {
             toast("Select a saved profile first.")
@@ -326,6 +431,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 intensity.progress = 255
                 singleColorSwitch.isChecked = false
                 selectedProfileColor = android.graphics.Color.WHITE
+                presets.optJSONObject(selectedPreset)?.put("profileIconColor", selectedProfileColor)
+                renderProfileArtworkEditor()
                 applySettingsTheme("classic")
                 bindingPreset = false
                 toast("Defaults shown. Press Save to keep these changes; exit without saving to discard them.")
@@ -362,6 +469,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             ?: prefs.getBoolean("colored_logo_enabled", false)
         applySettingsTheme(themeId ?: "classic")
         bindingPreset = false
+        renderProfileArtworkEditor()
     }
 
     private fun saveSelectedPreset() {
@@ -483,7 +591,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
         val names = arrayOf("White", "Red", "Green", "Blue", "Purple", "Cyan", "Yellow")
         AlertDialog.Builder(this).setTitle("Profile icon colour").setItems(names) { _, which ->
             selectedProfileColor = colors[which]
-            val p = presets.optJSONObject(selectedPreset)
+            presets.optJSONObject(selectedPreset)?.put("profileIconColor", selectedProfileColor)
+            renderProfileArtworkEditor()
             toast("Profile icon colour selected. Press Save to keep this change.")
         }.show()
     }
