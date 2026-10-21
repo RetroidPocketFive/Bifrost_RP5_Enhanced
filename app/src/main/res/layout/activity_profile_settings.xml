@@ -182,6 +182,15 @@
                             <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconImageButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choose Image" android:textSize="12sp" app:cornerRadius="10dp"/>
                             <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconColorButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:text="Choose Colour" android:textSize="12sp" app:cornerRadius="10dp"/>
                         </LinearLayout>
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/profileSettingsArtworkButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="Customize Artwork"
+                            android:contentDescription="Customize the selected profile's preset artwork"
+                            app:cornerRadius="10dp" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
                 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
