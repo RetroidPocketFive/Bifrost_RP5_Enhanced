@@ -6,7 +6,10 @@ import android.animation.ValueAnimator
 import android.Manifest
 import android.app.ActivityOptions
 import android.app.WallpaperManager
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.content.Intent
@@ -160,6 +163,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var homeContainer: View
     private lateinit var profileWallpaperContainer: FrameLayout
     private var profileWallpaperVideoView: VideoView? = null
+    private var profileWallpaperApplyReceiver: BroadcastReceiver? = null
     private lateinit var homeSettingsButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
     private lateinit var homeExitButton: MaterialButton
@@ -260,6 +264,9 @@ class MainActivity : AppCompatActivity() {
         private const val PREF_KEY_LAST_PRESET = "last_preset_name"
         private const val PREF_APP_PROFILE_INFO_SHOWN = "app_profile_info_shown"
         const val EXTRA_PROFILE_ARTWORK_PRESET_NAME = "com.moonbench.bifrost.extra.PROFILE_ARTWORK_PRESET_NAME"
+        const val ACTION_APPLY_PROFILE_WALLPAPER = "com.moonbench.bifrost.action.APPLY_PROFILE_WALLPAPER"
+        const val EXTRA_WALLPAPER_IMAGE = "wallpaper_image_file_name"
+        const val EXTRA_WALLPAPER_VIDEO = "wallpaper_video_file_name"
 
         // Note: this key is shared with PresetController for backward compatibility.
         // Do not change unless updating persistence logic across components.
@@ -723,6 +730,24 @@ class MainActivity : AppCompatActivity() {
         settingsOverlay = findViewById(R.id.settingsOverlay)
         homeContainer = findViewById(R.id.homeContainer)
         profileWallpaperContainer = findViewById(R.id.profileWallpaperContainer)
+        if (profileWallpaperApplyReceiver == null) {
+            profileWallpaperApplyReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent?.action != ACTION_APPLY_PROFILE_WALLPAPER) return
+                    applyProfileWallpaper(
+                        intent.getStringExtra(EXTRA_WALLPAPER_IMAGE).orEmpty(),
+                        intent.getStringExtra(EXTRA_WALLPAPER_VIDEO).orEmpty()
+                    )
+                }
+            }
+            val filter = IntentFilter(ACTION_APPLY_PROFILE_WALLPAPER)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(profileWallpaperApplyReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("DEPRECATION")
+                registerReceiver(profileWallpaperApplyReceiver, filter)
+            }
+        }
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
         findViewById<MaterialButton>(R.id.openLibrarySettingsButton).setOnClickListener {
@@ -2756,6 +2781,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        profileWallpaperApplyReceiver?.let { receiver ->
+            runCatching { unregisterReceiver(receiver) }
+        }
+        profileWallpaperApplyReceiver = null
+
         super.onDestroy()
         if (!isAppInitialized) return
         prefs.unregisterOnSharedPreferenceChangeListener(liveWallpaperPrefsListener)
