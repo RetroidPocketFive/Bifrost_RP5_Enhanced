@@ -484,11 +484,12 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 }
                 val target = if (existingIndex != null) presets.optJSONObject(existingIndex) else JSONObject()
                 if (target == null) { toast("Could not create the profile."); return@setPositiveButton }
-                // When saving under a new name, carry the selected profile's wallpaper
-                // metadata across; otherwise the imported background is silently lost.
-                if (existingIndex == null && current != null) {
+                // Carry the wallpaper draft from the profile being edited whenever the
+                // save target is a different profile. This also handles saving over an
+                // existing profile name, not only creating a brand-new name.
+                if (current != null && target !== current) {
                     listOf("wallpaperImageFileName", "wallpaperVideoFileName").forEach { key ->
-                        if (current.has(key)) target.put(key, current.opt(key))
+                        if (current.has(key)) target.put(key, current.opt(key)) else target.remove(key)
                     }
                 }
                 target.put("name", name)
@@ -552,7 +553,17 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 persistPresets()
                 restoreDefaultsPending = false
                 reloadPresets()
-                toast("Profile '$name' saved.")
+
+                // Saving a profile also applies its BIFROST in-app background.
+                // Keep Profile Settings open; MainActivity updates its background
+                // through the package-scoped receiver and reads the saved filenames.
+                sendBroadcast(
+                    Intent(MainActivity.ACTION_APPLY_PROFILE_WALLPAPER)
+                        .setPackage(packageName)
+                        .putExtra(MainActivity.EXTRA_WALLPAPER_IMAGE, target.optString("wallpaperImageFileName", ""))
+                        .putExtra(MainActivity.EXTRA_WALLPAPER_VIDEO, target.optString("wallpaperVideoFileName", ""))
+                )
+                toast("Profile '$name' saved and its BIFROST background applied.")
             }.show()
     }
 
