@@ -68,7 +68,7 @@
                 <FrameLayout
                     android:layout_width="88dp"
                     android:layout_height="88dp"
-                    android:background="@drawable/color_preview_bg"
+                    android:background="@drawable/profile_icon_preview_bg"
                     android:foregroundGravity="center">
 
                     <ImageView

@@ -15,4 +15,8 @@
 
     <color name="bifrost_accent">#6366F1</color>
     <color name="bifrost_accent_light">#818CF8</color>
+    <!-- Shared semantic tokens for the Profile Settings shell. -->
+    <color name="bifrost_border">#252E48</color>
+    <color name="bifrost_selected">#3435A5</color>
+    <color name="bifrost_error">#F06475</color>
 </resources>

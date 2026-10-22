@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="@dimen/bifrost_screen_padding"
+    android:background="@color/bifrost_bg">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card"
+        app:cardCornerRadius="18dp" app:cardElevation="0dp"
+        app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="68dp" android:gravity="center_vertical" android:orientation="horizontal"
+            android:padding="10dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/profileSettingsExitButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="44dp" android:layout_height="44dp" android:minWidth="44dp"
+                android:minHeight="44dp" android:padding="0dp" android:text="‹" android:textSize="28sp"
+                android:textColor="@color/bifrost_text" android:contentDescription="Exit Profile Settings"
+                app:cornerRadius="12dp" app:strokeColor="@color/bifrost_border"/>
+            <ImageView android:layout_width="36dp" android:layout_height="36dp"
+                android:layout_marginStart="12dp" android:layout_marginEnd="12dp"
+                android:contentDescription="BIFROST logo" android:src="@mipmap/ic_launcher" android:scaleType="fitCenter"/>
+            <View android:layout_width="1dp" android:layout_height="40dp"
+                android:layout_marginEnd="12dp" android:background="@color/bifrost_border"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="PROFILE SETTINGS" android:textColor="@color/bifrost_text"
+                    android:textSize="20sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp" android:text="Configure the selected preset and its behaviour."
+                    android:textColor="@color/bifrost_text_secondary" android:textSize="13sp" android:maxLines="2"/>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp"
+        app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="16dp" app:cardElevation="0dp"
+        app:strokeColor="@color/bifrost_border" app:strokeWidth="1dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="8dp">
+            <Spinner android:id="@+id/profileSettingsPresetSpinner" android:layout_width="match_parent"
+                android:layout_height="44dp" android:contentDescription="Select profile"
+                android:backgroundTint="@color/bifrost_accent"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" android:orientation="horizontal" android:gravity="center" android:weightSum="4">
+                <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsSaveButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp"
+                    android:layout_height="44dp" android:layout_weight="1" android:layout_marginEnd="4dp"
+                    android:minWidth="0dp" android:text="Save" android:textSize="13sp" android:textColor="@color/bifrost_text"
+                    app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsEditButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp"
+                    android:layout_height="44dp" android:layout_weight="1" android:layout_marginHorizontal="4dp"
+                    android:minWidth="0dp" android:text="Edit" android:textSize="13sp" android:textColor="@color/bifrost_text"
+                    app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsRestoreButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp"
+                    android:layout_height="44dp" android:layout_weight="1" android:layout_marginHorizontal="4dp"
+                    android:minWidth="0dp" android:text="Restore" android:textSize="13sp" android:textColor="@color/bifrost_text"
+                    app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsDeleteButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp"
+                    android:layout_height="44dp" android:layout_weight="1" android:layout_marginStart="4dp"
+                    android:minWidth="0dp" android:text="Delete" android:textSize="13sp" android:textColor="@color/bifrost_error"
+                    app:cornerRadius="12dp" app:strokeColor="@color/bifrost_error"/>
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp" android:orientation="horizontal" android:weightSum="3">
+        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsArtworkTab"
+            android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1" android:layout_marginEnd="4dp"
+            android:text="Characteristics" android:textSize="11sp" android:textColor="@color/bifrost_text"
+            app:cornerRadius="12dp" app:backgroundTint="@color/bifrost_selected" app:strokeColor="@color/bifrost_accent"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsThemesTab"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="44dp"
+            android:layout_weight="1" android:layout_marginHorizontal="4dp" android:text="Theme" android:textSize="12sp"
+            android:textColor="@color/bifrost_text" app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsWallpaperTab"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="44dp"
+            android:layout_weight="1" android:layout_marginStart="4dp" android:text="Blank" android:textSize="12sp"
+            android:textColor="@color/bifrost_text" app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
+    </LinearLayout>
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:fillViewport="false" android:clipToPadding="false" android:scrollbars="vertical">
+        <FrameLayout android:id="@+id/profileSettingsContentHost" android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout android:id="@+id/profileSettingsCharacteristicsContent" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="vertical">
+                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="PERFORMANCE PROFILE"
+                            android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp" android:letterSpacing="0.05"/>
+                        <Spinner android:id="@+id/profileSettingsPerformanceSpinner" android:layout_width="match_parent" android:layout_height="56dp"
+                            android:layout_marginTop="12dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp"
+                            android:contentDescription="Performance profile"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Choose the performance preset used to balance LED response and system load." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="12dp">
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="ANIMATION MODE"
+                            android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp" android:letterSpacing="0.05"/>
+                        <Spinner android:id="@+id/profileSettingsAnimationModeSpinner" android:layout_width="match_parent" android:layout_height="64dp"
+                            android:layout_marginTop="10dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp"
+                            android:contentDescription="Animation mode"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Select the animation pattern used by this profile." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
+                            android:text="Animation Viewing Profile" android:textColor="@color/bifrost_text" android:textSize="14sp"/>
+                        <Spinner android:id="@+id/profileSettingsViewingProfileSpinner" android:layout_width="match_parent" android:layout_height="56dp"
+                            android:layout_marginTop="8dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp"
+                            android:contentDescription="Animation Viewing Profile"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsSingleColorSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="SINGLE COLOR MODE" android:textColor="@color/bifrost_text"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Use one selected colour for the LED output instead of sampling multiple colours." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsScreenCaptureSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="USE SCREEN CAPTURE" android:textColor="@color/bifrost_text"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Capture on-screen colours for reactive ambient lighting. Android may request screen-capture permission." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp"
+                            android:text="ANIMATION PARAMETERS" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Tune how quickly the animation responds and how strongly colours are enhanced." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
+                            android:text="REACTIVITY" android:textColor="@color/bifrost_text_secondary" android:textSize="12sp" android:letterSpacing="0.08"/>
+                        <SeekBar android:id="@+id/profileSettingsReactivitySeekBar" android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" android:max="100" android:progress="50" android:progressTint="@color/bifrost_accent"
+                            android:thumbTint="@color/bifrost_accent_light"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Higher reactivity makes the lighting respond more quickly to changes in the source." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp"
+                            android:text="SATURATION BOOST" android:textColor="@color/bifrost_text_secondary" android:textSize="12sp" android:letterSpacing="0.08"/>
+                        <SeekBar android:id="@+id/profileSettingsSaturationSeekBar" android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" android:max="100" android:progress="0" android:progressTint="@color/bifrost_accent"
+                            android:thumbTint="@color/bifrost_accent_light"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Boosts colour intensity for more vivid LED output." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="BRIGHTNESS"
+                            android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp" android:letterSpacing="0.05"/>
+                        <SeekBar android:id="@+id/profileSettingsIntensitySeekBar" android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp" android:max="255" android:progress="255" android:progressTint="@color/bifrost_accent"
+                            android:thumbTint="@color/bifrost_accent_light"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Sets the maximum LED output brightness from 0 (off) to 255 (full brightness)." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/profileSettingsThemeContent" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
+                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="THEMES" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Choose the BIFROST interface colour scheme." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <Spinner android:id="@+id/profileSettingsThemeSpinner" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp"
+                            android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp" android:contentDescription="Themes"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsColoredLogoSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Colored Logo" android:textColor="@color/bifrost_text"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Use the coloured BIFROST logo in the app header." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp" app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="PROFILE ICON" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Choose an image or colour to identify this saved profile in the preset carousel." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconImageButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" android:text="Choose Image" android:textSize="12sp" app:cornerRadius="10dp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsIconColorButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Choose Colour" app:cornerRadius="10dp"/>
+                        <include layout="@layout/sheet_preset_artwork" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp" app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="14dp">
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="WALLPAPER" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Configure video wallpaper playback and its target frame rate." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Video Wallpaper" android:textColor="@color/bifrost_text" android:textSize="14sp"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsVideoWallpaperSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Enable video wallpaper" android:textColor="@color/bifrost_text" android:layout_marginTop="6dp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Enable the BIFROST live wallpaper feature. A video must be selected and activated through Android's wallpaper chooser." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal">
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsPickVideoButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Choose Video" android:textSize="12sp" app:cornerRadius="10dp"/>
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsPickImageWallpaperButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:text="Upload Image Wallpaper" android:textSize="11sp" app:cornerRadius="10dp"/>
+                        </LinearLayout>
+                        <LinearLayout android:id="@+id/profileSettingsWallpaperSelectionPreview" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+                            <ImageView android:id="@+id/profileSettingsWallpaperPreviewImage" android:layout_width="76dp" android:layout_height="56dp" android:scaleType="centerCrop" android:contentDescription="Selected wallpaper preview" android:background="@color/bifrost_surface"/>
+                            <TextView android:id="@+id/profileSettingsWallpaperPreviewName" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="10dp" android:textColor="@color/bifrost_text" android:textSize="12sp" android:maxLines="2" android:ellipsize="middle"/>
+                        </LinearLayout>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsApplyWallpaperButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Apply to BIFROST Background" app:cornerRadius="10dp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsResetWallpaperButton" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Reset Wallpaper to Default" app:cornerRadius="10dp" app:strokeColor="@color/bifrost_border"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="These files set the background behind the BIFROST home-screen interface, not Android system wallpaper. Choose an image or video; choosing one replaces the other. Press Save to keep the profile, then Apply to BIFROST Background. Video loops silently; MP4/H.264 up to 100 MB is recommended. Apply with no file selected to restore the default BIFROST background." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="TARGET FPS" android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Choose the target frame rate for video wallpaper playback. Higher values may use more power." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <Spinner android:id="@+id/profileSettingsTargetFpsSpinner" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp" android:contentDescription="Target FPS"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+            <FrameLayout android:id="@+id/profileSettingsBlankContent" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:visibility="gone"/>
+        </FrameLayout>
+    </ScrollView>
+</LinearLayout>
