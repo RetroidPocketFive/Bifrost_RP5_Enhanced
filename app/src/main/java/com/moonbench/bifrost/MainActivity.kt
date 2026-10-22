@@ -745,7 +745,7 @@ class MainActivity : AppCompatActivity() {
                 isClickable = false
                 isFocusable = false
             }
-            profileWallpaperContainer.addView(
+            findViewById<ViewGroup>(android.R.id.content).addView(
                 profileWallpaperDiagnosticView,
                 FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.WRAP_CONTENT,
