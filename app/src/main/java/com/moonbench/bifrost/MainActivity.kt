@@ -870,6 +870,8 @@ class MainActivity : AppCompatActivity() {
         animationSpinner = findViewById(R.id.animationSpinner)
         profileSpinner = findViewById(R.id.profileSpinner)
         presetSpinner = findViewById(R.id.presetSpinner)
+        // The profile selector belongs to profile-specific editing, not this app-wide menu.
+        presetSpinner.visibility = View.GONE
         themeSpinner = findViewById(R.id.themeSpinner)
         exportThemeButton = findViewById(R.id.exportThemeButton)
         importThemeButton = findViewById(R.id.importThemeButton)
@@ -1121,11 +1123,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupSettingsTabs() {
-        tabUiSettings.setOnClickListener { setSettingsTab(SettingsTab.UI) }
+        // BIFROST Settings is organised into three destinations. Existing screens are reused;
+        // no setting values or underlying feature implementations are changed.
+        tabUiSettings.text = "CALIBRATION"
+        tabBehaviorSettings.text = "SETTING"
+        tabThemesSettings.text = "IMPORT/EXPORT"
+        liveWallpaperTabButton.visibility = View.GONE
+
+        tabUiSettings.setOnClickListener {
+            startActivity(Intent(this, Rp5CalibrationMenuActivity::class.java))
+        }
         tabBehaviorSettings.setOnClickListener { setSettingsTab(SettingsTab.BEHAVIOR) }
-        tabThemesSettings.setOnClickListener { setSettingsTab(SettingsTab.THEMES) }
-        liveWallpaperTabButton.setOnClickListener { setSettingsTab(SettingsTab.LIVE_WALLPAPER) }
-        setSettingsTab(currentSettingsTab)
+        tabThemesSettings.setOnClickListener {
+            startActivity(Intent(this, BifrostLibrarySettingsActivity::class.java))
+        }
+        setSettingsTab(SettingsTab.BEHAVIOR)
     }
 
     private fun setSettingsTab(tab: SettingsTab) {
@@ -1150,7 +1162,7 @@ class MainActivity : AppCompatActivity() {
 
         settingsOwnershipHint.text = when (tab) {
             SettingsTab.UI -> "These controls tune the selected preset. When closing settings, choose Save to keep your changes or Don’t Save to discard them."
-            SettingsTab.BEHAVIOR -> "These controls affect Bifrost globally, including startup, system behaviour and app profiles."
+            SettingsTab.BEHAVIOR -> "Setting — app-wide behaviour and preferences. Calibration and Import/Export open their existing screens."
             SettingsTab.THEMES -> "Themes change the app's interface appearance, not the LED settings stored in a preset."
             SettingsTab.LIVE_WALLPAPER -> "Wallpaper playback settings are app-wide and remain separate from LED presets."
         }
