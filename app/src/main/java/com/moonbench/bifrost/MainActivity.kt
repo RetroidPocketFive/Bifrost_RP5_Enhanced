@@ -2206,7 +2206,7 @@ class MainActivity : AppCompatActivity() {
             }
             if (textureView.isAvailable) {
                 textureView.surfaceTexture?.let { surfaceTexture ->
-                    textureView.surfaceTextureListener.onSurfaceTextureAvailable(
+                    textureView.surfaceTextureListener?.onSurfaceTextureAvailable(
                         surfaceTexture, textureView.width, textureView.height
                     )
                 }
