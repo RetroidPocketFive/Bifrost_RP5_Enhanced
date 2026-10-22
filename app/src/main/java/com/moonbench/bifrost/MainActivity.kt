@@ -163,6 +163,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var homeContainer: View
     private lateinit var profileWallpaperContainer: FrameLayout
     private var profileWallpaperVideoView: VideoView? = null
+    private var profileWallpaperDiagnosticView: TextView? = null
     private var profileWallpaperApplyReceiver: BroadcastReceiver? = null
     private lateinit var homeSettingsButton: MaterialButton
     private lateinit var closeSettingsButton: MaterialButton
@@ -730,6 +731,32 @@ class MainActivity : AppCompatActivity() {
         settingsOverlay = findViewById(R.id.settingsOverlay)
         homeContainer = findViewById(R.id.homeContainer)
         profileWallpaperContainer = findViewById(R.id.profileWallpaperContainer)
+        if (profileWallpaperDiagnosticView == null) {
+            profileWallpaperDiagnosticView = TextView(this).apply {
+                text = "WP DIAG: READY"
+                textSize = 9f
+                setTextColor(Color.WHITE)
+                setPadding(8, 5, 8, 5)
+                background = GradientDrawable().apply {
+                    setColor(Color.rgb(25, 80, 180))
+                    cornerRadius = 8f
+                }
+                elevation = 24f
+                isClickable = false
+                isFocusable = false
+            }
+            profileWallpaperContainer.addView(
+                profileWallpaperDiagnosticView,
+                FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    FrameLayout.LayoutParams.WRAP_CONTENT,
+                    Gravity.BOTTOM or Gravity.END
+                ).apply {
+                    marginEnd = 10
+                    bottomMargin = 10
+                }
+            )
+        }
         if (profileWallpaperApplyReceiver == null) {
             profileWallpaperApplyReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
@@ -2042,8 +2069,33 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private fun updateProfileWallpaperDiagnostic(message: String, color: Int) {
+        runOnUiThread {
+            profileWallpaperDiagnosticView?.apply {
+                text = message
+                background = GradientDrawable().apply {
+                    setColor(color)
+                    cornerRadius = 8f
+                }
+                visibility = View.VISIBLE
+            }
+            Log.i("BifrostWallpaperDiag", message)
+        }
+    }
+
     private fun applyProfileWallpaper(imageFileName: String, videoFileName: String) {
+        val videoCandidate = videoFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        val imageCandidate = imageFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
+        updateProfileWallpaperDiagnostic(
+            "WP DIAG: APPLY img=${imageFileName.ifBlank { "-" }} vid=${videoFileName.ifBlank { "-" }}",
+            Color.rgb(25, 80, 180)
+        )
+        Log.i(
+            "BifrostWallpaperDiag",
+            "apply request: imageName='$imageFileName', imageExists=${imageCandidate?.isFile}, imageBytes=${imageCandidate?.length()}, videoName='$videoFileName', videoExists=${videoCandidate?.isFile}, videoBytes=${videoCandidate?.length()}"
+        )
         if (!::homeContainer.isInitialized || !::profileWallpaperContainer.isInitialized) {
+            updateProfileWallpaperDiagnostic("WP DIAG: VIEWS NOT READY", Color.RED)
             Log.w("BifrostWallpaper", "Cannot apply wallpaper before the home views are initialized")
             return
         }
@@ -2063,9 +2115,11 @@ class MainActivity : AppCompatActivity() {
                     player.isLooping = true
                     player.setVolume(0f, 0f)
                     start()
+                    updateProfileWallpaperDiagnostic("WP DIAG: VIDEO PLAYING ${videoFile.name}", Color.rgb(0, 125, 65))
                     Log.i("BifrostWallpaper", "Playing profile video wallpaper: ${videoFile.name}")
                 }
                 setOnErrorListener { _, what, extra ->
+                    updateProfileWallpaperDiagnostic("WP DIAG: VIDEO ERROR $what/$extra", Color.RED)
                     Log.e(
                         "BifrostWallpaper",
                         "Video wallpaper playback failed (file=${videoFile.name}, what=$what, extra=$extra)"
@@ -2089,6 +2143,7 @@ class MainActivity : AppCompatActivity() {
             )
             container.background = ColorDrawable(Color.BLACK)
             homeContainer.setBackgroundColor(Color.TRANSPARENT)
+            updateProfileWallpaperDiagnostic("WP DIAG: VIDEO LOADING ${videoFile.name}", Color.rgb(180, 105, 0))
             videoView.setVideoURI(Uri.fromFile(videoFile))
             return
         }
@@ -2103,12 +2158,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (bitmap != null) {
+            updateProfileWallpaperDiagnostic("WP DIAG: IMAGE DECODE OK ${bitmap.width}x${bitmap.height}", Color.rgb(0, 125, 65))
             container.background = BitmapDrawable(resources, bitmap).apply {
                 gravity = Gravity.FILL
             }
             homeContainer.setBackgroundColor(Color.TRANSPARENT)
             Log.i("BifrostWallpaper", "Applied profile image wallpaper: ${imageFile?.name}")
         } else {
+            val failure = when {
+                videoFileName.isNotBlank() && (videoCandidate == null || !videoCandidate.isFile || videoCandidate.length() <= 0L) ->
+                    "WP DIAG: VIDEO FILE MISSING"
+                imageFileName.isNotBlank() && (imageCandidate == null || !imageCandidate.isFile || imageCandidate.length() <= 0L) ->
+                    "WP DIAG: IMAGE FILE MISSING"
+                imageFileName.isNotBlank() -> "WP DIAG: IMAGE DECODE FAILED"
+                videoFileName.isNotBlank() -> "WP DIAG: VIDEO FILE MISSING"
+                else -> "WP DIAG: NO WALLPAPER SELECTED"
+            }
+            updateProfileWallpaperDiagnostic(failure, Color.RED)
             container.background = ColorDrawable(selectedUiTheme.backgroundColor)
             homeContainer.setBackgroundColor(Color.TRANSPARENT)
             if (imageFileName.isNotBlank()) {
