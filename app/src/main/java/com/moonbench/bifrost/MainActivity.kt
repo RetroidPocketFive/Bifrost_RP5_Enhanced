@@ -19,6 +19,10 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.ColorDrawable
+import android.graphics.SurfaceTexture
+import android.media.MediaPlayer
+import android.view.Surface
+import android.view.TextureView
 import android.hardware.display.DisplayManager
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
@@ -50,7 +54,6 @@ import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
-import android.widget.VideoView
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 import android.view.animation.LinearInterpolator
@@ -162,7 +165,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var settingsOverlay: View
     private lateinit var homeContainer: View
     private lateinit var profileWallpaperContainer: FrameLayout
-    private var profileWallpaperVideoView: VideoView? = null
+    private var profileWallpaperVideoView: TextureView? = null
+    private var profileWallpaperMediaPlayer: MediaPlayer? = null
+    private var profileWallpaperSurface: Surface? = null
     private var profileWallpaperDiagnosticView: TextView? = null
     private var profileWallpaperApplyReceiver: BroadcastReceiver? = null
     private lateinit var homeSettingsButton: MaterialButton
@@ -2083,6 +2088,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun releaseProfileWallpaperVideo() {
+        val player = profileWallpaperMediaPlayer
+        profileWallpaperMediaPlayer = null
+        if (player != null) {
+            runCatching { player.setOnPreparedListener(null) }
+            runCatching { player.setOnErrorListener(null) }
+            runCatching { player.stop() }
+            runCatching { player.reset() }
+            runCatching { player.release() }
+        }
+        profileWallpaperSurface?.let { surface -> runCatching { surface.release() } }
+        profileWallpaperSurface = null
+    }
+
     private fun applyProfileWallpaper(imageFileName: String, videoFileName: String) {
         val videoCandidate = videoFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
         val imageCandidate = imageFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
@@ -2101,40 +2120,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         val container = profileWallpaperContainer
+        releaseProfileWallpaperVideo()
         profileWallpaperVideoView?.let { old ->
-            runCatching { old.stopPlayback() }
             (old.parent as? ViewGroup)?.removeView(old)
         }
         profileWallpaperVideoView = null
 
         val videoFile = videoFileName.takeIf { it.isNotBlank() }?.let { File(filesDir, it) }
         if (videoFile != null && videoFile.isFile && videoFile.length() > 0L) {
-            val videoView = VideoView(this).apply {
-                setBackgroundColor(Color.BLACK)
-                setOnPreparedListener { player ->
-                    player.isLooping = true
-                    player.setVolume(0f, 0f)
-                    start()
-                    updateProfileWallpaperDiagnostic("WP DIAG: VIDEO PLAYING ${videoFile.name}", Color.rgb(0, 125, 65))
-                    Log.i("BifrostWallpaper", "Playing profile video wallpaper: ${videoFile.name}")
-                }
-                setOnErrorListener { _, what, extra ->
-                    updateProfileWallpaperDiagnostic("WP DIAG: VIDEO ERROR $what/$extra", Color.RED)
-                    Log.e(
-                        "BifrostWallpaper",
-                        "Video wallpaper playback failed (file=${videoFile.name}, what=$what, extra=$extra)"
-                    )
-                    Toast.makeText(
-                        this@MainActivity,
-                        "BIFROST could not play this profile's video wallpaper. Try an MP4/H.264 file.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    true
-                }
-            }
-            profileWallpaperVideoView = videoView
+            val textureView = TextureView(this)
+            profileWallpaperVideoView = textureView
             container.addView(
-                videoView,
+                textureView,
                 0,
                 FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -2144,7 +2141,76 @@ class MainActivity : AppCompatActivity() {
             container.background = ColorDrawable(Color.BLACK)
             homeContainer.setBackgroundColor(Color.TRANSPARENT)
             updateProfileWallpaperDiagnostic("WP DIAG: VIDEO LOADING ${videoFile.name}", Color.rgb(180, 105, 0))
-            videoView.setVideoURI(Uri.fromFile(videoFile))
+
+            textureView.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
+                override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
+                    if (profileWallpaperVideoView !== textureView) return
+                    releaseProfileWallpaperVideo()
+                    val outputSurface = Surface(surfaceTexture)
+                    profileWallpaperSurface = outputSurface
+                    val player = MediaPlayer()
+                    profileWallpaperMediaPlayer = player
+                    try {
+                        player.isLooping = true
+                        player.setVolume(0f, 0f)
+                        player.setSurface(outputSurface)
+                        player.setOnPreparedListener { preparedPlayer ->
+                            if (profileWallpaperMediaPlayer !== preparedPlayer) return@setOnPreparedListener
+                            runCatching {
+                                preparedPlayer.setVideoScalingMode(
+                                    MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+                                )
+                            }.onFailure { scalingError ->
+                                Log.w("BifrostWallpaper", "Video scaling mode not supported", scalingError)
+                            }
+                            preparedPlayer.start()
+                            updateProfileWallpaperDiagnostic(
+                                "WP DIAG: VIDEO RENDERING ${videoFile.name}",
+                                Color.rgb(0, 125, 65)
+                            )
+                            Log.i("BifrostWallpaper", "Rendering profile video wallpaper via TextureView: ${videoFile.name}")
+                        }
+                        player.setOnErrorListener { failedPlayer, what, extra ->
+                            if (profileWallpaperMediaPlayer === failedPlayer) {
+                                updateProfileWallpaperDiagnostic("WP DIAG: VIDEO ERROR $what/$extra", Color.RED)
+                                Log.e(
+                                    "BifrostWallpaper",
+                                    "Video wallpaper playback failed (file=${videoFile.name}, what=$what, extra=$extra)"
+                                )
+                                releaseProfileWallpaperVideo()
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "BIFROST could not play this profile's video wallpaper. Try an MP4/H.264 file.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                            true
+                        }
+                        player.setDataSource(videoFile.absolutePath)
+                        player.prepareAsync()
+                    } catch (e: Exception) {
+                        updateProfileWallpaperDiagnostic("WP DIAG: VIDEO SETUP FAILED", Color.RED)
+                        Log.e("BifrostWallpaper", "Unable to initialize profile video wallpaper", e)
+                        releaseProfileWallpaperVideo()
+                    }
+                }
+
+                override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) = Unit
+
+                override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
+                    releaseProfileWallpaperVideo()
+                    return true
+                }
+
+                override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) = Unit
+            }
+            if (textureView.isAvailable) {
+                textureView.surfaceTexture?.let { surfaceTexture ->
+                    textureView.surfaceTextureListener.onSurfaceTextureAvailable(
+                        surfaceTexture, textureView.width, textureView.height
+                    )
+                }
+            }
             return
         }
 
