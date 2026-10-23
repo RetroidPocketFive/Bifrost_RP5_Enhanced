@@ -224,19 +224,25 @@
                             android:textSize="14sp" android:textStyle="bold"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                             android:layout_marginTop="4dp" android:layout_marginBottom="12dp"
-                            android:text="Create and save named left/right screen regions. Animation Viewing Profile uses the saved region profile selected in Characteristics."
+                            android:text="Choose the background used by the existing Sample Area editor."
                             android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
-                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsOpenSampleAreaButton"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
-                            android:layout_height="48dp" android:text="Open Sample Area Editor"
-                            android:contentDescription="Open the editor for live or still screen sampling areas"
-                            android:tooltipText="Adjust and save screen sampling regions" app:cornerRadius="12dp"
-                            app:strokeColor="@color/bifrost_accent"/>
                         <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsColourWheelButton"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
-                            android:layout_height="48dp" android:layout_marginTop="8dp" android:text="Colour Wheel Test"
-                            android:contentDescription="Open the colour wheel sample area test"
-                            android:tooltipText="Test sample-area colour response using a colour wheel" app:cornerRadius="12dp"
+                            android:layout_height="48dp" android:text="Color wheel"
+                            android:contentDescription="Open Edit Sample Area with the color wheel background"
+                            android:tooltipText="Use the existing color wheel background" app:cornerRadius="12dp"
+                            app:strokeColor="@color/bifrost_accent"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsStillImageButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
+                            android:layout_height="48dp" android:layout_marginTop="8dp" android:text="Still image"
+                            android:contentDescription="Open Edit Sample Area with a selected still image background"
+                            android:tooltipText="Choose a still image as the background" app:cornerRadius="12dp"
+                            app:strokeColor="@color/bifrost_accent"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsLiveImageButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
+                            android:layout_height="48dp" android:layout_marginTop="8dp" android:text="Live image"
+                            android:contentDescription="Open Edit Sample Area with a live screen capture background"
+                            android:tooltipText="Capture the current screen as the background" app:cornerRadius="12dp"
                             app:strokeColor="@color/bifrost_accent"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
