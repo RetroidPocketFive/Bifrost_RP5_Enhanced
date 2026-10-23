@@ -276,7 +276,7 @@
             android:layout_height="40dp"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:text="RESTORE"
+            android:text="RESTORE DEFAULTS"
             android:textSize="11sp"
             android:letterSpacing="0.05"
             android:textColor="@color/bifrost_text"
