@@ -47,8 +47,8 @@
                 android:backgroundTint="@color/bifrost_surface"
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/bifrost_accent"
-                app:strokeWidth="1dp" /
-                android:visibility="gone">
+                app:strokeWidth="1dp" 
+                android:visibility="gone"/>
 
             <ImageView
                 android:id="@+id/settingsHeaderLogo"
@@ -121,8 +121,8 @@
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp" /
-                android:visibility="gone">
+                android:paddingBottom="8dp" 
+                android:visibility="gone"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/savePresetButton"
@@ -144,8 +144,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Save"
-                android:tooltipText="Save" /
-                android:visibility="gone">
+                android:tooltipText="Save" 
+                android:visibility="gone"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/modifyPresetButton"
@@ -167,8 +167,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Edit"
-                android:tooltipText="Edit" /
-                android:visibility="gone">
+                android:tooltipText="Edit" 
+                android:visibility="gone"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/deletePresetButton"
@@ -190,8 +190,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Delete"
-                android:tooltipText="Delete" /
-                android:visibility="gone">
+                android:tooltipText="Delete" 
+                android:visibility="gone"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/customizePresetArtworkButton"
@@ -264,8 +264,8 @@
             app:strokeWidth="1dp"
             app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Backup"
-                android:tooltipText="Backup" /
-                android:visibility="gone">
+                android:tooltipText="Backup" 
+                android:visibility="gone"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/importPresetsButton"
@@ -1995,8 +1995,8 @@
         android:backgroundTint="@color/bifrost_surface"
         app:cornerRadius="10dp"
         app:strokeWidth="1dp"
-        app:strokeColor="@color/bifrost_accent" /
-                android:visibility="gone">
+        app:strokeColor="@color/bifrost_accent" 
+                android:visibility="gone"/>
                         
                             <com.google.android.material.button.MaterialButton
                         android:id="@+id/pluginStoreButton"
