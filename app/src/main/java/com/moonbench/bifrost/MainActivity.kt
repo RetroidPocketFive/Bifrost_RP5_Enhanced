@@ -1125,15 +1125,15 @@ class MainActivity : AppCompatActivity() {
     private fun setupSettingsTabs() {
         // BIFROST Settings is organised into three destinations. Existing screens are reused;
         // no setting values or underlying feature implementations are changed.
-        tabUiSettings.text = "CALIBRATION"
-        tabBehaviorSettings.text = "SETTING"
+        tabUiSettings.text = "SETTING"
+        tabBehaviorSettings.text = "CALIBRATION"
         tabThemesSettings.text = "IMPORT/EXPORT"
         liveWallpaperTabButton.visibility = View.GONE
 
-        tabUiSettings.setOnClickListener {
+        tabUiSettings.setOnClickListener { setSettingsTab(SettingsTab.BEHAVIOR) }
+        tabBehaviorSettings.setOnClickListener {
             startActivity(Intent(this, Rp5CalibrationMenuActivity::class.java))
         }
-        tabBehaviorSettings.setOnClickListener { setSettingsTab(SettingsTab.BEHAVIOR) }
         tabThemesSettings.setOnClickListener {
             startActivity(Intent(this, BifrostLibrarySettingsActivity::class.java))
         }
