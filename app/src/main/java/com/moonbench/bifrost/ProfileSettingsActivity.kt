@@ -151,8 +151,15 @@ class ProfileSettingsActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.profileSettingsIconColorButton).setOnClickListener { chooseProfileColor() }
         setupProfileArtworkEditor()
 
-        findViewById<MaterialButton>(R.id.profileSettingsOpenSampleAreaButton).setOnClickListener {
-            startActivity(Intent(this, SamplingEditorActivity::class.java))
+        // Reuse the existing Sample Area screen for all three background sources.
+        // This menu only selects the source; it does not launch the separate calibration flow.
+        findViewById<MaterialButton>(R.id.profileSettingsLiveImageButton).setOnClickListener {
+            startActivity(Intent(this, EditSampleAreaActivity::class.java)
+                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_LIVE))
+        }
+        findViewById<MaterialButton>(R.id.profileSettingsStillImageButton).setOnClickListener {
+            startActivity(Intent(this, EditSampleAreaActivity::class.java)
+                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_STILL))
         }
         findViewById<MaterialButton>(R.id.profileSettingsColourWheelButton).setOnClickListener {
             startActivity(Intent(this, EditSampleAreaActivity::class.java)
