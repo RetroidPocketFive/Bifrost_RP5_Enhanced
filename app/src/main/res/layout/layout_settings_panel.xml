@@ -32,7 +32,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/settingsHeaderBackButton"
-                android:visibility="gone"
+                
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:minWidth="48dp"
@@ -48,8 +48,8 @@
                 android:backgroundTint="@color/bifrost_surface"
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/bifrost_accent"
-                app:strokeWidth="1dp" android:visibility="gone"
-                />
+                app:strokeWidth="1dp" 
+                 android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/settingsHeaderLogo"
@@ -126,7 +126,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/savePresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -145,12 +145,12 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Save"
-                android:tooltipText="Save" android:visibility="gone"
-                />
+                android:tooltipText="Save" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/modifyPresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -169,12 +169,12 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Edit"
-                android:tooltipText="Edit" android:visibility="gone"
-                />
+                android:tooltipText="Edit" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/deletePresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -193,8 +193,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Delete"
-                android:tooltipText="Delete" android:visibility="gone"
-                />
+                android:tooltipText="Delete" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/customizePresetArtworkButton"
@@ -254,7 +254,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/settingsHeaderBackButton"
-                android:visibility="gone"
+                
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:minWidth="48dp"
@@ -270,8 +270,8 @@
                 android:backgroundTint="@color/bifrost_surface"
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/bifrost_accent"
-                app:strokeWidth="1dp" android:visibility="gone"
-                />
+                app:strokeWidth="1dp" 
+                 android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/settingsHeaderLogo"
@@ -348,7 +348,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/savePresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -367,12 +367,12 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Save"
-                android:tooltipText="Save" android:visibility="gone"
-                />
+                android:tooltipText="Save" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/modifyPresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -391,12 +391,12 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Edit"
-                android:tooltipText="Edit" android:visibility="gone"
-                />
+                android:tooltipText="Edit" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/deletePresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -415,8 +415,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Delete"
-                android:tooltipText="Delete" android:visibility="gone"
-                />
+                android:tooltipText="Delete" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/customizePresetArtworkButton"
@@ -773,7 +773,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/settingsHeaderBackButton"
-                android:visibility="gone"
+                
                 android:layout_width="44dp"
                 android:layout_height="44dp"
                 android:minWidth="48dp"
@@ -789,8 +789,8 @@
                 android:backgroundTint="@color/bifrost_surface"
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/bifrost_accent"
-                app:strokeWidth="1dp" android:visibility="gone"
-                />
+                app:strokeWidth="1dp" 
+                 android:visibility="gone" />
 
             <ImageView
                 android:id="@+id/settingsHeaderLogo"
@@ -867,7 +867,7 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/savePresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -886,12 +886,12 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Save"
-                android:tooltipText="Save" android:visibility="gone"
-                />
+                android:tooltipText="Save" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/modifyPresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -910,12 +910,12 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Edit"
-                android:tooltipText="Edit" android:visibility="gone"
-                />
+                android:tooltipText="Edit" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/deletePresetButton"
-            android:visibility="gone"
+            
                 android:layout_width="118dp"
                 android:layout_height="48dp"
                 android:layout_marginStart="6dp"
@@ -934,8 +934,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Delete"
-                android:tooltipText="Delete" android:visibility="gone"
-                />
+                android:tooltipText="Delete" 
+                 android:visibility="gone" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/customizePresetArtworkButton"
@@ -2974,11 +2974,11 @@
 
                             <com.google.android.material.button.MaterialButton
         android:id="@+id/openLibrarySettingsButton"
-            android:visibility="gone"
+            
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_marginTop="8dp"
-        android:text="LIBRARY &amp; IMPORT / EXPORT" android:visibility="gone"
+        android:text="LIBRARY &amp; IMPORT / EXPORT" 
         android:textColor="@color/bifrost_text"
         android:textSize="11sp"
         android:contentDescription="Open library folder and import/export settings"
@@ -2986,7 +2986,7 @@
         android:backgroundTint="@color/bifrost_surface"
         app:cornerRadius="10dp"
         app:strokeWidth="1dp"
-        app:strokeColor="@color/bifrost_accent" />
+        app:strokeColor="@color/bifrost_accent"  android:visibility="gone" />
                         
                             <com.google.android.material.button.MaterialButton
                         android:id="@+id/pluginStoreButton"
