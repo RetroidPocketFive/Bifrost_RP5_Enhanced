@@ -276,12 +276,13 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(10), dp(12), dp(10))
         }
-        headerRow.addView(styledButton("EXIT") { finish() }.apply {
-            textSize = 12f
-            minWidth = dp(56)
-            contentDescription = "Exit Import/Export"
-            tooltipText = "Exit Import/Export"
-        }, LinearLayout.LayoutParams(dp(64), dp(48)))
+        headerRow.addView(styledButton("‹") { finish() }.apply {
+            textSize = 30f
+            minWidth = dp(48)
+            contentDescription = "Back"
+            tooltipText = "Back"
+            setPadding(0, 0, 0, dp(3))
+        }, LinearLayout.LayoutParams(dp(48), dp(48)))
         headerRow.addView(android.widget.ImageView(this).apply {
             setImageResource(R.mipmap.ic_launcher)
             contentDescription = "BIFROST logo"
@@ -386,7 +387,6 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             }
         }
         sections.addView(statusText)
-        sections.addView(styledButton("EXIT") { finish() }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
         scroll.addView(sections)
         page.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         setContentView(page)
