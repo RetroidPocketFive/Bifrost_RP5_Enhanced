@@ -299,7 +299,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             contentDescription = "BIFROST logo"
             scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
         }, LinearLayout.LayoutParams(dp(36), dp(36)).apply {
-            marginStart = dp(12)
+            marginStart = dp(10)
             marginEnd = dp(10)
         })
         headerRow.addView(android.view.View(this).apply {
@@ -324,7 +324,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
         })
         heading.addView(TextView(this).apply {
             text = "Manage backups, the library folder and Sample Area profiles."
-            textSize = 12f
+            textSize = 13f
             setTextColor(getColor(R.color.bifrost_text_secondary))
         })
         headerRow.addView(heading, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
