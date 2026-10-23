@@ -818,6 +818,9 @@ class MainActivity : AppCompatActivity() {
         settingsPageTitle = findViewById(R.id.settingsPageTitle)
         settingsPageDescription = findViewById(R.id.settingsPageDescription)
         settingsHeaderBackButton = findViewById(R.id.settingsHeaderBackButton)
+        settingsHeaderBackButton.visibility = View.VISIBLE
+        settingsHeaderBackButton.contentDescription = "Exit BIFROST settings"
+        settingsHeaderBackButton.tooltipText = "Exit settings"
         settingsHeaderBackButton.setOnClickListener { requestCloseSettingsOverlay() }
         liveWallpaperTabButton = findViewById(R.id.liveWallpaperTabButton)
         mainSettingsScroll = findViewById(R.id.mainSettingsScroll)
@@ -1088,6 +1091,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
         }
+        closeSettingsButton.visibility = View.GONE
         closeSettingsButton.text = "EXIT"
         closeSettingsButton.contentDescription = "Exit Bifrost settings"
         closeSettingsButton.tooltipText = "Exit settings"
