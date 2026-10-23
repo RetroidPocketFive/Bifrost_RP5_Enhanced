@@ -276,15 +276,34 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(10), dp(12), dp(10))
         }
-        headerRow.addView(styledButton("‹") { finish() }.apply {
-            textSize = 26f
-            minWidth = dp(44)
+        headerRow.addView(styledButton("EXIT") { finish() }.apply {
+            textSize = 12f
+            minWidth = dp(56)
             contentDescription = "Exit Import/Export"
-        }, LinearLayout.LayoutParams(dp(48), dp(48)))
+            tooltipText = "Exit Import/Export"
+        }, LinearLayout.LayoutParams(dp(64), dp(48)))
+        headerRow.addView(android.widget.ImageView(this).apply {
+            setImageResource(R.mipmap.ic_launcher)
+            contentDescription = "BIFROST logo"
+            scaleType = android.widget.ImageView.ScaleType.FIT_CENTER
+        }, LinearLayout.LayoutParams(dp(36), dp(36)).apply {
+            marginStart = dp(12)
+            marginEnd = dp(10)
+        })
+        headerRow.addView(android.view.View(this).apply {
+            setBackgroundColor(getColor(R.color.bifrost_accent))
+        }, LinearLayout.LayoutParams(dp(1), dp(40)).apply { marginEnd = dp(12) })
         val heading = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), 0, 0, 0)
+            setPadding(0, 0, 0, 0)
         }
+        heading.addView(TextView(this).apply {
+            text = "BIFROST"
+            textSize = 12f
+            letterSpacing = 0.12f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(getColor(R.color.bifrost_accent))
+        })
         heading.addView(TextView(this).apply {
             text = "IMPORT / EXPORT"
             textSize = 20f
@@ -292,7 +311,7 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             setTextColor(getColor(R.color.bifrost_text))
         })
         heading.addView(TextView(this).apply {
-            text = "Manage BIFROST backups, the library folder and Sample Area profiles."
+            text = "Manage backups, the library folder and Sample Area profiles."
             textSize = 12f
             setTextColor(getColor(R.color.bifrost_text_secondary))
         })
