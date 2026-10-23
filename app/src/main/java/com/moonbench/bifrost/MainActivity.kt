@@ -2913,6 +2913,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             refreshCoverFlowFromPresets()
+            if (::appProfileManager.isInitialized) {
+                syncAppProfileSwitches(appProfileManager.isEnabled)
+                updateManualPresetSwitchingUi(appProfileManager.isEnabled)
+            }
             if (prefs.getBoolean(PREF_LIVE_WALLPAPER_APPLY_IN_PROGRESS, false)) {
                 scheduleLiveWallpaperApplyStateSync()
             } else {

@@ -125,8 +125,21 @@
                             android:contentDescription="Animation Viewing Profile"/>
                         <TextView android:id="@+id/profileSettingsViewingProfileDescription" android:layout_width="match_parent"
                             android:layout_height="wrap_content" android:layout_marginTop="4dp"
-                            android:text="Choose a saved Sample Area profile to define the regions used by Ambient sampling."
+                            android:text="Default uses the standard animation-mode sampling regions."
                             android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp" android:orientation="horizontal" android:weightSum="2">
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsApplyViewingProfileButton"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp"
+                                android:layout_height="44dp" android:layout_weight="1" android:layout_marginEnd="4dp"
+                                android:minWidth="0dp" android:text="Apply" android:textColor="@color/bifrost_text"
+                                app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsEditViewingProfileButton"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp"
+                                android:layout_height="44dp" android:layout_weight="1" android:layout_marginStart="4dp"
+                                android:minWidth="0dp" android:text="Edit" android:textColor="@color/bifrost_text"
+                                app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
+                        </LinearLayout>
                         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsSingleColorSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="SINGLE COLOR MODE" android:textColor="@color/bifrost_text"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Use one selected colour for the LED output instead of sampling multiple colours." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsScreenCaptureSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="USE SCREEN CAPTURE" android:textColor="@color/bifrost_text"/>
@@ -159,6 +172,31 @@
                             android:layout_marginTop="12dp" android:max="255" android:progress="255" android:progressTint="@color/bifrost_accent"
                             android:thumbTint="@color/bifrost_accent_light"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Sets the maximum LED output brightness from 0 (off) to 255 (full brightness)." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:padding="14dp">
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:text="APP PROFILES" android:textColor="@color/bifrost_text"
+                            android:textStyle="bold" android:textSize="14sp" android:letterSpacing="0.05"/>
+                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:gravity="center_vertical" android:orientation="horizontal" android:layout_marginTop="8dp">
+                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                                    android:text="Auto-switch by foreground app" android:textColor="@color/bifrost_text"
+                                    android:textSize="14sp"/>
+                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                                    android:text="Automatically switch to the preset assigned to the foreground app."
+                                    android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                            </LinearLayout>
+                            <com.google.android.material.switchmaterial.SwitchMaterial
+                                android:id="@+id/profileSettingsAutoSwitchByAppSwitch" android:layout_width="wrap_content"
+                                android:layout_height="wrap_content" android:contentDescription="Auto-switch by foreground app"/>
+                        </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>

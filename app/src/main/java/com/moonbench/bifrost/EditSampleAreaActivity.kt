@@ -31,6 +31,7 @@ import java.util.concurrent.Executor
 class EditSampleAreaActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_SOURCE = "edit_sample_area.source"
+        const val EXTRA_PROFILE_NAME = "edit_sample_area.profile_name"
         const val SOURCE_LIVE = "live"
         const val SOURCE_STILL = "still"
         const val SOURCE_COLOR_WHEEL = "color_wheel"
@@ -118,6 +119,10 @@ class EditSampleAreaActivity : AppCompatActivity() {
             setContentView(root); startLiveCapture()
         }
         addButton(root, "STILL IMAGE", "Choose a saved screenshot or image") { imagePicker.launch("image/*") }
+        addButton(root, "COLOR WHEEL", "Use the built-in colour wheel as the viewing background") {
+            bitmap = createColorWheelBitmap(720)
+            showEditor()
+        }
         addButton(root, "EXIT", "Return to the previous menu") { finish() }
         setContentView(root)
     }
@@ -192,6 +197,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
         setContentView(root)
         // Start with the stick identity colors; sample colors take over after user adjustment.
         canvas.post { showDefaultLedColors() }
+        loadRequestedProfileIntoEditor()
     }
 
     private fun promptSave() {
@@ -243,6 +249,23 @@ class EditSampleAreaActivity : AppCompatActivity() {
                 if (left != null && right != null) SampleAreaProfileStore.save(this, name, left, right)
             }
         }
+    }
+
+    private fun loadRequestedProfileIntoEditor() {
+        val requestedName = intent.getStringExtra(EXTRA_PROFILE_NAME)?.takeIf { it.isNotBlank() } ?: return
+        val profile = SampleAreaProfileStore.list(this)
+            .firstOrNull { it.name.equals(requestedName, ignoreCase = true) }
+        if (profile == null) {
+            Toast.makeText(this, "Saved viewing profile '$requestedName' was not found.", Toast.LENGTH_LONG).show()
+            intent.removeExtra(EXTRA_PROFILE_NAME)
+            return
+        }
+        activeProfile = profile.name
+        canvas.setRegions(profile.left, profile.right)
+        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+        modeSpinner.setSelection(prefs.getInt("${profile.name}.mode", 0).coerceIn(0, MODES.lastIndex))
+        Toast.makeText(this, "Editing ${profile.name} on the selected background. Save to update it.", Toast.LENGTH_SHORT).show()
+        intent.removeExtra(EXTRA_PROFILE_NAME)
     }
 
     private fun chooseProfileToEdit() {

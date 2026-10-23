@@ -7,6 +7,7 @@ import android.app.WallpaperManager
 import java.io.File
 import android.os.Bundle
 import android.net.Uri
+import android.provider.Settings
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import android.text.InputType
@@ -24,6 +25,7 @@ import com.moonbench.bifrost.animations.LedAnimationType
 import com.moonbench.bifrost.tools.PerformanceProfile
 import com.moonbench.bifrost.tools.SamplingRegionStore
 import com.moonbench.bifrost.services.LEDService
+import com.moonbench.bifrost.services.AppProfileManager
 import com.moonbench.bifrost.services.LiveWallpaperSettingsManager
 import com.moonbench.bifrost.services.VideoLiveWallpaperService
 import org.json.JSONArray
@@ -41,6 +43,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private lateinit var animationSpinner: Spinner
     private lateinit var viewingSpinner: Spinner
     private lateinit var viewingProfileDescription: TextView
+    private lateinit var appProfileSwitch: SwitchMaterial
     private var viewingProfileNames: List<String> = emptyList()
     private lateinit var themeSpinner: Spinner
     private lateinit var reactivity: SeekBar
@@ -136,7 +139,15 @@ class ProfileSettingsActivity : AppCompatActivity() {
         setupEnumSpinner(performanceSpinner, PerformanceProfile.values().map { label(it.name) })
         setupEnumSpinner(animationSpinner, LedAnimationType.values().map { label(it.name) })
         viewingProfileDescription = findViewById(R.id.profileSettingsViewingProfileDescription)
+        appProfileSwitch = findViewById(R.id.profileSettingsAutoSwitchByAppSwitch)
+        setupAppProfileToggle()
         refreshViewingProfileSpinner(null)
+        findViewById<MaterialButton>(R.id.profileSettingsApplyViewingProfileButton).setOnClickListener {
+            applyViewingProfileSelection()
+        }
+        findViewById<MaterialButton>(R.id.profileSettingsEditViewingProfileButton).setOnClickListener {
+            editViewingProfileSelection()
+        }
         setupEnumSpinner(themeSpinner, listOf("Classic", "OLED Purple"))
         setupEnumSpinner(fpsSpinner, listOf("24 FPS", "30 FPS", "60 FPS"))
         reactivity.max = 100
@@ -243,6 +254,12 @@ class ProfileSettingsActivity : AppCompatActivity() {
         presetSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                 if (!bindingPreset) { restoreDefaultsPending = false; selectedPreset = position; loadSelectedPreset() }
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+        viewingSpinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                updateViewingProfileAvailability()
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
@@ -497,12 +514,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private fun refreshViewingProfileSpinner(selectedName: String?) {
         val profiles = SampleAreaProfileStore.list(this)
         viewingProfileNames = profiles.map { it.name }
-        val entries = if (viewingProfileNames.isEmpty()) {
-            listOf("No saved profiles — open Edit Sample Area")
-        } else {
-            listOf("Select saved Sample Area profile") + viewingProfileNames
-        }
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, entries)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, listOf("Default") + viewingProfileNames)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         viewingSpinner.adapter = adapter
         val selectedIndex = viewingProfileNames.indexOfFirst { it.equals(selectedName, ignoreCase = true) }
@@ -510,7 +522,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
     }
 
     private fun selectedSampleAreaProfileName(): String? {
-        if (viewingProfileNames.isEmpty()) return null
         val selectedPosition = viewingSpinner.selectedItemPosition
         if (selectedPosition <= 0) return null
         return viewingProfileNames.getOrNull(selectedPosition - 1)
@@ -519,25 +530,97 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private fun updateViewingProfileAvailability() {
         val ambientSelected = animationSpinner.selectedItemPosition in LedAnimationType.values().indices &&
             LedAnimationType.values()[animationSpinner.selectedItemPosition] == LedAnimationType.AMBIENT
-        val enabled = ambientSelected && !singleColorSwitch.isChecked && viewingProfileNames.isNotEmpty()
-        viewingSpinner.isEnabled = enabled
+        val modeAllowsViewingProfile = ambientSelected && !singleColorSwitch.isChecked
+        viewingSpinner.isEnabled = modeAllowsViewingProfile
+        findViewById<MaterialButton>(R.id.profileSettingsApplyViewingProfileButton).isEnabled = modeAllowsViewingProfile
+        findViewById<MaterialButton>(R.id.profileSettingsEditViewingProfileButton).isEnabled =
+            modeAllowsViewingProfile && selectedSampleAreaProfileName() != null
         viewingProfileDescription.text = when {
-            !ambientSelected || singleColorSwitch.isChecked ->
-                "Available only for Ambient mode when Single Color Mode is off."
-            viewingProfileNames.isEmpty() ->
-                "No saved Sample Area profiles yet. Open Edit Sample Area to create one."
+            !modeAllowsViewingProfile ->
+                "Using default animation-mode settings while this control is disabled."
+            selectedSampleAreaProfileName() == null ->
+                "Default uses the standard animation-mode sampling regions. Choose a saved profile, then tap Apply. Tap Save above to store this choice in the selected Profile Settings preset."
             else ->
-                "Choose a saved Sample Area profile to define the left and right regions used by Ambient sampling."
+                "Tap Apply to use this saved Sample Area profile. Tap Edit to change its viewing regions. Tap Save above to store the selection in Profile Settings."
         }
-        viewingProfileDescription.alpha = if (ambientSelected && !singleColorSwitch.isChecked) 1f else 0.55f
+        viewingProfileDescription.alpha = if (modeAllowsViewingProfile) 1f else 0.55f
+    }
+
+    private fun applyViewingProfileSelection() {
+        if (animationSpinner.selectedItemPosition !in LedAnimationType.values().indices ||
+            LedAnimationType.values()[animationSpinner.selectedItemPosition] != LedAnimationType.AMBIENT ||
+            singleColorSwitch.isChecked) {
+            toast("Animation Viewing Profile is available only for Ambient mode with Single Color Mode off.")
+            return
+        }
+        val selectedName = selectedSampleAreaProfileName()
+        val current = presets.optJSONObject(selectedPreset)
+        if (current == null) {
+            toast("Save or create a Profile Settings preset first, then apply the viewing profile.")
+            return
+        }
+        if (selectedName == null) {
+            SamplingRegionStore.setEnabled(this, false)
+            current.remove("sampleAreaProfileName")
+            toast("Default animation-mode sampling applied. Tap Save to store this choice.")
+        } else {
+            val profile = SampleAreaProfileStore.list(this)
+                .firstOrNull { it.name.equals(selectedName, ignoreCase = true) }
+            if (profile == null) {
+                toast("That Sample Area profile is no longer available. Refresh the selection.")
+                refreshViewingProfileSpinner(null)
+                updateViewingProfileAvailability()
+                return
+            }
+            SamplingRegionStore.setRegions(this, profile.left, profile.right)
+            SamplingRegionStore.setEnabled(this, true)
+            current.put("sampleAreaProfileName", profile.name)
+            toast("Applied '$selectedName'. Tap Save to store this choice in Profile Settings.")
+        }
+        updateViewingProfileAvailability()
+    }
+
+    private fun editViewingProfileSelection() {
+        val selectedName = selectedSampleAreaProfileName()
+        if (selectedName == null) {
+            toast("Choose a saved viewing profile to edit.")
+            return
+        }
+        startActivity(Intent(this, EditSampleAreaActivity::class.java)
+            .putExtra(EditSampleAreaActivity.EXTRA_PROFILE_NAME, selectedName))
     }
 
     private fun applySelectedSampleAreaProfile(profileName: String?) {
-        if (profileName.isNullOrBlank()) return
+        if (profileName.isNullOrBlank()) {
+            SamplingRegionStore.setEnabled(this, false)
+            return
+        }
         val profile = SampleAreaProfileStore.list(this)
-            .firstOrNull { it.name.equals(profileName, ignoreCase = true) } ?: return
+            .firstOrNull { it.name.equals(profileName, ignoreCase = true) } ?: run {
+                SamplingRegionStore.setEnabled(this, false)
+                return
+            }
         SamplingRegionStore.setRegions(this, profile.left, profile.right)
         SamplingRegionStore.setEnabled(this, true)
+    }
+
+    private fun setupAppProfileToggle() {
+        val manager = AppProfileManager(prefs)
+        appProfileSwitch.isChecked = manager.isEnabled
+        appProfileSwitch.setOnCheckedChangeListener { _, enabled ->
+            if (enabled && !manager.hasUsageStatsPermission(this)) {
+                appProfileSwitch.isChecked = false
+                Toast.makeText(this, "Grant usage access to Bifrost to enable automatic app switching.", Toast.LENGTH_LONG).show()
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                return@setOnCheckedChangeListener
+            }
+            manager.isEnabled = enabled
+            manager.resetLastForegroundPackage()
+            if (LEDService.isRunning) {
+                startService(Intent(this, LEDService::class.java).setAction(LEDService.ACTION_FORCE_APP_PROFILE_RESOLUTION))
+            }
+            Toast.makeText(this, if (enabled) "Automatic foreground-app switching enabled." else "Automatic foreground-app switching disabled.", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun saveSelectedPreset() {
