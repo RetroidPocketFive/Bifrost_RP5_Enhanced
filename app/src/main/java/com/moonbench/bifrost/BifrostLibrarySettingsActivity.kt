@@ -276,12 +276,23 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             gravity = android.view.Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(10), dp(12), dp(10))
         }
-        headerRow.addView(styledButton("‹") { finish() }.apply {
+        headerRow.addView(MaterialButton(this).apply {
+            text = "‹"
+            isAllCaps = false
             textSize = 30f
+            setTextColor(getColor(R.color.bifrost_text))
+            backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.bifrost_surface))
+            strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.bifrost_accent))
+            strokeWidth = dp(1)
+            cornerRadius = dp(12)
+            insetTop = 0
+            insetBottom = 0
             minWidth = dp(48)
-            contentDescription = "Back"
+            minHeight = dp(48)
+            contentDescription = "Back to BIFROST Settings"
             tooltipText = "Back"
             setPadding(0, 0, 0, dp(3))
+            setOnClickListener { finish() }
         }, LinearLayout.LayoutParams(dp(48), dp(48)))
         headerRow.addView(android.widget.ImageView(this).apply {
             setImageResource(R.mipmap.ic_launcher)
