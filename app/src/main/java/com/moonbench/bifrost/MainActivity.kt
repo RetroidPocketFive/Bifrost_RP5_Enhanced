@@ -87,6 +87,7 @@ import com.moonbench.bifrost.services.VideoLiveWallpaperService
 import com.moonbench.bifrost.tools.CrashReporter
 import com.moonbench.bifrost.tools.DeviceInfo
 import com.moonbench.bifrost.tools.PerformanceProfile
+import com.moonbench.bifrost.tools.SamplingRegionStore
 import com.moonbench.bifrost.ui.AnimatedRainbowDrawable
 import com.moonbench.bifrost.ui.BifrostAlertDialog
 import com.moonbench.bifrost.ui.ColorPickerDialog
@@ -2062,6 +2063,28 @@ class MainActivity : AppCompatActivity() {
         val profile = (0 until profiles.length())
             .mapNotNull { profiles.optJSONObject(it) }
             .firstOrNull { it.optString("name") == presetName } ?: return
+
+        // Each preset can select a saved Sample Area profile. Apply it when the
+        // preset becomes active so switching presets also switches the regions.
+        val sampleAreaProfileName = profile.optString("sampleAreaProfileName", "").trim()
+        val previousSampleAreaProfile = prefs.getString("active_sample_area_profile_name", null)
+        if (sampleAreaProfileName.isNotEmpty()) {
+            val sampleArea = SampleAreaProfileStore.list(this)
+                .firstOrNull { it.name.equals(sampleAreaProfileName, ignoreCase = true) }
+            if (sampleArea != null) {
+                SamplingRegionStore.setRegions(this, sampleArea.left, sampleArea.right)
+                SamplingRegionStore.setEnabled(this, true)
+                prefs.edit().putString("active_sample_area_profile_name", sampleArea.name).apply()
+            } else if (!previousSampleAreaProfile.isNullOrBlank()) {
+                SamplingRegionStore.setEnabled(this, false)
+                prefs.edit().remove("active_sample_area_profile_name").apply()
+            }
+        } else if (!previousSampleAreaProfile.isNullOrBlank()) {
+            // A preset without a saved Sample Area selection returns to the
+            // normal sampling behaviour rather than inheriting another preset's area.
+            SamplingRegionStore.setEnabled(this, false)
+            prefs.edit().remove("active_sample_area_profile_name").apply()
+        }
         val themeId = profile.optString("uiThemeId", "")
         if (themeId == "classic" || themeId == "oled_purple") {
             prefs.edit().putString(PREF_SELECTED_UI_THEME, themeId).apply()
