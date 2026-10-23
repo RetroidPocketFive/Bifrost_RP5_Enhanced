@@ -67,6 +67,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        migrateLegacyProfiles()
         window.statusBarColor = bg
         window.navigationBarColor = bg
         window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN)
@@ -202,7 +203,10 @@ class EditSampleAreaActivity : AppCompatActivity() {
             .setPositiveButton("SAVE") { _, _ ->
                 val name = input.text.toString().trim()
                 if (name.isBlank()) { Toast.makeText(this, "Enter a profile name.", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-                saveProfile(name)
+                if (!saveProfile(name)) {
+                    Toast.makeText(this, "Could not save sample-area profile. Check the name and profile limit.", Toast.LENGTH_LONG).show()
+                    return@setPositiveButton
+                }
                 activeProfile = name
                 val colors = sampleColors()
                 runLedTest(colors.first, colors.second, 1200L)
@@ -210,32 +214,51 @@ class EditSampleAreaActivity : AppCompatActivity() {
             }.show()
     }
 
-    private fun saveProfile(name: String) {
+    private fun saveProfile(name: String): Boolean {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         val names = (prefs.getStringSet(KEY_NAMES, emptySet()) ?: emptySet()).toMutableSet()
         names.add(name)
+        val saved = SampleAreaProfileStore.save(this, name, canvas.leftRegion, canvas.rightRegion)
+        if (!saved) return false
         prefs.edit().putStringSet(KEY_NAMES, names).putString(KEY_ACTIVE, name)
             .putString("$name.left", canvas.leftRegion.encode())
             .putString("$name.right", canvas.rightRegion.encode())
             .putInt("$name.mode", modeSpinner.selectedItemPosition).apply()
+        return true
+    }
+
+    /**
+     * Older versions stored Edit Sample Area profiles in a private list that the
+     * Profile Settings viewing-profile selector could not see. Import them into
+     * the shared named-profile store without deleting the original saved data.
+     */
+    private fun migrateLegacyProfiles() {
+        val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
+        val legacyNames = prefs.getStringSet(KEY_NAMES, emptySet()) ?: emptySet()
+        val sharedNames = SampleAreaProfileStore.list(this).map { it.name.lowercase() }.toSet()
+        legacyNames.forEach { name ->
+            if (name.lowercase() !in sharedNames) {
+                val left = SamplingRegion.decode(prefs.getString("$name.left", null))
+                val right = SamplingRegion.decode(prefs.getString("$name.right", null))
+                if (left != null && right != null) SampleAreaProfileStore.save(this, name, left, right)
+            }
+        }
     }
 
     private fun chooseProfileToEdit() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
-        val names = (prefs.getStringSet(KEY_NAMES, emptySet()) ?: emptySet()).toList().sorted()
-        if (names.isEmpty()) {
+        val profiles = SampleAreaProfileStore.list(this)
+        if (profiles.isEmpty()) {
             Toast.makeText(this, "No saved sample-area profiles yet. Save one first.", Toast.LENGTH_LONG).show()
             return
         }
         AlertDialog.Builder(this).setTitle("Edit saved profile")
-            .setItems(names.toTypedArray()) { _, index ->
-                val name = names[index]
-                val left = SamplingRegion.decode(prefs.getString("$name.left", null)) ?: SamplingRegion.RP5_LEFT_DEFAULT
-                val right = SamplingRegion.decode(prefs.getString("$name.right", null)) ?: SamplingRegion.RP5_RIGHT_DEFAULT
-                activeProfile = name
-                canvas.setRegions(left, right)
-                modeSpinner.setSelection(prefs.getInt("$name.mode", 0).coerceIn(0, MODES.lastIndex))
-                Toast.makeText(this, "Editing $name — save to update it.", Toast.LENGTH_SHORT).show()
+            .setItems(profiles.map { it.name }.toTypedArray()) { _, index ->
+                val profile = profiles[index]
+                activeProfile = profile.name
+                canvas.setRegions(profile.left, profile.right)
+                modeSpinner.setSelection(prefs.getInt("${profile.name}.mode", 0).coerceIn(0, MODES.lastIndex))
+                Toast.makeText(this, "Editing ${profile.name} — save to update it.", Toast.LENGTH_SHORT).show()
             }.show()
     }
 
