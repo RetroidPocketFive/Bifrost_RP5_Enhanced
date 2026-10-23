@@ -52,11 +52,11 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         }
 
         val header = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
+            radius = dp(16).toFloat()
             setCardBackgroundColor(panel)
             strokeWidth = dp(1)
             strokeColor = accent
-            setContentPadding(dp(12), dp(10), dp(18), dp(10))
+            setContentPadding(dp(12), dp(10), dp(12), dp(10))
         }
 
         val headerRow = LinearLayout(this).apply {
@@ -66,17 +66,17 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
 
         val back = MaterialButton(this).apply {
             text = "‹"
-            textSize = 34f
+            textSize = 30f
             setTextColor(this@Rp5CalibrationMenuActivity.text)
-            minWidth = dp(58)
-            minHeight = dp(52)
+            minWidth = dp(48)
+            minHeight = dp(48)
             insetTop = 0
             insetBottom = 0
             setOnClickListener { finish() }
             background = roundedDrawable(Color.TRANSPARENT, accent, 18)
             contentDescription = "Back"
         }
-        headerRow.addView(back, LinearLayout.LayoutParams(dp(62), dp(56)))
+        headerRow.addView(back, LinearLayout.LayoutParams(dp(48), dp(48)))
 
         val logo = ImageView(this).apply {
             setImageResource(R.mipmap.ic_launcher_foreground)
@@ -84,17 +84,18 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             scaleType = ImageView.ScaleType.FIT_CENTER
             setPadding(dp(6), dp(6), dp(6), dp(6))
         }
-        headerRow.addView(logo, LinearLayout.LayoutParams(dp(52), dp(52)))
+        headerRow.addView(logo, LinearLayout.LayoutParams(dp(36), dp(36)).apply { marginStart = dp(12); marginEnd = dp(10) })
 
         val brand = TextView(this).apply {
             this.text = "BIFROST"
-            textSize = 20f
-            setTextColor(this@Rp5CalibrationMenuActivity.text)
+            textSize = 12f
+            setTextColor(accent)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
             gravity = Gravity.CENTER_VERTICAL
-            letterSpacing = 0.18f
-            setPadding(dp(8), 0, dp(12), 0)
+            letterSpacing = 0.12f
+            setPadding(0, 0, dp(12), 0)
         }
-        headerRow.addView(brand, LinearLayout.LayoutParams(dp(128), dp(56)))
+        headerRow.addView(brand, LinearLayout.LayoutParams(dp(72), dp(48)))
 
         val divider = View(this).apply { setBackgroundColor(accent) }
         headerRow.addView(divider, LinearLayout.LayoutParams(dp(1), dp(38)))
@@ -105,19 +106,20 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         }
         titleBox.addView(TextView(this).apply {
             text = "Calibration"
-            textSize = 28f
+            textSize = 20f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
             setTextColor(this@Rp5CalibrationMenuActivity.text)
         })
         titleBox.addView(TextView(this).apply {
             text = "Adjust your device for the best visual performance."
-            textSize = 13f
+            textSize = 12f
             setTextColor(secondary)
         })
-        headerRow.addView(titleBox, LinearLayout.LayoutParams(0, dp(56), 1f))
+        headerRow.addView(titleBox, LinearLayout.LayoutParams(0, dp(48), 1f))
         header.addView(headerRow)
 
-        content.addView(header, LinearLayout.LayoutParams(-1, dp(100)).apply {
-            bottomMargin = dp(22)
+        content.addView(header, LinearLayout.LayoutParams(-1, -2).apply {
+            bottomMargin = dp(14)
         })
 
         content.addView(card(
