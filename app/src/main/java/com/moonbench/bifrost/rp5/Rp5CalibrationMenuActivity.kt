@@ -52,11 +52,11 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         }
 
         val header = MaterialCardView(this).apply {
-            radius = dp(16).toFloat()
+            radius = dp(18).toFloat()
             setCardBackgroundColor(panel)
             strokeWidth = dp(1)
             strokeColor = accent
-            setContentPadding(dp(12), dp(10), dp(12), dp(10))
+            setContentPadding(dp(12), dp(8), dp(12), dp(8))
         }
 
         val headerRow = LinearLayout(this).apply {
@@ -66,56 +66,61 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
 
         val back = MaterialButton(this).apply {
             text = "‹"
+            isAllCaps = false
             textSize = 30f
             setTextColor(this@Rp5CalibrationMenuActivity.text)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(panel)
+            strokeColor = android.content.res.ColorStateList.valueOf(accent)
+            strokeWidth = dp(1)
+            cornerRadius = dp(12)
             minWidth = dp(48)
             minHeight = dp(48)
             insetTop = 0
             insetBottom = 0
             setOnClickListener { finish() }
-            background = roundedDrawable(Color.TRANSPARENT, accent, 18)
-            contentDescription = "Back"
+            contentDescription = "Back to BIFROST Settings"
+            tooltipText = "Back"
         }
         headerRow.addView(back, LinearLayout.LayoutParams(dp(48), dp(48)))
 
         val logo = ImageView(this).apply {
-            setImageResource(R.mipmap.ic_launcher_foreground)
-            contentDescription = "Bifrost logo"
+            setImageResource(R.mipmap.ic_launcher)
+            contentDescription = "BIFROST logo"
             scaleType = ImageView.ScaleType.FIT_CENTER
-            setPadding(dp(6), dp(6), dp(6), dp(6))
         }
-        headerRow.addView(logo, LinearLayout.LayoutParams(dp(36), dp(36)).apply { marginStart = dp(12); marginEnd = dp(10) })
+        headerRow.addView(logo, LinearLayout.LayoutParams(dp(36), dp(36)).apply {
+            marginStart = dp(12)
+            marginEnd = dp(10)
+        })
 
-        val brand = TextView(this).apply {
-            this.text = "BIFROST"
-            textSize = 12f
-            setTextColor(accent)
-            setTypeface(typeface, android.graphics.Typeface.BOLD)
-            gravity = Gravity.CENTER_VERTICAL
-            letterSpacing = 0.12f
-            setPadding(0, 0, dp(12), 0)
-        }
-        headerRow.addView(brand, LinearLayout.LayoutParams(dp(72), dp(48)))
-
-        val divider = View(this).apply { setBackgroundColor(accent) }
-        headerRow.addView(divider, LinearLayout.LayoutParams(dp(1), dp(38)))
+        headerRow.addView(View(this).apply {
+            setBackgroundColor(accent)
+        }, LinearLayout.LayoutParams(dp(1), dp(40)).apply { marginEnd = dp(12) })
 
         val titleBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), 0, 0, 0)
         }
         titleBox.addView(TextView(this).apply {
-            text = "Calibration"
+            text = "BIFROST"
+            textSize = 12f
+            letterSpacing = 0.12f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(accent)
+        })
+        titleBox.addView(TextView(this).apply {
+            text = "CALIBRATION"
             textSize = 20f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             setTextColor(this@Rp5CalibrationMenuActivity.text)
+            maxLines = 1
         })
         titleBox.addView(TextView(this).apply {
             text = "Adjust your device for the best visual performance."
             textSize = 12f
             setTextColor(secondary)
+            maxLines = 2
         })
-        headerRow.addView(titleBox, LinearLayout.LayoutParams(0, dp(48), 1f))
+        headerRow.addView(titleBox, LinearLayout.LayoutParams(0, -2, 1f))
         header.addView(headerRow)
 
         content.addView(header, LinearLayout.LayoutParams(-1, -2).apply {
