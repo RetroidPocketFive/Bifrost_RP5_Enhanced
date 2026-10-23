@@ -1130,7 +1130,7 @@ class MainActivity : AppCompatActivity() {
         // no setting values or underlying feature implementations are changed.
         tabBehaviorSettings.text = "CALIBRATION"
         tabUiSettings.text = "SETTING"
-        tabThemesSettings.text = "IMPORT/EXPORT"
+        tabThemesSettings.text = "IMPORT / EXPORT"
         tabUiSettings.contentDescription = "BIFROST Settings: global behaviour and app preferences"
         tabUiSettings.tooltipText = "Setting"
         tabBehaviorSettings.contentDescription = "Open calibration tools"
