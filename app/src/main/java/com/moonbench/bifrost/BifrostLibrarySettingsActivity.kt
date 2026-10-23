@@ -195,87 +195,180 @@ class BifrostLibrarySettingsActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+    private fun styledButton(label: String, action: () -> Unit): MaterialButton {
+        return MaterialButton(this).apply {
+            text = label
+            isAllCaps = false
+            textSize = 14f
+            setTextColor(getColor(R.color.bifrost_text))
+            backgroundTintList = android.content.res.ColorStateList.valueOf(getColor(R.color.bifrost_surface))
+            strokeColor = android.content.res.ColorStateList.valueOf(getColor(R.color.bifrost_accent))
+            strokeWidth = dp(1)
+            cornerRadius = dp(12)
+            insetTop = 0
+            insetBottom = 0
+            minHeight = dp(48)
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            setOnClickListener { action() }
+        }
+    }
+
+    private fun sectionCard(title: String, description: String, content: LinearLayout): com.google.android.material.card.MaterialCardView {
+        val card = com.google.android.material.card.MaterialCardView(this).apply {
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dp(14) }
+            setCardBackgroundColor(getColor(R.color.bifrost_card))
+            radius = dp(16).toFloat()
+            cardElevation = 0f
+            strokeWidth = dp(1)
+            strokeColor = getColor(R.color.bifrost_accent)
+        }
+        val inner = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+        }
+        inner.addView(TextView(this).apply {
+            text = title
+            textSize = 16f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(getColor(R.color.bifrost_text))
+        })
+        inner.addView(TextView(this).apply {
+            text = description
+            textSize = 12f
+            setTextColor(getColor(R.color.bifrost_text_secondary))
+            setPadding(0, dp(5), 0, dp(12))
+        })
+        for (index in 0 until content.childCount) {
+            val child = content.getChildAt(0)
+            content.removeViewAt(0)
+            val params = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { if (index > 0) topMargin = dp(8) }
+            inner.addView(child, params)
+        }
+        card.addView(inner)
+        return card
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val padding = (20 * resources.displayMetrics.density).toInt()
-        val layout = LinearLayout(this).apply {
+        val page = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(padding, padding, padding, padding)
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+            setBackgroundColor(getColor(R.color.bifrost_bg))
         }
-        layout.addView(TextView(this).apply {
-            text = "Library & Import/Export"
-            textSize = 24f
+        val header = com.google.android.material.card.MaterialCardView(this).apply {
+            setCardBackgroundColor(getColor(R.color.bifrost_card))
+            radius = dp(16).toFloat()
+            cardElevation = 0f
+            strokeWidth = dp(1)
+            strokeColor = getColor(R.color.bifrost_accent)
+        }
+        val headerRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+        }
+        headerRow.addView(styledButton("‹") { finish() }.apply {
+            textSize = 26f
+            minWidth = dp(44)
+            contentDescription = "Exit Import/Export"
+        }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        val heading = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), 0, 0, 0)
+        }
+        heading.addView(TextView(this).apply {
+            text = "IMPORT / EXPORT"
+            textSize = 20f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(getColor(R.color.bifrost_text))
         })
-        layout.addView(TextView(this).apply {
-            text = "Choose a parent folder for Bifrost/Saved. Bifrost will create or reuse its organised folders without deleting existing files."
-            textSize = 16f
-            setPadding(0, padding / 2, 0, padding)
+        heading.addView(TextView(this).apply {
+            text = "Manage BIFROST backups, the library folder and Sample Area profiles."
+            textSize = 12f
+            setTextColor(getColor(R.color.bifrost_text_secondary))
         })
-        layout.addView(MaterialButton(this).apply {
-            text = "Choose Library Folder"
-            setOnClickListener { folderPicker.launch(BifrostLibraryStorage.getRememberedRoot(this@BifrostLibrarySettingsActivity)) }
+        headerRow.addView(heading, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        header.addView(headerRow)
+        page.addView(header, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(14) })
+
+        val scroll = ScrollView(this).apply { isFillViewport = true; clipToPadding = false }
+        val sections = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val libraryContent = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        libraryContent.addView(styledButton("Choose Library Folder") {
+            folderPicker.launch(BifrostLibraryStorage.getRememberedRoot(this@BifrostLibrarySettingsActivity))
         })
-        layout.addView(MaterialButton(this).apply {
-            text = "Check / Repair Folder Layout"
-            setOnClickListener {
-                val uri = BifrostLibraryStorage.getRememberedRoot(this@BifrostLibrarySettingsActivity)
-                if (uri == null) {
-                    statusText.text = "No library folder selected yet. Choose a folder first."
-                } else {
-                    try {
-                        val result = BifrostLibraryStorage.ensureDirectoryLayout(this@BifrostLibrarySettingsActivity, uri)
-                        statusText.text = "Folder check complete. Created: ${result.createdFolders.size}; already present: ${result.existingFolders.size}" +
-                            if (result.warnings.isEmpty()) "" else "\n\nWarnings:\n" + result.warnings.joinToString("\n")
-                    } catch (error: Exception) {
-                        statusText.text = "Folder check failed: ${error.localizedMessage ?: "unknown error"}"
-                    }
+        libraryContent.addView(styledButton("Check / Repair Folder Layout") {
+            val uri = BifrostLibraryStorage.getRememberedRoot(this@BifrostLibrarySettingsActivity)
+            if (uri == null) {
+                statusText.text = "No library folder selected yet. Choose a folder first."
+            } else {
+                try {
+                    val result = BifrostLibraryStorage.ensureDirectoryLayout(this@BifrostLibrarySettingsActivity, uri)
+                    statusText.text = "Folder check complete. Created: ${result.createdFolders.size}; already present: ${result.existingFolders.size}" +
+                        if (result.warnings.isEmpty()) "" else "\\n\\nWarnings:\\n" + result.warnings.joinToString("\\n")
+                } catch (error: Exception) {
+                    statusText.text = "Folder check failed: ${error.localizedMessage ?: "unknown error"}"
                 }
             }
         })
-        layout.addView(MaterialButton(this).apply {
-            text = "Export Full Backup to Bifrost/Saved/Backups"
-            setOnClickListener { chooseBackupCategories(forExport = true) }
+        sections.addView(sectionCard(
+            "LIBRARY FOLDER",
+            "Choose a parent folder for Bifrost/Saved. Existing files are preserved.",
+            libraryContent
+        ))
+
+        val backupContent = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        backupContent.addView(styledButton("Export Full Backup to Bifrost/Saved/Backups") {
+            chooseBackupCategories(forExport = true)
         })
-        layout.addView(MaterialButton(this).apply {
-            text = "Restore Full Backup (.zip)"
-            setOnClickListener { chooseBackupCategories(forExport = false) }
+        backupContent.addView(styledButton("Restore Full Backup (.zip)") {
+            chooseBackupCategories(forExport = false)
         })
-        layout.addView(TextView(this).apply {
-            text = "Full backups can include themes, profile settings/mappings, and preset artwork. Restore replaces selected preference categories. LED calibration is excluded; artwork already on the device is preserved."
-            textSize = 13f
-            setPadding(0, padding / 2, 0, padding / 2)
+        backupContent.addView(TextView(this).apply {
+            text = "Full backups can include themes, profile settings/mappings, and preset artwork. LED calibration is excluded; existing artwork not present in the archive is preserved."
+            textSize = 12f
+            setTextColor(getColor(R.color.bifrost_text_secondary))
+            setPadding(0, dp(8), 0, 0)
         })
-        layout.addView(MaterialButton(this).apply {
-            text = "Export Sample Areas to Bifrost/Saved/Sample Area"
-            setOnClickListener { exportSampleAreasToLibrary() }
+        sections.addView(sectionCard("BACKUP & RESTORE", "Export or restore selected BIFROST data categories.", backupContent))
+
+        val sampleContent = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        sampleContent.addView(styledButton("Export Sample Areas to Bifrost/Saved/Sample Area") {
+            exportSampleAreasToLibrary()
         })
-        layout.addView(MaterialButton(this).apply {
-            text = "Import Sample Area Profiles"
-            setOnClickListener { launchLibraryImport("Saved/Sample Area", arrayOf("application/json", "text/json", "text/plain"), importSampleAreasLauncher) }
+        sampleContent.addView(styledButton("Import Sample Area Profiles") {
+            launchLibraryImport("Saved/Sample Area", arrayOf("application/json", "text/json", "text/plain"), importSampleAreasLauncher)
         })
-        layout.addView(TextView(this).apply {
-            text = "Sample Area imports merge by profile name. They never activate a profile or change LED calibration. Import only JSON files exported by Bifrost."
-            textSize = 13f
-            setPadding(0, padding / 2, 0, padding / 2)
+        sampleContent.addView(TextView(this).apply {
+            text = "Sample Area imports merge by profile name. They do not activate a profile or change LED calibration. Import only JSON files exported by BIFROST."
+            textSize = 12f
+            setTextColor(getColor(R.color.bifrost_text_secondary))
+            setPadding(0, dp(8), 0, 0)
         })
-        layout.addView(MaterialButton(this).apply {
-            text = "Back"
-            setOnClickListener { finish() }
-        })
+        sections.addView(sectionCard("SAMPLE AREA PROFILES", "Transfer saved Sample Area profiles between devices.", sampleContent))
+
         statusText = TextView(this).apply {
-            textSize = 14f
-            setPadding(0, padding, 0, 0)
+            textSize = 13f
+            setTextColor(getColor(R.color.bifrost_text_secondary))
+            setPadding(dp(4), dp(8), dp(4), dp(12))
             text = if (BifrostLibraryStorage.getRememberedRoot(this@BifrostLibrarySettingsActivity) == null) {
                 "No library folder selected."
             } else {
                 "A library folder is saved. Use Check / Repair to verify its structure."
             }
         }
-        layout.addView(statusText)
-        setContentView(ScrollView(this).apply {
-            isFillViewport = true
-            addView(layout)
-        })
-    }
-}
+        sections.addView(statusText)
+        sections.addView(styledButton("EXIT") { finish() }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
+        scroll.addView(sections)
+        page.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+        setContentView(page)
+    }}
