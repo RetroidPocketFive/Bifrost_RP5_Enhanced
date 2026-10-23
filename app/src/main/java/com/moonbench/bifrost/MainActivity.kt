@@ -133,7 +133,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var modifyPresetButton: MaterialButton
     private lateinit var deletePresetButton: MaterialButton
     private lateinit var customizePresetArtworkButton: MaterialButton
-    private lateinit var exportPresetsButton: MaterialButton
     private lateinit var importPresetsButton: MaterialButton
     private lateinit var colorButton: MaterialButton
     private lateinit var rightColorButton: MaterialButton
@@ -880,7 +879,6 @@ class MainActivity : AppCompatActivity() {
         modifyPresetButton = findViewById(R.id.modifyPresetButton)
         deletePresetButton = findViewById(R.id.deletePresetButton)
         customizePresetArtworkButton = findViewById(R.id.customizePresetArtworkButton)
-        exportPresetsButton = findViewById(R.id.exportPresetsButton)
         importPresetsButton = findViewById(R.id.importPresetsButton)
         colorButton = findViewById(R.id.colorButton)
         rightColorButton = findViewById(R.id.rightColorButton)
@@ -4116,27 +4114,6 @@ class MainActivity : AppCompatActivity() {
         presetController.init(initialConfigPreset)
         refreshCoverFlowFromPresets()
         syncAppProfileDefaultSwitch()
-
-        exportPresetsButton.setOnClickListener {
-            showBackupCategoryDialog(
-                title = "BACKUP CATEGORIES",
-                subtitle = "Choose what to include in the backup",
-                confirmLabel = "BACKUP"
-            ) { options ->
-                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                val uri = runCatching {
-                    BifrostLibraryStorage.createUniqueFileInLibrary(
-                        this, "Saved/Backups", "Bifrost-Backup-$timestamp.zip", "application/zip"
-                    )
-                }.getOrNull()
-                if (uri != null) {
-                    exportPresetBundle(uri, options)
-                } else {
-                    pendingBackupExportOptions = options
-                    exportPresetsLauncher.launch("Bifrost-Backup-$timestamp.zip")
-                }
-            }
-        }
 
         importPresetsButton.text = "RESTORE DEFAULTS"
         importPresetsButton.setOnClickListener {
