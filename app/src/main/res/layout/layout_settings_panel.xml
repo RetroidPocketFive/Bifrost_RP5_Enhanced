@@ -531,67 +531,7 @@
                             app:trackTint="@color/switch_track_tint" />
                     </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/bifrost_spacing_md"
-                        android:text="EDIT SAMPLE AREA"
-                        android:textColor="@color/bifrost_text"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:weightSum="3">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/editSampleAreaColorWheelButton"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="4dp"
-                            android:text="COLOR WHEEL"
-                            android:textSize="11sp"
-                            android:contentDescription="Edit sample area using a colour wheel"
-                            android:tooltipText="Use a generated colour wheel to test sampled colours" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/editSampleAreaLiveButton"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="2dp"
-                            android:layout_marginEnd="2dp"
-                            android:text="LIVE IMAGE"
-                            android:textSize="12sp"
-                            android:contentDescription="Edit sample area using a live screen capture"
-                            android:tooltipText="Capture the live game screen for sample area editing" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/editSampleAreaStillButton"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="2dp"
-                            android:text="STILL IMAGE"
-                            android:textSize="12sp"
-                            android:contentDescription="Edit sample area using a still image"
-                            android:tooltipText="Choose a saved screenshot for sample area editing" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Adjust and save viewing areas for Ambient colour matching."
-                        android:textColor="@color/bifrost_text_secondary"
-                        android:textSize="8sp" />
+                    
 
                     
 

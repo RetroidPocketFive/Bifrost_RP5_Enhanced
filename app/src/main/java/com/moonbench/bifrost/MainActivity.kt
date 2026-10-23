@@ -899,18 +899,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
             startActivity(Intent(this, Rp5CalibrationMenuActivity::class.java))
         }
-        findViewById<MaterialButton>(R.id.editSampleAreaColorWheelButton).setOnClickListener {
-            startActivity(Intent(this, EditSampleAreaActivity::class.java)
-                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_COLOR_WHEEL))
-        }
-        findViewById<MaterialButton>(R.id.editSampleAreaLiveButton).setOnClickListener {
-            startActivity(Intent(this, EditSampleAreaActivity::class.java)
-                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_LIVE))
-        }
-        findViewById<MaterialButton>(R.id.editSampleAreaStillButton).setOnClickListener {
-            startActivity(Intent(this, EditSampleAreaActivity::class.java)
-                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_STILL))
-        }
         singleColorSwitch = findViewById(R.id.singleColorSwitch)
         ambilightUseMediaProjectionSwitch = findViewById(R.id.ambilightUseMediaProjectionSwitch)
         breatheWhenChargingSwitch = findViewById(R.id.breatheWhenChargingSwitch)

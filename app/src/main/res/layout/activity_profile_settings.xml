@@ -85,7 +85,7 @@
             android:textColor="@color/bifrost_text" app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
         <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsWallpaperTab"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp" android:layout_height="44dp"
-            android:layout_weight="1" android:layout_marginStart="4dp" android:text="Blank" android:textSize="12sp"
+            android:layout_weight="1" android:layout_marginStart="4dp" android:text="Edit Sample Area" android:textSize="10sp"
             android:textColor="@color/bifrost_text" app:cornerRadius="12dp" app:strokeColor="@color/bifrost_accent"/>
     </LinearLayout>
 
@@ -123,6 +123,10 @@
                         <Spinner android:id="@+id/profileSettingsViewingProfileSpinner" android:layout_width="match_parent" android:layout_height="56dp"
                             android:layout_marginTop="8dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp"
                             android:contentDescription="Animation Viewing Profile"/>
+                        <TextView android:id="@+id/profileSettingsViewingProfileDescription" android:layout_width="match_parent"
+                            android:layout_height="wrap_content" android:layout_marginTop="4dp"
+                            android:text="Choose a saved Sample Area profile to define the regions used by Ambient sampling."
+                            android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsSingleColorSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="SINGLE COLOR MODE" android:textColor="@color/bifrost_text"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Use one selected colour for the LED output instead of sampling multiple colours." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsScreenCaptureSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="USE SCREEN CAPTURE" android:textColor="@color/bifrost_text"/>
@@ -208,8 +212,35 @@
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
-            <FrameLayout android:id="@+id/profileSettingsBlankContent" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:visibility="gone"/>
+            <LinearLayout android:id="@+id/profileSettingsBlankContent" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
+                    app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="vertical" android:padding="14dp">
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:text="EDIT SAMPLE AREA" android:textColor="@color/bifrost_text"
+                            android:textSize="14sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp" android:layout_marginBottom="12dp"
+                            android:text="Create and save named left/right screen regions. Animation Viewing Profile uses the saved region profile selected in Characteristics."
+                            android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsOpenSampleAreaButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
+                            android:layout_height="48dp" android:text="Open Sample Area Editor"
+                            android:contentDescription="Open the editor for live or still screen sampling areas"
+                            android:tooltipText="Adjust and save screen sampling regions" app:cornerRadius="12dp"
+                            app:strokeColor="@color/bifrost_accent"/>
+                        <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsColourWheelButton"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
+                            android:layout_height="48dp" android:layout_marginTop="8dp" android:text="Colour Wheel Test"
+                            android:contentDescription="Open the colour wheel sample area test"
+                            android:tooltipText="Test sample-area colour response using a colour wheel" app:cornerRadius="12dp"
+                            app:strokeColor="@color/bifrost_accent"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
         </FrameLayout>
     </ScrollView>
 </LinearLayout>

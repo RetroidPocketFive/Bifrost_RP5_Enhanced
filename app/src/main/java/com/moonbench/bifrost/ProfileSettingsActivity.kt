@@ -22,6 +22,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.moonbench.bifrost.animations.LedAnimationType
 import com.moonbench.bifrost.tools.PerformanceProfile
+import com.moonbench.bifrost.tools.SamplingRegionStore
 import com.moonbench.bifrost.services.LEDService
 import com.moonbench.bifrost.services.LiveWallpaperSettingsManager
 import com.moonbench.bifrost.services.VideoLiveWallpaperService
@@ -39,6 +40,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private lateinit var performanceSpinner: Spinner
     private lateinit var animationSpinner: Spinner
     private lateinit var viewingSpinner: Spinner
+    private lateinit var viewingProfileDescription: TextView
+    private var viewingProfileNames: List<String> = emptyList()
     private lateinit var themeSpinner: Spinner
     private lateinit var reactivity: SeekBar
     private lateinit var saturation: SeekBar
@@ -132,7 +135,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
         setupEnumSpinner(performanceSpinner, PerformanceProfile.values().map { label(it.name) })
         setupEnumSpinner(animationSpinner, LedAnimationType.values().map { label(it.name) })
-        setupEnumSpinner(viewingSpinner, listOf("Select viewing profile"))
+        viewingProfileDescription = findViewById(R.id.profileSettingsViewingProfileDescription)
+        refreshViewingProfileSpinner(null)
         setupEnumSpinner(themeSpinner, listOf("Classic", "OLED Purple"))
         setupEnumSpinner(fpsSpinner, listOf("24 FPS", "30 FPS", "60 FPS"))
         reactivity.max = 100
@@ -146,6 +150,14 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.profileSettingsIconColorButton).setOnClickListener { chooseProfileColor() }
         setupProfileArtworkEditor()
+
+        findViewById<MaterialButton>(R.id.profileSettingsOpenSampleAreaButton).setOnClickListener {
+            startActivity(Intent(this, SamplingEditorActivity::class.java))
+        }
+        findViewById<MaterialButton>(R.id.profileSettingsColourWheelButton).setOnClickListener {
+            startActivity(Intent(this, EditSampleAreaActivity::class.java)
+                .putExtra(EditSampleAreaActivity.EXTRA_SOURCE, EditSampleAreaActivity.SOURCE_COLOR_WHEEL))
+        }
 
         findViewById<MaterialButton>(R.id.profileSettingsPickVideoButton).setOnClickListener {
             videoWallpaperPicker.launch(arrayOf("video/*"))
@@ -232,6 +244,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                     if (!bindingPreset) {
                         if (spinner == themeSpinner) applyThemeSelection(position)
+                        if (spinner == animationSpinner) updateViewingProfileAvailability()
                     }
                 }
                 override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
@@ -245,7 +258,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         reactivity.setOnSeekBarChangeListener(change)
         saturation.setOnSeekBarChangeListener(change)
         intensity.setOnSeekBarChangeListener(change)
-        singleColorSwitch.setOnCheckedChangeListener { _, _ -> }
+        singleColorSwitch.setOnCheckedChangeListener { _, _ -> updateViewingProfileAvailability() }
         screenCaptureSwitch.setOnCheckedChangeListener { _, _ -> }
         coloredLogoSwitch.setOnCheckedChangeListener { _, _ -> }
         videoWallpaperSwitch.setOnCheckedChangeListener { _, checked ->
@@ -458,9 +471,66 @@ class ProfileSettingsActivity : AppCompatActivity() {
         coloredLogoSwitch.isChecked = p?.optBoolean("coloredLogoEnabled", prefs.getBoolean("colored_logo_enabled", false))
             ?: prefs.getBoolean("colored_logo_enabled", false)
         applySettingsTheme(themeId ?: "classic")
+        refreshViewingProfileSpinner(p?.optString("sampleAreaProfileName"))
         bindingPreset = false
         renderProfileArtworkEditor()
         renderWallpaperSelection(p)
+        updateViewingProfileAvailability()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::viewingSpinner.isInitialized) {
+            val savedName = presets.optJSONObject(selectedPreset)?.optString("sampleAreaProfileName")
+            refreshViewingProfileSpinner(selectedSampleAreaProfileName() ?: savedName)
+            updateViewingProfileAvailability()
+        }
+    }
+
+    private fun refreshViewingProfileSpinner(selectedName: String?) {
+        val profiles = SampleAreaProfileStore.list(this)
+        viewingProfileNames = profiles.map { it.name }
+        val entries = if (viewingProfileNames.isEmpty()) {
+            listOf("No saved profiles — open Edit Sample Area")
+        } else {
+            listOf("Select saved Sample Area profile") + viewingProfileNames
+        }
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, entries)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        viewingSpinner.adapter = adapter
+        val selectedIndex = viewingProfileNames.indexOfFirst { it.equals(selectedName, ignoreCase = true) }
+        viewingSpinner.setSelection(if (selectedIndex >= 0) selectedIndex + 1 else 0, false)
+    }
+
+    private fun selectedSampleAreaProfileName(): String? {
+        if (viewingProfileNames.isEmpty()) return null
+        val selectedPosition = viewingSpinner.selectedItemPosition
+        if (selectedPosition <= 0) return null
+        return viewingProfileNames.getOrNull(selectedPosition - 1)
+    }
+
+    private fun updateViewingProfileAvailability() {
+        val ambientSelected = animationSpinner.selectedItemPosition in LedAnimationType.values().indices &&
+            LedAnimationType.values()[animationSpinner.selectedItemPosition] == LedAnimationType.AMBIENT
+        val enabled = ambientSelected && !singleColorSwitch.isChecked && viewingProfileNames.isNotEmpty()
+        viewingSpinner.isEnabled = enabled
+        viewingProfileDescription.text = when {
+            !ambientSelected || singleColorSwitch.isChecked ->
+                "Available only for Ambient mode when Single Color Mode is off."
+            viewingProfileNames.isEmpty() ->
+                "No saved Sample Area profiles yet. Open Edit Sample Area to create one."
+            else ->
+                "Choose a saved Sample Area profile to define the left and right regions used by Ambient sampling."
+        }
+        viewingProfileDescription.alpha = if (ambientSelected && !singleColorSwitch.isChecked) 1f else 0.55f
+    }
+
+    private fun applySelectedSampleAreaProfile(profileName: String?) {
+        if (profileName.isNullOrBlank()) return
+        val profile = SampleAreaProfileStore.list(this)
+            .firstOrNull { it.name.equals(profileName, ignoreCase = true) } ?: return
+        SamplingRegionStore.setRegions(this, profile.left, profile.right)
+        SamplingRegionStore.setEnabled(this, true)
     }
 
     private fun saveSelectedPreset() {
@@ -525,6 +595,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 target.put("saturationBoost", saturation.progress / 100.0)
                 target.put("useCustomSampling", screenCaptureSwitch.isChecked)
                 target.put("useSingleColor", singleColorSwitch.isChecked)
+                val sampleAreaProfileName = selectedSampleAreaProfileName()
+                if (sampleAreaProfileName != null) target.put("sampleAreaProfileName", sampleAreaProfileName)
+                else target.remove("sampleAreaProfileName")
                 target.put("uiThemeId", if (themeSpinner.selectedItemPosition == 1) "oled_purple" else "classic")
                 target.put("coloredLogoEnabled", coloredLogoSwitch.isChecked)
                 target.put("breatheWhenCharging", target.optBoolean("breatheWhenCharging", false))
@@ -551,6 +624,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 applySettingsTheme(themeId)
                 LiveWallpaperSettingsManager.setTargetFps(prefs, listOf(24, 30, 60).getOrElse(fpsSpinner.selectedItemPosition) { 30 })
                 persistPresets()
+                if (animationSpinner.selectedItemPosition in LedAnimationType.values().indices &&
+                    LedAnimationType.values()[animationSpinner.selectedItemPosition] == LedAnimationType.AMBIENT &&
+                    !singleColorSwitch.isChecked) {
+                    applySelectedSampleAreaProfile(sampleAreaProfileName)
+                }
                 restoreDefaultsPending = false
                 reloadPresets()
 
