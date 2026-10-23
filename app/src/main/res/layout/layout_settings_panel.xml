@@ -47,7 +47,8 @@
                 android:backgroundTint="@color/bifrost_surface"
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/bifrost_accent"
-                app:strokeWidth="1dp" />
+                app:strokeWidth="1dp" android:visibility="gone"
+                />
 
             <ImageView
                 android:id="@+id/settingsHeaderLogo"
@@ -142,7 +143,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Save"
-                android:tooltipText="Save" />
+                android:tooltipText="Save" android:visibility="gone"
+                />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/modifyPresetButton"
@@ -164,7 +166,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Edit"
-                android:tooltipText="Edit" />
+                android:tooltipText="Edit" android:visibility="gone"
+                />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/deletePresetButton"
@@ -186,7 +189,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Delete"
-                android:tooltipText="Delete" />
+                android:tooltipText="Delete" android:visibility="gone"
+                />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/customizePresetArtworkButton"
@@ -219,14 +223,14 @@
                 android:backgroundTint="@color/bifrost_surface"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                android:text="DONE"
+                android:text="EXIT"
                 android:textColor="@color/bifrost_text"
                 android:textSize="11sp"
                 app:cornerRadius="10dp"
                 app:strokeColor="@color/bifrost_accent"
                 app:strokeWidth="1dp" 
-                android:contentDescription="Done"
-                android:tooltipText="Done" />
+                android:contentDescription="Exit"
+                android:tooltipText="Exit" />
     </LinearLayout>
 
     </HorizontalScrollView>
@@ -259,7 +263,8 @@
             app:strokeWidth="1dp"
             app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Backup"
-                android:tooltipText="Backup" />
+                android:tooltipText="Backup" android:visibility="gone"
+                />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/importPresetsButton"
@@ -311,7 +316,7 @@
             android:layout_weight="1"
             android:layout_marginStart="2dp"
             android:layout_marginEnd="2dp"
-            android:text="BIFROST SETTINGS"
+            android:text="SETTING"
             android:textColor="@color/bifrost_text"
             android:textSize="10sp"
             android:letterSpacing="0.05"
@@ -1981,7 +1986,7 @@
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_marginTop="8dp"
-        android:text="LIBRARY &amp; IMPORT / EXPORT"
+        android:text="LIBRARY &amp; IMPORT / EXPORT" android:visibility="gone"
         android:textColor="@color/bifrost_text"
         android:textSize="11sp"
         android:contentDescription="Open library folder and import/export settings"
