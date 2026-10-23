@@ -48,7 +48,7 @@
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/bifrost_accent"
                 app:strokeWidth="1dp" 
-                android:visibility="gone"/>
+                android:visibility="visible"/>
 
             <ImageView
                 android:id="@+id/settingsHeaderLogo"
@@ -231,7 +231,8 @@
                 app:strokeColor="@color/bifrost_accent"
                 app:strokeWidth="1dp" 
                 android:contentDescription="Exit"
-                android:tooltipText="Exit" />
+                android:tooltipText="Exit"
+                android:visibility="gone" />
     </LinearLayout>
 
     </HorizontalScrollView>
@@ -249,43 +250,7 @@
         android:orientation="horizontal"
         android:layout_marginBottom="0dp">
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/exportPresetsButton"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            android:text="BACKUP"
-            android:textSize="11sp"
-            android:letterSpacing="0.05"
-            android:textColor="@color/bifrost_text"
-            android:backgroundTint="@color/bifrost_surface"
-            app:cornerRadius="10dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Backup"
-                android:tooltipText="Backup" 
-                android:visibility="gone"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/importPresetsButton"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:text="RESTORE DEFAULTS"
-            android:textSize="11sp"
-            android:letterSpacing="0.05"
-            android:textColor="@color/bifrost_text"
-            android:backgroundTint="@color/bifrost_surface"
-            app:cornerRadius="10dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Restore default BIFROST settings"
-                android:tooltipText="Restore default BIFROST settings" />
-    </LinearLayout>
-
-    </HorizontalScrollView>
+            </HorizontalScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -1925,6 +1890,55 @@
                             app:thumbTint="@color/switch_thumb_tint"
                             app:trackTint="@color/switch_track_tint" />
                     </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/restoreDefaultsCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/bifrost_spacing_md"
+                app:cardBackgroundColor="@color/bifrost_card"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/bifrost_accent"
+                app:strokeWidth="1dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/bifrost_card_padding">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="RESTORE DEFAULTS"
+                        android:textColor="@color/bifrost_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="12dp"
+                        android:text="Reset only the Setting options above. Profiles, calibration, themes and backups remain unchanged."
+                        android:textColor="@color/bifrost_text_secondary"
+                        android:textSize="13sp" />
+                    <com.google.android.material.button.MaterialButton
+            android:id="@+id/importPresetsButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            
+            
+            android:text="Restore Setting Defaults"
+            android:textSize="14sp"
+            android:letterSpacing="0.05"
+            android:textColor="@color/bifrost_text"
+            android:backgroundTint="@color/bifrost_surface"
+            app:cornerRadius="10dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/bifrost_accent" 
+                android:contentDescription="Restore default BIFROST settings"
+                android:tooltipText="Restore default BIFROST settings" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
