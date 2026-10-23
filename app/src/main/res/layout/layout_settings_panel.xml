@@ -237,20 +237,7 @@
 
     </HorizontalScrollView>
 
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:scrollbars="none"
-        android:overScrollMode="never">
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="0dp">
-
-            </HorizontalScrollView>
+    
 
     <LinearLayout
         android:layout_width="match_parent"
