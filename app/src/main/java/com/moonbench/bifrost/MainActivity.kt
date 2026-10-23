@@ -782,9 +782,7 @@ class MainActivity : AppCompatActivity() {
         }
         homeSettingsButton = findViewById(R.id.homeSettingsButton)
         closeSettingsButton = findViewById(R.id.closeSettingsButton)
-        findViewById<MaterialButton>(R.id.openLibrarySettingsButton).setOnClickListener {
-            startActivity(Intent(this, BifrostLibrarySettingsActivity::class.java))
-        }
+        findViewById<View>(R.id.openLibrarySettingsButton).visibility = View.GONE
         homeExitButton = findViewById<MaterialButton?>(R.id.homeExitButton)
             ?: MaterialButton(this).apply {
                 id = R.id.homeExitButton
@@ -1090,6 +1088,9 @@ class MainActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
         }
+        closeSettingsButton.text = "EXIT"
+        closeSettingsButton.contentDescription = "Exit Bifrost settings"
+        closeSettingsButton.tooltipText = "Exit settings"
         closeSettingsButton.setOnClickListener { requestCloseSettingsOverlay() }
         homeExitButton.setOnClickListener { finishAndRemoveTask() }
         customizePresetArtworkButton.setOnClickListener {
@@ -4133,19 +4134,43 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        importPresetsButton.text = "RESTORE DEFAULTS"
         importPresetsButton.setOnClickListener {
-            showBackupCategoryDialog(
-                title = "RESTORE CATEGORIES",
-                subtitle = "Choose what to restore from archive",
-                confirmLabel = "RESTORE"
-            ) { options ->
-                pendingBackupImportOptions = options
-                launchManagedLibraryImport(
-                    "Saved/Backups",
-                    arrayOf("application/zip", "application/octet-stream", "*/*"),
-                    importPresetsLauncher
-                )
-            }
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("RESTORE BIFROST SETTINGS")
+                .setMessage("Restore the Setting subheading to its default values? Presets, calibration, profiles, and backups will not be changed.")
+                .setNegativeButton("CANCEL", null)
+                .setPositiveButton("RESTORE") { _, _ ->
+                    HeimdallStartupManager.setAutoStartEnabled(prefs, false)
+                    prefs.edit()
+                        .putBoolean(PREF_BATTERY_OVERRIDE_WHEN_PLUGGED, false)
+                        .putBoolean(PREF_LOW_BATTERY_ALERT_ENABLED, false)
+                        .putInt(PREF_LOW_BATTERY_ALERT_THRESHOLD, 20)
+                        .putBoolean(PREF_DISABLE_LOW_BATTERY_ALERT_WHILE_CHARGING, false)
+                        .putBoolean(PREF_PERSISTENT_NOTIFICATION, true)
+                        .putBoolean(PREF_ADAPTIVE_BRIGHTNESS, false)
+                        .putBoolean(ExternalApiGate.PREF_ENABLED, false)
+                        .apply()
+                    selectedBatteryOverrideWhenPlugged = false
+                    selectedLowBatteryAlertEnabled = false
+                    selectedLowBatteryAlertThreshold = 20
+                    selectedDisableLowBatteryAlertWhileCharging = false
+                    selectedPersistentNotification = true
+                    selectedAdaptiveBrightness = false
+                    autoStartupSwitch.isChecked = false
+                    pluggedBatteryOverrideSwitch.isChecked = false
+                    lowBatteryAlertSwitch.isChecked = false
+                    lowBatteryAlertSeekBar.progress = 20
+                    disableLowBatteryAlertWhileChargingSwitch.isChecked = false
+                    persistentNotificationSwitch.isChecked = true
+                    adaptiveBrightnessSwitch.isChecked = false
+                    externalApiSwitch.isChecked = false
+                    updateLowBatteryAlertOptionsVisibility()
+                    if (LEDService.isRunning && !serviceController.isServiceTransitioning) {
+                        sendLiveUpdateToLedService()
+                    }
+                }
+                .show()
         }
 
         exportThemeButton.setOnClickListener {
