@@ -1128,9 +1128,15 @@ class MainActivity : AppCompatActivity() {
     private fun setupSettingsTabs() {
         // BIFROST Settings is organised into three destinations. Existing screens are reused;
         // no setting values or underlying feature implementations are changed.
-        tabUiSettings.text = "SETTING"
         tabBehaviorSettings.text = "CALIBRATION"
+        tabUiSettings.text = "SETTING"
         tabThemesSettings.text = "IMPORT/EXPORT"
+        tabUiSettings.contentDescription = "BIFROST Settings: global behaviour and app preferences"
+        tabUiSettings.tooltipText = "Setting"
+        tabBehaviorSettings.contentDescription = "Open calibration tools"
+        tabBehaviorSettings.tooltipText = "Calibration"
+        tabThemesSettings.contentDescription = "Open Import/Export tools"
+        tabThemesSettings.tooltipText = "Import/Export"
         liveWallpaperTabButton.visibility = View.GONE
 
         tabUiSettings.setOnClickListener { setSettingsTab(SettingsTab.BEHAVIOR) }
@@ -1195,8 +1201,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSettingsTabButtonStyles() {
-        updateSettingsTabButtonState(tabUiSettings, currentSettingsTab == SettingsTab.UI)
-        updateSettingsTabButtonState(tabBehaviorSettings, currentSettingsTab == SettingsTab.BEHAVIOR)
+        // The Setting destination displays the app-wide behaviour panel; Calibration opens its own screen.
+        updateSettingsTabButtonState(tabUiSettings, currentSettingsTab == SettingsTab.BEHAVIOR)
+        updateSettingsTabButtonState(tabBehaviorSettings, false)
         updateSettingsTabButtonState(tabThemesSettings, currentSettingsTab == SettingsTab.THEMES)
         updateSettingsTabButtonState(liveWallpaperTabButton, currentSettingsTab == SettingsTab.LIVE_WALLPAPER)
     }
