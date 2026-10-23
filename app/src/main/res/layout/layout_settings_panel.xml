@@ -246,29 +246,12 @@
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/tabUiSettings"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            android:text="PROFILE SETTINGS"
-            android:textColor="@color/bifrost_text"
-            android:textSize="10sp"
-            android:letterSpacing="0.05"
-            android:backgroundTint="@color/bifrost_surface"
-            app:cornerRadius="10dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Profile settings: colour, animation and profile tuning"
-                android:tooltipText="Profile settings" />
-
-        <com.google.android.material.button.MaterialButton
             android:id="@+id/tabBehaviorSettings"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
-            android:layout_marginStart="2dp"
-            android:layout_marginEnd="2dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="4dp"
             android:text="CALIBRATION"
             android:textColor="@color/bifrost_text"
             android:textSize="10sp"
@@ -277,8 +260,25 @@
             app:cornerRadius="10dp"
             app:strokeWidth="1dp"
             app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Bifrost settings: global behaviour and app profiles"
-                android:tooltipText="Bifrost settings" />
+                android:contentDescription="Open calibration tools"
+                android:tooltipText="Calibration" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/tabUiSettings"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="4dp"
+            android:text="SETTING"
+            android:textColor="@color/bifrost_text"
+            android:textSize="10sp"
+            android:letterSpacing="0.05"
+            android:backgroundTint="@color/bifrost_surface"
+            app:cornerRadius="10dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/bifrost_accent" 
+                android:contentDescription="BIFROST Settings: global behaviour and app preferences"
+                android:tooltipText="Setting" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/tabThemesSettings"
