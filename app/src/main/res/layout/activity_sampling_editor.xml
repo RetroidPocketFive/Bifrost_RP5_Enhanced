@@ -130,7 +130,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="LIVE GAME SCREEN" />
+            android:text="LIVE GAME SCREEN"
+                app:cornerRadius="14dp"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#6865F2"
+                android:minHeight="48dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnChooseStill"
@@ -138,7 +142,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="STILL IMAGE" />
+            android:text="STILL IMAGE"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSaveSampleAreaProfile"
@@ -146,7 +156,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="SAVE SAMPLE AREA PROFILE" />
+            android:text="SAVE SAMPLE AREA PROFILE"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLoadSampleAreaProfile"
@@ -154,7 +170,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="LOAD SAMPLE AREA PROFILE" />
+            android:text="LOAD SAMPLE AREA PROFILE"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnManageSampleAreaProfiles"
@@ -162,7 +184,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="MANAGE SAVED SAMPLE AREAS" />
+            android:text="MANAGE SAVED SAMPLE AREAS"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
         <TextView
             android:layout_width="match_parent"
@@ -197,7 +225,7 @@
                 android:text="LEFT STICK"
                 android:textColor="#F2F4FF"
                 android:textStyle="bold"
-                android:textSize="18sp" />
+                android:textSize="16sp" />
 
             <TextView
                 android:id="@+id/editorSubtitle"
@@ -247,7 +275,13 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
                 android:text="LEFT"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/rightReferenceButton"
@@ -257,7 +291,13 @@
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:text="RIGHT"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -274,7 +314,13 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
                 android:text="RECAPTURE"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnReset"
@@ -284,7 +330,13 @@
                 android:layout_weight="1"
                 android:layout_marginHorizontal="4dp"
                 android:text="RESET"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDisable"
@@ -294,7 +346,13 @@
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
                 android:text="DISABLE"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -310,7 +368,13 @@
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:text="BACK" />
+                android:text="BACK"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnNext"
@@ -319,7 +383,11 @@
                 android:layout_height="44dp"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:text="NEXT" />
+                android:text="NEXT"
+                app:cornerRadius="14dp"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#6865F2"
+                android:minHeight="48dp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -339,7 +407,7 @@
             android:text="LED COLOR MATCH"
             android:textColor="#F2F4FF"
             android:textStyle="bold"
-            android:textSize="17sp" />
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/colorTestSubtitle"
@@ -364,7 +432,13 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="3dp"
                 android:text="LEFT STICK"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <TextView
                 android:id="@+id/matchStickName"
@@ -385,7 +459,13 @@
                 android:layout_weight="1"
                 android:layout_marginStart="3dp"
                 android:text="RIGHT STICK"
-                android:textSize="12sp" />
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -454,12 +534,12 @@
             android:layout_height="wrap_content"
             android:text="R 255"
             android:textColor="#FF7777"
-            android:textSize="11sp" />
+            android:textSize="13sp" />
 
         <SeekBar
             android:id="@+id/redSeek"
             android:layout_width="match_parent"
-            android:layout_height="24dp"
+            android:layout_height="36dp"
             android:max="255" />
 
         <TextView
@@ -468,12 +548,12 @@
             android:layout_height="wrap_content"
             android:text="G 255"
             android:textColor="#77FF77"
-            android:textSize="11sp" />
+            android:textSize="13sp" />
 
         <SeekBar
             android:id="@+id/greenSeek"
             android:layout_width="match_parent"
-            android:layout_height="30dp"
+            android:layout_height="36dp"
             android:max="255" />
 
         <TextView
@@ -482,12 +562,12 @@
             android:layout_height="wrap_content"
             android:text="B 255"
             android:textColor="#7799FF"
-            android:textSize="11sp" />
+            android:textSize="13sp" />
 
         <SeekBar
             android:id="@+id/blueSeek"
             android:layout_width="match_parent"
-            android:layout_height="30dp"
+            android:layout_height="36dp"
             android:max="255" />
 
         <LinearLayout
@@ -502,7 +582,11 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="3dp"
-                android:text="TEST RAW LED" />
+                android:text="TEST RAW LED"
+                app:cornerRadius="14dp"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#6865F2"
+                android:minHeight="48dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSavePrimary"
@@ -511,7 +595,13 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginHorizontal="3dp"
-                android:text="SAVE PRIMARY" />
+                android:text="SAVE PRIMARY"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnResetLedCalibration"
@@ -520,7 +610,13 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginStart="3dp"
-                android:text="RESET" />
+                android:text="RESET"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -535,7 +631,13 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:text="BACK" />
+                android:text="BACK"
+                app:cornerRadius="12dp"
+                android:textColor="#F2F4FF"
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnColorNext"
@@ -544,14 +646,22 @@
                 android:layout_height="48dp"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:text="NEXT PRIMARY" />
+                android:text="NEXT PRIMARY"
+                app:cornerRadius="14dp"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#6865F2"
+                android:minHeight="48dp" />
         </LinearLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnFinishCalibration"
             style="@style/Widget.Material3.Button"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:text="SAVE &amp; APPLY" />
+            android:layout_height="48dp"
+            android:text="SAVE &amp; APPLY"
+                app:cornerRadius="14dp"
+                android:textColor="#FFFFFF"
+                app:backgroundTint="#6865F2"
+                android:minHeight="48dp" />
     </LinearLayout>
 </LinearLayout>
