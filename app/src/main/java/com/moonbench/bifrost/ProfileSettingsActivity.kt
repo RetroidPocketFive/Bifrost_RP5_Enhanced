@@ -34,6 +34,7 @@ import org.json.JSONObject
 class ProfileSettingsActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_PRESET_NAME = "com.moonbench.bifrost.extra.PROFILE_SETTINGS_PRESET_NAME"
+        private const val MAX_VIDEO_WALLPAPER_BYTES = 100L * 1024L * 1024L
     }
 
     private val prefs by lazy { getSharedPreferences("bifrost_prefs", MODE_PRIVATE) }
@@ -867,11 +868,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
         animationSpinner.adapter = adapter
         animationSpinner.dropDownVerticalOffset = dp(4)
-        animationSpinner.popupBackground = android.graphics.drawable.GradientDrawable().apply {
+        animationSpinner.setPopupBackgroundDrawable(android.graphics.drawable.GradientDrawable().apply {
             setColor(getColor(R.color.bifrost_dropdown_bg))
             cornerRadius = dp(12).toFloat()
             setStroke(dp(1), getColor(R.color.bifrost_border))
-        }
+        })
     }
 
     private fun updateAnimationDescription() {
@@ -968,7 +969,4 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
     private fun toast(message: String) = Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
-    companion object {
-        private const val MAX_VIDEO_WALLPAPER_BYTES = 100L * 1024L * 1024L
-    }
 }
