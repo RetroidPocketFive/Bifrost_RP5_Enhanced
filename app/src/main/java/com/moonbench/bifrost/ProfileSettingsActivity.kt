@@ -651,6 +651,60 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
     }
 
+    private fun currentProfileName(): String? =
+        presets.optJSONObject(selectedPreset)?.optString("name")?.trim()?.takeIf { it.isNotEmpty() }
+
+    private fun notifyAppAssignmentsChanged() {
+        val manager = AppProfileManager(prefs)
+        manager.resetLastForegroundPackage()
+        if (LEDService.isRunning) {
+            startService(Intent(this, LEDService::class.java).setAction(LEDService.ACTION_FORCE_APP_PROFILE_RESOLUTION))
+        }
+    }
+
+    private fun showAppAssignmentPicker() {
+        val profileName = currentProfileName()
+        if (profileName == null) { toast("Create or select a saved profile first."); return }
+        val launchIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val apps = packageManager.queryIntentActivities(launchIntent, 0)
+            .filter { it.activityInfo.packageName != packageName }
+            .sortedBy { it.loadLabel(packageManager).toString().lowercase() }
+        if (apps.isEmpty()) { toast("No launchable apps were found."); return }
+        val labels = apps.map { it.loadLabel(packageManager).toString() }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Assign app to " + profileName)
+            .setItems(labels) { _, which ->
+                val packageNameToAssign = apps[which].activityInfo.packageName
+                AppProfileManager(prefs).setMapping(packageNameToAssign, profileName)
+                notifyAppAssignmentsChanged()
+                toast(labels[which] + " assigned to " + profileName + ".")
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun showAppAssignmentManager() {
+        val manager = AppProfileManager(prefs)
+        val mappings = manager.getMappings().toList().sortedBy { (pkg, _) ->
+            runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() }
+                .getOrDefault(pkg).lowercase()
+        }
+        if (mappings.isEmpty()) { toast("No app assignments yet. Choose Assign app to this profile first."); return }
+        val labels = mappings.map { (pkg, profileName) ->
+            val appLabel = runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString() }
+                .getOrDefault(pkg)
+            appLabel + " → " + profileName
+        }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Manage app assignments")
+            .setItems(labels) { _, which ->
+                manager.removeMapping(mappings[which].first)
+                notifyAppAssignmentsChanged()
+                toast("Removed assignment for " + labels[which].substringBefore(" → ") + ".")
+            }
+            .setNegativeButton("Close", null)
+            .show()
+    }
     private fun saveSelectedPreset() {
         val current = presets.optJSONObject(selectedPreset)
         val input = android.widget.EditText(this).apply {
