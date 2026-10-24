@@ -191,7 +191,7 @@
                 android:layout_height="wrap_content"
                 android:text="Zoomed view."
                 android:textColor="#8992AD"
-                android:textSize="9sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <FrameLayout
@@ -214,7 +214,7 @@
                 android:gravity="center"
                 android:text="No reference image. The sampling box can still be positioned."
                 android:textColor="#8992AD"
-                android:textSize="9sp"
+                android:textSize="12sp"
                 android:visibility="gone" />
         </FrameLayout>
 
@@ -229,7 +229,7 @@
                 android:id="@+id/leftReferenceButton"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="32dp"
+                android:layout_height="36dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
                 android:text="LEFT"
@@ -349,14 +349,20 @@
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
+    <ScrollView
         android:id="@+id/colorTestPanel"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:padding="4dp"
+        android:fillViewport="true"
+        android:clipToPadding="false"
         android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="4dp">
 
         <TextView
             android:id="@+id/colorTestTitle"
@@ -365,7 +371,7 @@
             android:text="LED COLOR MATCH"
             android:textColor="#F2F4FF"
             android:textStyle="bold"
-            android:textSize="15sp" />
+            android:textSize="16sp" />
 
         <TextView
             android:id="@+id/colorTestSubtitle"
@@ -374,11 +380,11 @@
             android:layout_marginTop="0dp"
             android:text="Match the physical LED to the screen colour. Adjust raw RGB, test it, then save the primary. Green can be corrected independently from blue."
             android:textColor="#8992AD"
-            android:textSize="9sp" />
+            android:textSize="12sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="32dp"
+            android:layout_height="36dp"
             android:orientation="horizontal"
             android:layout_marginTop="2dp">
 
@@ -386,7 +392,7 @@
                 android:id="@+id/btnMatchLeft"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="32dp"
+                android:layout_height="36dp"
                 android:layout_weight="1"
                 android:layout_marginEnd="3dp"
                 android:text="LEFT STICK"
@@ -401,7 +407,7 @@
             <TextView
                 android:id="@+id/matchStickName"
                 android:layout_width="0dp"
-                android:layout_height="32dp"
+                android:layout_height="36dp"
                 android:layout_weight="0.75"
                 android:gravity="center"
                 android:text="SELECT: LEFT"
@@ -413,7 +419,7 @@
                 android:id="@+id/btnMatchRight"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
-                android:layout_height="32dp"
+                android:layout_height="36dp"
                 android:layout_weight="1"
                 android:layout_marginStart="3dp"
                 android:text="RIGHT STICK"
@@ -492,12 +498,12 @@
             android:layout_height="wrap_content"
             android:text="R 255"
             android:textColor="#FF7777"
-            android:textSize="9sp" />
+            android:textSize="12sp" />
 
         <SeekBar
             android:id="@+id/redSeek"
             android:layout_width="match_parent"
-            android:layout_height="18dp"
+            android:layout_height="24dp"
             android:max="255" />
 
         <TextView
@@ -506,12 +512,12 @@
             android:layout_height="wrap_content"
             android:text="G 255"
             android:textColor="#77FF77"
-            android:textSize="9sp" />
+            android:textSize="12sp" />
 
         <SeekBar
             android:id="@+id/greenSeek"
             android:layout_width="match_parent"
-            android:layout_height="18dp"
+            android:layout_height="24dp"
             android:max="255" />
 
         <TextView
@@ -520,12 +526,12 @@
             android:layout_height="wrap_content"
             android:text="B 255"
             android:textColor="#7799FF"
-            android:textSize="9sp" />
+            android:textSize="12sp" />
 
         <SeekBar
             android:id="@+id/blueSeek"
             android:layout_width="match_parent"
-            android:layout_height="18dp"
+            android:layout_height="24dp"
             android:max="255" />
 
         <LinearLayout
@@ -621,5 +627,6 @@
                 android:textColor="#FFFFFF"
                 app:backgroundTint="#6865F2"
                 android:minHeight="48dp" />
-    </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>
