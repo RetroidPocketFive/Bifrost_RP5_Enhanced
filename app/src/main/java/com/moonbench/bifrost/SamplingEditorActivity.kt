@@ -152,13 +152,13 @@ class SamplingEditorActivity : AppCompatActivity() {
             importImageLauncher.launch("image/*")
         }
 
-        findViewById<MaterialButton>(R.id.btnSaveSampleAreaProfile).setOnClickListener {
+        findViewById<MaterialButton>(R.id.btnSaveSampleAreaProfile)?.setOnClickListener {
             promptSaveSampleAreaProfile()
         }
-        findViewById<MaterialButton>(R.id.btnLoadSampleAreaProfile).setOnClickListener {
+        findViewById<MaterialButton>(R.id.btnLoadSampleAreaProfile)?.setOnClickListener {
             showSampleAreaProfilePicker()
         }
-        findViewById<MaterialButton>(R.id.btnManageSampleAreaProfiles).setOnClickListener {
+        findViewById<MaterialButton>(R.id.btnManageSampleAreaProfiles)?.setOnClickListener {
             showSampleAreaProfileManager()
         }
         findViewById<MaterialButton>(R.id.btnRecapture).setOnClickListener {
