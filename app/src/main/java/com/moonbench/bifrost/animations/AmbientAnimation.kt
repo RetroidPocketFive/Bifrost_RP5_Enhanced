@@ -78,13 +78,14 @@ class AmbientAnimation(
     }
 
     private fun colorLerpFactor(): Float {
-        val min = 0.1f
+        // Let the slow end of Profile Settings' Reactivity slider genuinely feel slow.
+        val min = 0.01f
         val max = 0.9f
         return min + (max - min) * response
     }
 
     private fun brightnessLerpFactor(): Float {
-        val min = 0.1f
+        val min = 0.01f
         val max = 0.9f
         return min + (max - min) * response
     }
