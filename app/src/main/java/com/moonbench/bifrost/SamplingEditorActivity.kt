@@ -48,7 +48,7 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var colorTestPanel: View
     private lateinit var samplingHeaderTitle: TextView
     private lateinit var samplingHeaderDescription: TextView
-    private var editorSourceMode = SOURCE_LIVE
+    private var editorSourceMode: String? = null
     private lateinit var canvas: SamplingCanvasView
     private lateinit var editorTitle: TextView
     private lateinit var editorSubtitle: TextView
@@ -263,6 +263,7 @@ class SamplingEditorActivity : AppCompatActivity() {
         showChooser()
         when (intent.getStringExtra(EXTRA_START_MODE)) {
             MODE_COLOUR_MATCH -> {
+                editorSourceMode = MODE_COLOUR_MATCH
                 showEditor(1)
                 showColorTest()
             }
@@ -402,11 +403,22 @@ class SamplingEditorActivity : AppCompatActivity() {
     private fun showEditor(stick: Int) {
         page = Page.EDITOR
         activeStick = stick.coerceIn(0, 1)
-        samplingHeaderTitle.text = if (editorSourceMode == SOURCE_LIVE) "Live Image" else "Still Image"
-        samplingHeaderDescription.text = if (editorSourceMode == SOURCE_LIVE) {
-            "Capture live screen colours and adjust the left/right sampling regions."
-        } else {
-            "Use a screenshot to adjust the left/right sampling regions."
+        when (editorSourceMode) {
+            SOURCE_LIVE -> {
+                samplingHeaderTitle.text = "Live Image"
+                samplingHeaderDescription.text =
+                    "Capture live screen colours and adjust the left/right sampling regions."
+            }
+            SOURCE_STILL -> {
+                samplingHeaderTitle.text = "Still Image"
+                samplingHeaderDescription.text =
+                    "Use a screenshot to adjust the left/right sampling regions."
+            }
+            else -> {
+                samplingHeaderTitle.text = "Sample Area"
+                samplingHeaderDescription.text =
+                    "Adjust the left/right sampling regions before matching LED output."
+            }
         }
         chooserPanel.visibility = View.GONE
         editorPanel.visibility = View.VISIBLE
