@@ -183,6 +183,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var liveWallpaperTabButton: MaterialButton
     private lateinit var mainSettingsScroll: ScrollView
     private lateinit var liveWallpaperSettingsScroll: ScrollView
+    private lateinit var calibrationPanelCard: MaterialCardView
+    private lateinit var importExportPanelCard: MaterialCardView
+    private lateinit var importExportStatusText: TextView
     private lateinit var liveWallpaperVideoPathText: TextView
     private lateinit var liveWallpaperPickVideoButton: MaterialButton
     private lateinit var liveWallpaperPickImageButton: MaterialButton
@@ -221,6 +224,7 @@ class MainActivity : AppCompatActivity() {
     private enum class SettingsTab {
         UI,
         BEHAVIOR,
+        CALIBRATION,
         THEMES,
         LIVE_WALLPAPER
     }
@@ -898,7 +902,7 @@ class MainActivity : AppCompatActivity() {
         saturationBoostSeekBar = findViewById(R.id.saturationBoostSeekBar)
         customSamplingSwitch = findViewById(R.id.customSamplingSwitch)
         findViewById<MaterialButton>(R.id.rp5CalibrationButton).setOnClickListener {
-            startActivity(Intent(this, Rp5CalibrationMenuActivity::class.java))
+            setSettingsTab(SettingsTab.CALIBRATION)
         }
         singleColorSwitch = findViewById(R.id.singleColorSwitch)
         ambilightUseMediaProjectionSwitch = findViewById(R.id.ambilightUseMediaProjectionSwitch)
@@ -1114,6 +1118,184 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    private fun dpValue(value: Int): Int =
+        (value * resources.displayMetrics.density).toInt()
+
+    private fun createSettingsActionPanel(
+        title: String,
+        description: String,
+        actions: List<Pair<String, () -> Unit>>
+    ): MaterialCardView {
+        val card = MaterialCardView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = dpValue(14) }
+            setCardBackgroundColor(selectedUiTheme.cardColor)
+            radius = dpValue(16).toFloat()
+            cardElevation = 0f
+            strokeWidth = dpValue(1)
+            strokeColor = selectedUiTheme.accentColor
+        }
+        val inner = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dpValue(16), dpValue(16), dpValue(16), dpValue(16))
+        }
+        inner.addView(TextView(this).apply {
+            text = title
+            textSize = 15f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(selectedUiTheme.textColor)
+        })
+        inner.addView(TextView(this).apply {
+            text = description
+            textSize = 12f
+            setTextColor(getColor(R.color.bifrost_text_secondary))
+            setPadding(0, dpValue(5), 0, dpValue(12))
+        })
+        actions.forEach { (label, action) ->
+            inner.addView(MaterialButton(this).apply {
+                text = label
+                isAllCaps = false
+                textSize = 13f
+                setTextColor(selectedUiTheme.textColor)
+                backgroundTintList = ColorStateList.valueOf(selectedUiTheme.surfaceColor)
+                strokeColor = ColorStateList.valueOf(selectedUiTheme.accentColor)
+                strokeWidth = dpValue(1)
+                cornerRadius = dpValue(10)
+                insetTop = 0
+                insetBottom = 0
+                minHeight = dpValue(46)
+                setOnClickListener { action() }
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { topMargin = dpValue(6) })
+        }
+        card.addView(inner)
+        return card
+    }
+
+    private val libraryFolderPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+                val result = BifrostLibraryStorage.ensureDirectoryLayout(this, uri)
+                BifrostLibraryStorage.rememberRoot(this, uri)
+                importExportStatusText.text = buildString {
+                    append("Library folder prepared. Created: ${result.createdFolders.size}; already present: ${result.existingFolders.size}.")
+                    if (result.warnings.isNotEmpty()) append("\n\nWarnings:\n" + result.warnings.joinToString("\n"))
+                }
+                Toast.makeText(this, "BIFROST library folder prepared", Toast.LENGTH_SHORT).show()
+            } catch (error: Exception) {
+                importExportStatusText.text = "Could not prepare the selected folder. ${error.localizedMessage ?: "Check folder access and try again."}"
+            }
+        }
+
+    private val sampleAreaExportLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
+            if (uri == null) return@registerForActivityResult
+            runCatching { SampleAreaProfileTransfer.exportToUri(this, uri) }
+                .onSuccess { count ->
+                    importExportStatusText.text = "Export complete: $count Sample Area profile(s). Active sampling and calibration were not changed."
+                    Toast.makeText(this, "Sample Area profiles exported", Toast.LENGTH_SHORT).show()
+                }
+                .onFailure { error ->
+                    importExportStatusText.text = "Export failed: ${error.localizedMessage ?: "unknown error"}"
+                }
+        }
+
+    private val sampleAreaImportLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            runCatching { SampleAreaProfileTransfer.importFromUri(this, uri) }
+                .onSuccess { resultData ->
+                    importExportStatusText.text = "Import complete: ${resultData.importedCount} profile(s) imported or updated. Other saved profiles were preserved. Active sampling and calibration were not changed."
+                    Toast.makeText(this, "Sample Area profiles imported", Toast.LENGTH_LONG).show()
+                }
+                .onFailure { error ->
+                    importExportStatusText.text = "Import failed: ${error.localizedMessage ?: "unknown error"}"
+                }
+        }
+
+    private fun checkOrRepairLibraryFolder() {
+        val uri = BifrostLibraryStorage.getRememberedRoot(this)
+        if (uri == null) {
+            importExportStatusText.text = "No library folder selected yet. Choose a folder first."
+            return
+        }
+        runCatching { BifrostLibraryStorage.ensureDirectoryLayout(this, uri) }
+            .onSuccess { result ->
+                importExportStatusText.text = "Folder check complete. Created: ${result.createdFolders.size}; already present: ${result.existingFolders.size}." +
+                    if (result.warnings.isEmpty()) "" else "\n\nWarnings:\n" + result.warnings.joinToString("\n")
+            }
+            .onFailure { error ->
+                importExportStatusText.text = "Folder check failed: ${error.localizedMessage ?: "unknown error"}"
+            }
+    }
+
+    private fun showBackupCategoryDialog(forExport: Boolean) {
+        val labels = arrayOf("Themes and interface settings", "Profiles and profile mappings", "Preset artwork / images")
+        val selected = booleanArrayOf(true, true, true)
+        AlertDialog.Builder(this)
+            .setTitle(if (forExport) "Export backup categories" else "Restore backup categories")
+            .setMultiChoiceItems(labels, selected) { _, which, isChecked -> selected[which] = isChecked }
+            .setMessage(
+                if (forExport) "Only the selected categories will be included in the archive."
+                else "Selected settings may replace matching settings on this device. Existing artwork not present in the archive is preserved. Global LED calibration is not included."
+            )
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton(if (forExport) "Choose file" else "Select backup") { _, _ ->
+                val options = BackupArchiveTransfer.CategoryOptions(
+                    themes = selected[0],
+                    profiles = selected[1],
+                    images = selected[2]
+                )
+                if (!options.hasAtLeastOneCategory()) {
+                    importExportStatusText.text = "Choose at least one category."
+                    return@setPositiveButton
+                }
+                if (forExport) {
+                    pendingBackupExportOptions = options
+                    exportPresetsLauncher.launch("Bifrost-Backup.zip")
+                } else {
+                    pendingBackupImportOptions = options
+                    launchManagedLibraryImport(
+                        "Saved/Backups",
+                        arrayOf("application/zip", "application/octet-stream"),
+                        importPresetsLauncher
+                    )
+                }
+            }
+            .show()
+    }
+
+    private fun exportSampleAreaProfiles() {
+        val uri = runCatching {
+            BifrostLibraryStorage.createUniqueFileInLibrary(
+                this, "Saved/Sample Area", "Bifrost-Sample-Area-Profiles.json", "application/json"
+            )
+        }.getOrNull()
+        if (uri != null) {
+            runCatching { SampleAreaProfileTransfer.exportToUri(this, uri) }
+                .onSuccess { count ->
+                    importExportStatusText.text = "Export complete: $count Sample Area profile(s). Saved to Bifrost/Saved/Sample Area."
+                    Toast.makeText(this, "Sample Area profiles exported", Toast.LENGTH_SHORT).show()
+                }
+                .onFailure { error ->
+                    importExportStatusText.text = "Export failed: ${error.localizedMessage ?: "unknown error"}"
+                }
+        } else {
+            sampleAreaExportLauncher.launch("Bifrost-Sample-Area-Profiles.json")
+        }
+    }
+
     private fun setupSettingsTabs() {
         // BIFROST Settings is organised into three destinations. Existing screens are reused;
         // no setting values or underlying feature implementations are changed.
@@ -1129,11 +1311,68 @@ class MainActivity : AppCompatActivity() {
         liveWallpaperTabButton.visibility = View.GONE
 
         tabUiSettings.setOnClickListener { setSettingsTab(SettingsTab.BEHAVIOR) }
-        tabBehaviorSettings.setOnClickListener {
-            startActivity(Intent(this, Rp5CalibrationMenuActivity::class.java))
-        }
-        tabThemesSettings.setOnClickListener {
-            startActivity(Intent(this, BifrostLibrarySettingsActivity::class.java))
+        tabBehaviorSettings.setOnClickListener { setSettingsTab(SettingsTab.CALIBRATION) }
+        tabThemesSettings.setOnClickListener { setSettingsTab(SettingsTab.THEMES) }
+
+        val panelRoot = mainSettingsScroll.getChildAt(0) as? LinearLayout
+        if (panelRoot != null) {
+            calibrationPanelCard = createSettingsActionPanel(
+                "CALIBRATION TOOLS",
+                "Test LED output and configure the screen sampling area without leaving BIFROST Settings.",
+                listOf(
+                    "Live Image — screen colour check" to {
+                        startActivity(Intent(this, SamplingEditorActivity::class.java)
+                            .putExtra(SamplingEditorActivity.EXTRA_START_MODE, SamplingEditorActivity.SOURCE_LIVE))
+                    },
+                    "Still Image — screen colour check" to {
+                        startActivity(Intent(this, SamplingEditorActivity::class.java)
+                            .putExtra(SamplingEditorActivity.EXTRA_START_MODE, SamplingEditorActivity.SOURCE_STILL))
+                    },
+                    "Edit Sample Area" to {
+                        startActivity(Intent(this, EditSampleAreaActivity::class.java))
+                    },
+                    "LED Colour Match" to {
+                        startActivity(Intent(this, SamplingEditorActivity::class.java)
+                            .putExtra(SamplingEditorActivity.EXTRA_START_MODE, SamplingEditorActivity.MODE_COLOUR_MATCH))
+                    },
+                    "LED Brightness Test" to {
+                        startActivity(Intent(this, com.moonbench.bifrost.rp5.Rp5LedBrightnessTestActivity::class.java))
+                    }
+                )
+            )
+            importExportPanelCard = createSettingsActionPanel(
+                "LIBRARY, BACKUP & TRANSFER",
+                "Manage the BIFROST library, backup archives and saved Sample Area profiles.",
+                listOf(
+                    "Choose Library Folder" to { libraryFolderPickerLauncher.launch(BifrostLibraryStorage.getRememberedRoot(this)) },
+                    "Check / Repair Library Folder" to { checkOrRepairLibraryFolder() },
+                    "Export Full Backup" to { showBackupCategoryDialog(forExport = true) },
+                    "Restore Full Backup" to { showBackupCategoryDialog(forExport = false) },
+                    "Export Sample Area Profiles" to { exportSampleAreaProfiles() },
+                    "Import Sample Area Profiles" to {
+                        launchManagedLibraryImport(
+                            "Saved/Sample Area",
+                            arrayOf("application/json", "text/json", "text/plain"),
+                            sampleAreaImportLauncher
+                        )
+                    }
+                )
+            )
+            importExportStatusText = TextView(this).apply {
+                textSize = 12f
+                setTextColor(getColor(R.color.bifrost_text_secondary))
+                text = if (BifrostLibraryStorage.getRememberedRoot(this@MainActivity) == null) {
+                    "No library folder selected."
+                } else {
+                    "A library folder is saved. Use Check / Repair to verify its structure."
+                }
+                setPadding(dpValue(4), dpValue(8), dpValue(4), dpValue(12))
+            }
+            (importExportPanelCard.getChildAt(0) as? LinearLayout)?.addView(importExportStatusText)
+            calibrationPanelCard.visibility = View.GONE
+            importExportPanelCard.visibility = View.GONE
+            panelRoot.addView(calibrationPanelCard)
+            panelRoot.addView(importExportPanelCard)
         }
         setSettingsTab(SettingsTab.BEHAVIOR)
     }
@@ -1142,26 +1381,30 @@ class MainActivity : AppCompatActivity() {
         currentSettingsTab = tab
         val showingUi = tab == SettingsTab.UI
         val showingBehavior = tab == SettingsTab.BEHAVIOR
+        val showingCalibration = tab == SettingsTab.CALIBRATION
         val showingThemes = tab == SettingsTab.THEMES
         val showingLiveWallpaper = tab == SettingsTab.LIVE_WALLPAPER
 
         settingsPageTitle.text = when (tab) {
             SettingsTab.UI -> "PROFILE SETTINGS"
             SettingsTab.BEHAVIOR -> "BIFROST SETTINGS"
-            SettingsTab.THEMES -> "THEMES"
+            SettingsTab.CALIBRATION -> "CALIBRATION"
+            SettingsTab.THEMES -> "IMPORT / EXPORT"
             SettingsTab.LIVE_WALLPAPER -> "WALLPAPER"
         }
         settingsPageDescription.text = when (tab) {
             SettingsTab.UI -> "Configure the selected preset and its behaviour."
             SettingsTab.BEHAVIOR -> "Configure application behaviour and global preferences."
-            SettingsTab.THEMES -> "Customise the BIFROST interface appearance."
+            SettingsTab.CALIBRATION -> "Test LED output and manage screen sampling."
+            SettingsTab.THEMES -> "Manage backups, library folders and Sample Area transfers."
             SettingsTab.LIVE_WALLPAPER -> "Configure app-wide wallpaper playback."
         }
 
         settingsOwnershipHint.text = when (tab) {
             SettingsTab.UI -> "These controls tune the selected preset. When closing settings, choose Save to keep your changes or Don’t Save to discard them."
-            SettingsTab.BEHAVIOR -> "Setting — app-wide behaviour and preferences. Calibration and Import/Export open their existing screens."
-            SettingsTab.THEMES -> "Themes change the app's interface appearance, not the LED settings stored in a preset."
+            SettingsTab.BEHAVIOR -> "Setting — app-wide behaviour and preferences."
+            SettingsTab.CALIBRATION -> "Calibration tools are shown within this menu. Individual test/edit tools may open their own work surface."
+            SettingsTab.THEMES -> "Import and export tools are shown within this menu. File selection opens Android's document picker when needed."
             SettingsTab.LIVE_WALLPAPER -> "Wallpaper playback settings are app-wide and remain separate from LED presets."
         }
 
@@ -1179,6 +1422,12 @@ class MainActivity : AppCompatActivity() {
         thorCard?.visibility = if (showingBehavior && DeviceInfo.isAynThor) View.VISIBLE else View.GONE
 
         themesCard.visibility = if (showingThemes) View.VISIBLE else View.GONE
+        if (::calibrationPanelCard.isInitialized) {
+            calibrationPanelCard.visibility = if (showingCalibration) View.VISIBLE else View.GONE
+        }
+        if (::importExportPanelCard.isInitialized) {
+            importExportPanelCard.visibility = if (showingThemes) View.VISIBLE else View.GONE
+        }
 
         mainSettingsScroll.visibility = if (showingLiveWallpaper) View.GONE else View.VISIBLE
         liveWallpaperSettingsScroll.visibility = if (showingLiveWallpaper) View.VISIBLE else View.GONE
@@ -1190,9 +1439,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateSettingsTabButtonStyles() {
-        // The Setting destination displays the app-wide behaviour panel; Calibration opens its own screen.
+        // All destinations remain inside the shared settings surface.
         updateSettingsTabButtonState(tabUiSettings, currentSettingsTab == SettingsTab.BEHAVIOR)
-        updateSettingsTabButtonState(tabBehaviorSettings, false)
+        updateSettingsTabButtonState(tabBehaviorSettings, currentSettingsTab == SettingsTab.CALIBRATION)
         updateSettingsTabButtonState(tabThemesSettings, currentSettingsTab == SettingsTab.THEMES)
         updateSettingsTabButtonState(liveWallpaperTabButton, currentSettingsTab == SettingsTab.LIVE_WALLPAPER)
     }
