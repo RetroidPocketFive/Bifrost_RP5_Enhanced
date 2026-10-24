@@ -19,7 +19,6 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.moonbench.bifrost.services.BifrostAccessibilityService
 import com.moonbench.bifrost.services.LEDService
@@ -47,6 +46,9 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var chooserPanel: View
     private lateinit var editorPanel: View
     private lateinit var colorTestPanel: View
+    private lateinit var samplingHeaderTitle: TextView
+    private lateinit var samplingHeaderDescription: TextView
+    private var editorSourceMode = SOURCE_LIVE
     private lateinit var canvas: SamplingCanvasView
     private lateinit var editorTitle: TextView
     private lateinit var editorSubtitle: TextView
@@ -88,9 +90,12 @@ class SamplingEditorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sampling_editor)
+        window.statusBarColor = Color.rgb(8, 12, 24)
+        window.navigationBarColor = Color.rgb(8, 12, 24)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.samplingToolbar)
-        toolbar.setNavigationOnClickListener {
+        samplingHeaderTitle = findViewById(R.id.samplingHeaderTitle)
+        samplingHeaderDescription = findViewById(R.id.samplingHeaderDescription)
+        findViewById<MaterialButton>(R.id.samplingBackButton).setOnClickListener {
             when (page) {
                 Page.CHOOSER -> finish()
                 Page.EDITOR -> if (activeStick == 0) showChooser() else showEditor(0)
@@ -137,10 +142,12 @@ class SamplingEditorActivity : AppCompatActivity() {
         }
 
         findViewById<MaterialButton>(R.id.btnChooseLive).setOnClickListener {
+            editorSourceMode = SOURCE_LIVE
             showEditor(0)
             startDelayedCapture()
         }
         findViewById<MaterialButton>(R.id.btnChooseStill).setOnClickListener {
+            editorSourceMode = SOURCE_STILL
             showEditor(0)
             importImageLauncher.launch("image/*")
         }
@@ -260,10 +267,12 @@ class SamplingEditorActivity : AppCompatActivity() {
                 showColorTest()
             }
             SOURCE_LIVE -> {
+                editorSourceMode = SOURCE_LIVE
                 showEditor(0)
                 startDelayedCapture()
             }
             SOURCE_STILL -> {
+                editorSourceMode = SOURCE_STILL
                 showEditor(0)
                 importImageLauncher.launch("image/*")
             }
@@ -383,6 +392,8 @@ class SamplingEditorActivity : AppCompatActivity() {
 
     private fun showChooser() {
         page = Page.CHOOSER
+        samplingHeaderTitle.text = "Calibration"
+        samplingHeaderDescription.text = "Test and calibrate controller lighting."
         chooserPanel.visibility = View.VISIBLE
         editorPanel.visibility = View.GONE
         colorTestPanel.visibility = View.GONE
@@ -391,6 +402,12 @@ class SamplingEditorActivity : AppCompatActivity() {
     private fun showEditor(stick: Int) {
         page = Page.EDITOR
         activeStick = stick.coerceIn(0, 1)
+        samplingHeaderTitle.text = if (editorSourceMode == SOURCE_LIVE) "Live Image" else "Still Image"
+        samplingHeaderDescription.text = if (editorSourceMode == SOURCE_LIVE) {
+            "Capture live screen colours and adjust the left/right sampling regions."
+        } else {
+            "Use a screenshot to adjust the left/right sampling regions."
+        }
         chooserPanel.visibility = View.GONE
         editorPanel.visibility = View.VISIBLE
         colorTestPanel.visibility = View.GONE
@@ -407,6 +424,8 @@ class SamplingEditorActivity : AppCompatActivity() {
 
     private fun showColorTest() {
         page = Page.COLOR_TEST
+        samplingHeaderTitle.text = "LED Colour Match"
+        samplingHeaderDescription.text = "Match the physical LEDs to the colours displayed on screen."
         colorIndex = 0
         chooserPanel.visibility = View.GONE
         editorPanel.visibility = View.GONE
