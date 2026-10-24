@@ -62,6 +62,18 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private lateinit var videoWallpaperSwitch: SwitchMaterial
     private lateinit var fpsSpinner: Spinner
     private var selectedProfileColor: Int = android.graphics.Color.WHITE
+    private val colorPickerDialog = ColorPickerDialog()
+    private var selectedLedColor: Int = android.graphics.Color.WHITE
+    private var selectedRightLedColor: Int = android.graphics.Color.WHITE
+    private var selectedBatteryLowColor: Int? = null
+    private var selectedBatteryMidColor: Int? = null
+    private var selectedBatteryHighColor: Int? = null
+    private lateinit var leftStickColorButton: MaterialButton
+    private lateinit var rightStickColorButton: MaterialButton
+    private lateinit var batteryLowColorButton: MaterialButton
+    private lateinit var batteryMidColorButton: MaterialButton
+    private lateinit var batteryHighColorButton: MaterialButton
+    private lateinit var batteryPaletteRow: View
     private val videoWallpaperPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri == null) return@registerForActivityResult
         val profile = presets.optJSONObject(selectedPreset)
@@ -166,6 +178,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         reactivity.max = 100
         saturation.max = 100
         intensity.max = 255
+        setupLedColorControls()
 
         findViewById<MaterialButton>(R.id.profileSettingsSaveButton).setOnClickListener { saveSelectedPreset() }
         findViewById<MaterialButton>(R.id.profileSettingsEditButton).setOnClickListener { renameSelectedPreset() }
@@ -291,6 +304,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                         if (spinner == animationSpinner) {
                             updateAnimationDescription()
                             updateViewingProfileAvailability()
+                            updateAnimationColorControls()
                         }
                     }
                 }
@@ -485,6 +499,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 saturation.progress = 0
                 intensity.progress = 255
                 singleColorSwitch.isChecked = false
+                selectedLedColor = android.graphics.Color.WHITE
+                selectedRightLedColor = android.graphics.Color.WHITE
+                selectedBatteryLowColor = null
+                selectedBatteryMidColor = null
+                selectedBatteryHighColor = null
                 selectedProfileColor = android.graphics.Color.WHITE
                 presets.optJSONObject(selectedPreset)?.put("profileIconColor", selectedProfileColor)
                 renderProfileArtworkEditor()
@@ -505,12 +524,22 @@ class ProfileSettingsActivity : AppCompatActivity() {
             saturation.progress = (p.optDouble("saturationBoost", 0.0) * 100).toInt().coerceIn(0, 100)
             intensity.progress = p.optInt("brightness", 255).coerceIn(0, 255)
             singleColorSwitch.isChecked = p.optBoolean("useSingleColor", false)
+            selectedLedColor = p.optInt("color", android.graphics.Color.WHITE)
+            selectedRightLedColor = p.optInt("rightColor", selectedLedColor)
+            selectedBatteryLowColor = p.optInt("batteryLowColorOverride").takeIf { p.has("batteryLowColorOverride") }
+            selectedBatteryMidColor = p.optInt("batteryMidColorOverride").takeIf { p.has("batteryMidColorOverride") }
+            selectedBatteryHighColor = p.optInt("batteryHighColorOverride").takeIf { p.has("batteryHighColorOverride") }
             selectedProfileColor = p.optInt("profileIconColor", android.graphics.Color.WHITE)
         } else {
             performanceSpinner.setSelection(PerformanceProfile.values().indexOf(PerformanceProfile.HIGH))
             animationSpinner.setSelection(LedAnimationType.values().indexOf(LedAnimationType.AMBIENT))
             reactivity.progress = 50; saturation.progress = 0; intensity.progress = 255
             singleColorSwitch.isChecked = false
+            selectedLedColor = android.graphics.Color.WHITE
+            selectedRightLedColor = android.graphics.Color.WHITE
+            selectedBatteryLowColor = null
+            selectedBatteryMidColor = null
+            selectedBatteryHighColor = null
             selectedProfileColor = android.graphics.Color.WHITE
             val themeId = prefs.getString("selected_ui_theme", "classic") ?: "classic"
             themeSpinner.setSelection(if (themeId == "oled_purple") 1 else 0, false)
@@ -528,6 +557,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
         renderProfileArtworkEditor()
         renderWallpaperSelection(p)
         updateViewingProfileAvailability()
+        updateColorButtonSwatches()
+        updateAnimationColorControls()
     }
 
     override fun onResume() {
@@ -755,8 +786,14 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 }
                 target.put("animationType", LedAnimationType.values()[animationSpinner.selectedItemPosition].name)
                 target.put("performanceProfile", PerformanceProfile.values()[performanceSpinner.selectedItemPosition].name)
-                target.put("color", target.optInt("color", android.graphics.Color.WHITE))
-                target.put("rightColor", target.optInt("rightColor", target.optInt("color", android.graphics.Color.WHITE)))
+                target.put("color", selectedLedColor)
+                target.put("rightColor", selectedRightLedColor)
+                if (selectedBatteryLowColor == null) target.remove("batteryLowColorOverride")
+                else target.put("batteryLowColorOverride", selectedBatteryLowColor!!)
+                if (selectedBatteryMidColor == null) target.remove("batteryMidColorOverride")
+                else target.put("batteryMidColorOverride", selectedBatteryMidColor!!)
+                if (selectedBatteryHighColor == null) target.remove("batteryHighColorOverride")
+                else target.put("batteryHighColorOverride", selectedBatteryHighColor!!)
                 target.put("profileIconColor", selectedProfileColor)
                 target.put("fadeEndColor", target.optInt("fadeEndColor", android.graphics.Color.WHITE))
                 target.put("fadeEndRightColor", target.optInt("fadeEndRightColor", android.graphics.Color.WHITE))
@@ -942,6 +979,67 @@ class ProfileSettingsActivity : AppCompatActivity() {
         })
     }
 
+    private fun setupLedColorControls() {
+        leftStickColorButton = findViewById(R.id.profileSettingsLeftStickColorButton)
+        rightStickColorButton = findViewById(R.id.profileSettingsRightStickColorButton)
+        batteryLowColorButton = findViewById(R.id.profileSettingsBatteryLowColorButton)
+        batteryMidColorButton = findViewById(R.id.profileSettingsBatteryMidColorButton)
+        batteryHighColorButton = findViewById(R.id.profileSettingsBatteryHighColorButton)
+        batteryPaletteRow = findViewById(R.id.profileSettingsBatteryPaletteRow)
+        leftStickColorButton.setOnClickListener {
+            colorPickerDialog.show(activity = this, initialColor = selectedLedColor) { color ->
+                selectedLedColor = color
+                updateColorButtonSwatches()
+            }
+        }
+        rightStickColorButton.setOnClickListener {
+            colorPickerDialog.show(activity = this, initialColor = selectedRightLedColor) { color ->
+                selectedRightLedColor = color
+                updateColorButtonSwatches()
+            }
+        }
+        batteryLowColorButton.setOnClickListener { chooseBatteryColor(0) }
+        batteryMidColorButton.setOnClickListener { chooseBatteryColor(1) }
+        batteryHighColorButton.setOnClickListener { chooseBatteryColor(2) }
+        batteryLowColorButton.setOnLongClickListener { selectedBatteryLowColor = null; updateColorButtonSwatches(); true }
+        batteryMidColorButton.setOnLongClickListener { selectedBatteryMidColor = null; updateColorButtonSwatches(); true }
+        batteryHighColorButton.setOnLongClickListener { selectedBatteryHighColor = null; updateColorButtonSwatches(); true }
+        updateColorButtonSwatches()
+        updateAnimationColorControls()
+    }
+
+    private fun chooseBatteryColor(level: Int) {
+        val current = when (level) {
+            0 -> selectedBatteryLowColor ?: android.graphics.Color.rgb(255, 0, 0)
+            1 -> selectedBatteryMidColor ?: android.graphics.Color.rgb(255, 255, 0)
+            else -> selectedBatteryHighColor ?: android.graphics.Color.rgb(0, 255, 0)
+        }
+        colorPickerDialog.show(activity = this, initialColor = current) { color ->
+            when (level) {
+                0 -> selectedBatteryLowColor = color
+                1 -> selectedBatteryMidColor = color
+                else -> selectedBatteryHighColor = color
+            }
+            updateColorButtonSwatches()
+        }
+    }
+
+    private fun updateColorButtonSwatches() {
+        if (!::leftStickColorButton.isInitialized) return
+        leftStickColorButton.setBackgroundColor(selectedLedColor)
+        rightStickColorButton.setBackgroundColor(selectedRightLedColor)
+        batteryLowColorButton.setBackgroundColor(selectedBatteryLowColor ?: android.graphics.Color.rgb(255, 0, 0))
+        batteryMidColorButton.setBackgroundColor(selectedBatteryMidColor ?: android.graphics.Color.rgb(255, 255, 0))
+        batteryHighColorButton.setBackgroundColor(selectedBatteryHighColor ?: android.graphics.Color.rgb(0, 255, 0))
+    }
+
+    private fun updateAnimationColorControls() {
+        if (!::batteryPaletteRow.isInitialized) return
+        val type = LedAnimationType.values().getOrNull(animationSpinner.selectedItemPosition) ?: LedAnimationType.AMBIENT
+        batteryPaletteRow.visibility = if (type == LedAnimationType.BATTERY_INDICATOR) View.VISIBLE else View.GONE
+        leftStickColorButton.contentDescription = "Choose left stick LED colour"
+        rightStickColorButton.contentDescription = "Choose right stick LED colour"
+    }
     private fun updateAnimationDescription() {
         val position = animationSpinner.selectedItemPosition
         val type = LedAnimationType.values().getOrNull(position) ?: LedAnimationType.AMBIENT
