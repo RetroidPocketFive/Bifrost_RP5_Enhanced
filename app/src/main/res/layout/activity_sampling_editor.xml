@@ -391,14 +391,20 @@
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
+    <ScrollView
         android:id="@+id/colorTestPanel"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:padding="6dp"
+        android:fillViewport="true"
+        android:clipToPadding="false"
         android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
 
         <TextView
             android:id="@+id/colorTestTitle"
@@ -663,5 +669,6 @@
                 android:textColor="#FFFFFF"
                 app:backgroundTint="#6865F2"
                 android:minHeight="48dp" />
-    </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>
