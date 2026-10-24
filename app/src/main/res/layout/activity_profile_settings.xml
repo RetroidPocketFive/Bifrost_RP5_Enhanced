@@ -214,37 +214,6 @@
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Sets the maximum LED output brightness from 0 (off) to 255 (full brightness)." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
-                            </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-                <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
-                    app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
-                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:orientation="vertical" android:padding="14dp">
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                            android:text="APP PROFILES" android:textColor="@color/bifrost_text"
-                            android:textStyle="bold" android:textSize="14sp" android:letterSpacing="0.05"/>
-                        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                            android:gravity="center_vertical" android:orientation="horizontal" android:layout_marginTop="8dp">
-                            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                                android:orientation="vertical">
-                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                                    android:text="Auto-switch by foreground app" android:textColor="@color/bifrost_text"
-                                    android:textSize="14sp"/>
-                                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                                    android:text="Automatically switch to the preset assigned to the foreground app."
-                                    android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
-                            </LinearLayout>
-                            <com.google.android.material.switchmaterial.SwitchMaterial
-                                android:id="@+id/profileSettingsAutoSwitchByAppSwitch" android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" android:contentDescription="Auto-switch by foreground app"/>
-                        </LinearLayout>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
-
-            <LinearLayout android:id="@+id/profileSettingsThemeContent" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical" android:visibility="gone">
                 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
                     app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
