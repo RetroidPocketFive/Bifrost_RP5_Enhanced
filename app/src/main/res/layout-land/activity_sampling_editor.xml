@@ -503,7 +503,7 @@
         <SeekBar
             android:id="@+id/redSeek"
             android:layout_width="match_parent"
-            android:layout_height="24dp"
+            android:layout_height="36dp"
             android:max="255" />
 
         <TextView
@@ -517,7 +517,7 @@
         <SeekBar
             android:id="@+id/greenSeek"
             android:layout_width="match_parent"
-            android:layout_height="24dp"
+            android:layout_height="36dp"
             android:max="255" />
 
         <TextView
@@ -531,7 +531,7 @@
         <SeekBar
             android:id="@+id/blueSeek"
             android:layout_width="match_parent"
-            android:layout_height="24dp"
+            android:layout_height="36dp"
             android:max="255" />
 
         <LinearLayout
