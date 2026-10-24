@@ -245,9 +245,16 @@ class ProfileSettingsActivity : AppCompatActivity() {
         fun selectTab(selected: MaterialButton) {
             listOf(characteristicsTab, themeTab, blankTab).forEach { tab ->
                 val active = tab == selected
-                tab.backgroundTintList = ColorStateList.valueOf(getColor(if (active) R.color.bifrost_selected else R.color.bifrost_card))
-                tab.setTextColor(getColor(R.color.bifrost_text))
-                tab.strokeColor = ColorStateList.valueOf(getColor(R.color.bifrost_accent))
+                tab.isSelected = active
+                tab.backgroundTintList = ColorStateList.valueOf(
+                    getColor(if (active) R.color.bifrost_selected else R.color.bifrost_card)
+                )
+                tab.setTextColor(getColor(if (active) R.color.bifrost_text else R.color.bifrost_text_secondary))
+                tab.strokeColor = ColorStateList.valueOf(
+                    getColor(if (active) R.color.bifrost_accent_light else R.color.bifrost_border)
+                )
+                tab.strokeWidth = dp(if (active) 2 else 1)
+                tab.alpha = if (active) 1f else 0.86f
             }
             characteristics.visibility = if (selected == characteristicsTab) View.VISIBLE else View.GONE
             theme.visibility = if (selected == themeTab) View.VISIBLE else View.GONE
