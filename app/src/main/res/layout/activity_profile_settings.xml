@@ -214,6 +214,9 @@
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Sets the maximum LED output brightness from 0 (off) to 255 (full brightness)." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/profileSettingsThemeContent" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:visibility="gone">
                 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp" app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
                     app:cardElevation="0dp" app:strokeColor="@color/bifrost_accent" app:strokeWidth="1dp">
@@ -260,7 +263,6 @@
                         <Spinner android:id="@+id/profileSettingsTargetFpsSpinner" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="6dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp" android:contentDescription="Target FPS"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
-            </LinearLayout>
                 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:layout_marginTop="4dp" android:layout_marginBottom="8dp"
                     app:cardBackgroundColor="@color/bifrost_card" app:cardCornerRadius="18dp"
@@ -295,6 +297,7 @@
                             app:strokeColor="@color/bifrost_accent"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
             <LinearLayout android:id="@+id/profileSettingsBlankContent" android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
                 <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content"
