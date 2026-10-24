@@ -1395,16 +1395,16 @@ class MainActivity : AppCompatActivity() {
         settingsPageDescription.text = when (tab) {
             SettingsTab.UI -> "Configure the selected preset and its behaviour."
             SettingsTab.BEHAVIOR -> "Configure application behaviour and global preferences."
-            SettingsTab.CALIBRATION -> "Test LED output and manage screen sampling."
-            SettingsTab.THEMES -> "Manage backups, library folders and Sample Area transfers."
+            SettingsTab.CALIBRATION -> "Check LED colour and brightness, compare output, and configure the screen Sample Area used for animation sampling."
+            SettingsTab.THEMES -> "Choose or repair the BIFROST library folder, create or restore backups, and transfer saved Sample Area profiles."
             SettingsTab.LIVE_WALLPAPER -> "Configure app-wide wallpaper playback."
         }
 
         settingsOwnershipHint.text = when (tab) {
             SettingsTab.UI -> "These controls tune the selected preset. When closing settings, choose Save to keep your changes or Don’t Save to discard them."
             SettingsTab.BEHAVIOR -> "Setting — app-wide behaviour and preferences."
-            SettingsTab.CALIBRATION -> "Calibration tools are shown within this menu. Individual test/edit tools may open their own work surface."
-            SettingsTab.THEMES -> "Import and export tools are shown within this menu. File selection opens Android's document picker when needed."
+            SettingsTab.CALIBRATION -> "Live Image checks colours against the live screen; Still Image lets you work from an image. Edit Sample Area adjusts sampling regions, LED Colour Match helps compare LED output, and LED Brightness Test checks brightness response. A dedicated editor or test view may open for these tools."
+            SettingsTab.THEMES -> "Choose Library Folder selects where BIFROST stores its managed files; Check / Repair verifies or creates the expected folders. Export Full Backup saves selected settings to an archive, while Restore Full Backup imports selected categories and may replace matching settings. Import / Export Sample Area Profiles transfers those saved regions separately. Android's document picker opens when a file or folder must be selected."
             SettingsTab.LIVE_WALLPAPER -> "Wallpaper playback settings are app-wide and remain separate from LED presets."
         }
 
