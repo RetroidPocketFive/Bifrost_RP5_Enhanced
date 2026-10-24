@@ -49,6 +49,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private lateinit var viewingSpinner: Spinner
     private lateinit var viewingProfileDescription: TextView
     private lateinit var appProfileSwitch: SwitchMaterial
+    private lateinit var assignAppButton: MaterialButton
+    private lateinit var manageAppAssignmentsButton: MaterialButton
     private var viewingProfileNames: List<String> = emptyList()
     private lateinit var themeSpinner: Spinner
     private lateinit var reactivity: SeekBar
@@ -147,7 +149,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
         updateAnimationDescription()
         viewingProfileDescription = findViewById(R.id.profileSettingsViewingProfileDescription)
         appProfileSwitch = findViewById(R.id.profileSettingsAutoSwitchByAppSwitch)
+        assignAppButton = findViewById(R.id.profileSettingsAssignAppButton)
+        manageAppAssignmentsButton = findViewById(R.id.profileSettingsManageAppAssignmentsButton)
         setupAppProfileToggle()
+        assignAppButton.setOnClickListener { showAppAssignmentPicker() }
+        manageAppAssignmentsButton.setOnClickListener { showAppAssignmentManager() }
         refreshViewingProfileSpinner(null)
         findViewById<MaterialButton>(R.id.profileSettingsApplyViewingProfileButton).setOnClickListener {
             applyViewingProfileSelection()
