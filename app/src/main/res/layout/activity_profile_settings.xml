@@ -144,6 +144,46 @@
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Use one selected colour for the LED output instead of sampling multiple colours." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/profileSettingsScreenCaptureSwitch" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="USE SCREEN CAPTURE" android:textColor="@color/bifrost_text"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Capture on-screen colours for reactive ambient lighting. Android may request screen-capture permission." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
+                            android:text="LED COLOURS" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="13sp"/>
+                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+                            android:text="Choose independent left and right stick colours for fixed-colour and other colour-based modes."
+                            android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <LinearLayout android:id="@+id/profileSettingsStickColorRow" android:layout_width="match_parent"
+                            android:layout_height="wrap_content" android:layout_marginTop="6dp" android:orientation="horizontal">
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsLeftStickColorButton"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp"
+                                android:layout_height="44dp" android:layout_weight="1" android:layout_marginEnd="4dp"
+                                android:text="LEFT STICK" android:textColor="@color/bifrost_text" app:cornerRadius="10dp"
+                                app:strokeColor="@color/bifrost_accent"/>
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsRightStickColorButton"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="0dp"
+                                android:layout_height="44dp" android:layout_weight="1" android:layout_marginStart="4dp"
+                                android:text="RIGHT STICK" android:textColor="@color/bifrost_text" app:cornerRadius="10dp"
+                                app:strokeColor="@color/bifrost_accent"/>
+                        </LinearLayout>
+                        <LinearLayout android:id="@+id/profileSettingsBatteryPaletteRow" android:layout_width="match_parent"
+                            android:layout_height="wrap_content" android:layout_marginTop="10dp" android:orientation="vertical"
+                            android:visibility="gone">
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                                android:text="BATTERY INDICATOR COLOURS" android:textColor="@color/bifrost_text"
+                                android:textStyle="bold" android:textSize="12sp"/>
+                            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+                                android:text="Tap a level to choose its colour. Long-press to restore the default colour."
+                                android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsBatteryLowColorButton"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
+                                android:layout_height="40dp" android:layout_marginTop="6dp" android:text="LOW BATTERY"
+                                android:textColor="@color/bifrost_text" app:cornerRadius="10dp" app:strokeColor="@color/bifrost_accent"/>
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsBatteryMidColorButton"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
+                                android:layout_height="40dp" android:layout_marginTop="5dp" android:text="MEDIUM BATTERY"
+                                android:textColor="@color/bifrost_text" app:cornerRadius="10dp" app:strokeColor="@color/bifrost_accent"/>
+                            <com.google.android.material.button.MaterialButton android:id="@+id/profileSettingsBatteryHighColorButton"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent"
+                                android:layout_height="40dp" android:layout_marginTop="5dp" android:text="HIGH BATTERY"
+                                android:textColor="@color/bifrost_text" app:cornerRadius="10dp" app:strokeColor="@color/bifrost_accent"/>
+                        </LinearLayout>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="14dp"
                             android:text="ANIMATION PARAMETERS" android:textColor="@color/bifrost_text" android:textStyle="bold" android:textSize="14sp"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Tune how quickly the animation responds and how strongly colours are enhanced." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
