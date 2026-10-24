@@ -288,8 +288,11 @@
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/activePresetInfoCard"
             android:layout_width="match_parent"
-            android:layout_height="68dp"
+            android:layout_height="112dp"
             android:layout_marginTop="5dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Open Profile Settings for the selected profile"
             app:cardBackgroundColor="@color/bifrost_card"
             app:cardCornerRadius="12dp"
             app:cardElevation="0dp"
@@ -302,7 +305,7 @@
                 android:background="@drawable/card_glow_bg"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="8dp">
+                android:paddingVertical="7dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -344,6 +347,16 @@
                         android:visibility="gone" />
                 </LinearLayout>
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="PROFILE DETAILS"
+                    android:textColor="@color/bifrost_text_secondary"
+                    android:textSize="8sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -366,6 +379,16 @@
                         android:textColor="@color/bifrost_text_secondary"
                         android:textSize="8sp" />
                 </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Tap to edit this profile. App Profiles can switch presets automatically when enabled."
+                    android:textColor="@color/bifrost_text_secondary"
+                    android:textSize="8sp"
+                    android:maxLines="2"
+                    android:ellipsize="end" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
