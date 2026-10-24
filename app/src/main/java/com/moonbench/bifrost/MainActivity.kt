@@ -1077,8 +1077,12 @@ class MainActivity : AppCompatActivity() {
             openSettingsOverlay()
         }
         findViewById<MaterialButton>(R.id.homeProfileSettingsButton).setOnClickListener {
-            startActivity(Intent(this, ProfileSettingsActivity::class.java))
+            openProfileSettingsForPreset(selectedPresetName())
         }
+        activePresetInfoCard.setOnClickListener {
+            openProfileSettingsForPreset(selectedPresetName())
+        }
+        activePresetInfoCard.isClickable = true
         findViewById<MaterialButton>(R.id.homeClearCacheButton).setOnClickListener {
             confirmClearCache()
         }
@@ -1909,6 +1913,20 @@ class MainActivity : AppCompatActivity() {
         promptCloseSettingsWithSaveChoice()
     }
 
+    private fun selectedPresetName(): String? {
+        if (!::presetController.isInitialized) return null
+        return presetController.getPresets().getOrNull(selectedCoverFlowIndex)?.name
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    private fun openProfileSettingsForPreset(presetName: String? = null) {
+        val intent = Intent(this, ProfileSettingsActivity::class.java)
+        presetName?.takeIf { it.isNotBlank() }?.let {
+            intent.putExtra(ProfileSettingsActivity.EXTRA_PRESET_NAME, it)
+        }
+        startActivity(intent)
+    }
+
     private fun openSelectedPresetArtworkEditor(anchor: View) {
         if (!::presetController.isInitialized) return
         val presets = presetController.getPresets()
@@ -2004,7 +2022,7 @@ class MainActivity : AppCompatActivity() {
                     suppressNextCoverFlowSnap = true
                     selectPresetFromCoverFlow(index, animate = true, applyPreset = false)
                     presetController.selectPresetForEditing(index)
-                    openSettingsOverlay()
+                    openProfileSettingsForPreset(preset.name)
                 }
             }
 
