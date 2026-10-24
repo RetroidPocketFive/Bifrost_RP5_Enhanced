@@ -69,6 +69,13 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private var selectedBatteryLowColor: Int? = null
     private var selectedBatteryMidColor: Int? = null
     private var selectedBatteryHighColor: Int? = null
+    // Temporary live previews are never persisted to global preferences. The baseline
+    // tracks the profile's last saved values and is restored when leaving unsaved edits.
+    private var previewBaselineSpeed = 0.5f
+    private var previewBaselineSmoothness = 0.5f
+    private var previewBaselineSaturation = 0f
+    private var previewBaselineBrightness = 255
+    private var hasPreviewChanges = false
     private lateinit var leftStickColorButton: MaterialButton
     private lateinit var rightStickColorButton: MaterialButton
     private lateinit var batteryLowColorButton: MaterialButton
@@ -312,14 +319,22 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
             }
         }
-        val change = object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {}
+        val previewChange = object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (!fromUser || bindingPreset) return
+                if (LEDService.isRunning) hasPreviewChanges = true
+                sendProfileSettingsPreview(
+                    reactivityToSpeed(reactivity.progress),
+                    saturation.progress / 100f,
+                    intensity.progress
+                )
+            }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
         }
-        reactivity.setOnSeekBarChangeListener(change)
-        saturation.setOnSeekBarChangeListener(change)
-        intensity.setOnSeekBarChangeListener(change)
+        reactivity.setOnSeekBarChangeListener(previewChange)
+        saturation.setOnSeekBarChangeListener(previewChange)
+        intensity.setOnSeekBarChangeListener(previewChange)
         singleColorSwitch.setOnCheckedChangeListener { _, _ -> updateViewingProfileAvailability() }
         screenCaptureSwitch.setOnCheckedChangeListener { _, _ -> }
         coloredLogoSwitch.setOnCheckedChangeListener { _, _ -> }
@@ -337,6 +352,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
         reloadPresets()
+        capturePreviewBaselineFromCurrentProfile()
         bindingPreset = true
         videoWallpaperSwitch.isChecked = prefs.getBoolean("profile_settings_video_wallpaper_requested", false)
         fpsSpinner.setSelection(listOf(24, 30, 60).indexOf(LiveWallpaperSettingsManager.getTargetFps(prefs).let { current ->
@@ -345,6 +361,60 @@ class ProfileSettingsActivity : AppCompatActivity() {
         bindingPreset = false
     }
 
+    override fun onStop() {
+        // The preview is deliberately transient: if the user leaves without saving,
+        // put the LEDs back to the last saved profile values.
+        if (hasPreviewChanges) {
+            sendProfileSettingsPreview(
+                previewBaselineSpeed,
+                previewBaselineSaturation,
+                previewBaselineBrightness,
+                previewBaselineSmoothness
+            )
+            hasPreviewChanges = false
+        }
+        super.onStop()
+    }
+
+    private fun reactivityToSpeed(progress: Int): Float {
+        val normalized = progress.coerceIn(0, 100) / 100f
+        // A quadratic curve gives the lower end of the slider much finer control.
+        return normalized * normalized
+    }
+
+    private fun speedToReactivity(speed: Double): Int {
+        return (kotlin.math.sqrt(speed.coerceIn(0.0, 1.0)) * 100.0 + 0.5).toInt().coerceIn(0, 100)
+    }
+
+    private fun capturePreviewBaselineFromCurrentProfile() {
+        val profile = presets.optJSONObject(selectedPreset)
+        val speed = profile?.optDouble("speed", 0.5)?.toFloat() ?: 0.5f
+        previewBaselineSpeed = speed.coerceIn(0f, 1f)
+        previewBaselineSmoothness = (profile?.optDouble("smoothness", speed.toDouble())?.toFloat() ?: speed)
+            .coerceIn(0f, 1f)
+        previewBaselineSaturation = (profile?.optDouble("saturationBoost", 0.0)?.toFloat() ?: 0f)
+            .coerceIn(0f, 1f)
+        previewBaselineBrightness = profile?.optInt("brightness", 255)?.coerceIn(0, 255) ?: 255
+        hasPreviewChanges = false
+    }
+
+    private fun sendProfileSettingsPreview(
+        speed: Float,
+        saturationBoost: Float,
+        brightness: Int,
+        smoothness: Float = speed
+    ) {
+        if (!LEDService.isRunning) return
+        runCatching {
+            startService(Intent(this, LEDService::class.java).apply {
+                action = LEDService.ACTION_UPDATE_PARAMS
+                putExtra("speed", speed.coerceIn(0f, 1f))
+                putExtra("smoothness", smoothness.coerceIn(0f, 1f))
+                putExtra("saturationBoost", saturationBoost.coerceIn(0f, 1f))
+                putExtra("brightness", brightness.coerceIn(0, 255))
+            })
+        }
+    }
 
     private fun reloadPresets() {
         presets = runCatching { JSONArray(prefs.getString("presets_json", "[]")) }.getOrDefault(JSONArray())
@@ -523,7 +593,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         if (p != null) {
             performanceSpinner.setSelection(PerformanceProfile.values().indexOfFirst { it.name == p.optString("performanceProfile", "HIGH") }.coerceAtLeast(0))
             animationSpinner.setSelection(LedAnimationType.values().indexOfFirst { it.name == p.optString("animationType", "AMBIENT") }.coerceAtLeast(0))
-            reactivity.progress = (p.optDouble("speed", 0.5) * 100).toInt().coerceIn(0, 100)
+            reactivity.progress = speedToReactivity(p.optDouble("speed", 0.5))
             saturation.progress = (p.optDouble("saturationBoost", 0.0) * 100).toInt().coerceIn(0, 100)
             intensity.progress = p.optInt("brightness", 255).coerceIn(0, 255)
             singleColorSwitch.isChecked = p.optBoolean("useSingleColor", false)
@@ -536,7 +606,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         } else {
             performanceSpinner.setSelection(PerformanceProfile.values().indexOf(PerformanceProfile.HIGH))
             animationSpinner.setSelection(LedAnimationType.values().indexOf(LedAnimationType.AMBIENT))
-            reactivity.progress = 50; saturation.progress = 0; intensity.progress = 255
+            reactivity.progress = 71; saturation.progress = 0; intensity.progress = 255
             singleColorSwitch.isChecked = false
             selectedLedColor = android.graphics.Color.WHITE
             selectedRightLedColor = android.graphics.Color.WHITE
@@ -801,8 +871,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 target.put("fadeEndColor", target.optInt("fadeEndColor", android.graphics.Color.WHITE))
                 target.put("fadeEndRightColor", target.optInt("fadeEndRightColor", android.graphics.Color.WHITE))
                 target.put("brightness", intensity.progress)
-                target.put("speed", reactivity.progress / 100.0)
-                target.put("smoothness", reactivity.progress / 100.0)
+                val reactivitySpeed = reactivityToSpeed(reactivity.progress)
+                target.put("speed", reactivitySpeed.toDouble())
+                target.put("smoothness", reactivitySpeed.toDouble())
                 target.put("sensitivity", target.optDouble("sensitivity", 0.5))
                 target.put("saturationBoost", saturation.progress / 100.0)
                 target.put("useCustomSampling", screenCaptureSwitch.isChecked)
@@ -836,6 +907,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 applySettingsTheme(themeId)
                 LiveWallpaperSettingsManager.setTargetFps(prefs, listOf(24, 30, 60).getOrElse(fpsSpinner.selectedItemPosition) { 30 })
                 persistPresets()
+                capturePreviewBaselineFromCurrentProfile()
                 if (animationSpinner.selectedItemPosition in LedAnimationType.values().indices &&
                     LedAnimationType.values()[animationSpinner.selectedItemPosition] == LedAnimationType.AMBIENT &&
                     !singleColorSwitch.isChecked) {
@@ -1029,20 +1101,23 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
     private fun updateColorButtonSwatches() {
         if (!::leftStickColorButton.isInitialized) return
-        applyColorSwatch(leftStickColorButton, selectedLedColor)
-        applyColorSwatch(rightStickColorButton, selectedRightLedColor)
+        applyColorSwatch(leftStickColorButton, selectedLedColor, forceWhiteText = true)
+        applyColorSwatch(rightStickColorButton, selectedRightLedColor, forceWhiteText = true)
         applyColorSwatch(batteryLowColorButton, selectedBatteryLowColor ?: android.graphics.Color.rgb(255, 0, 0))
         applyColorSwatch(batteryMidColorButton, selectedBatteryMidColor ?: android.graphics.Color.rgb(255, 255, 0))
         applyColorSwatch(batteryHighColorButton, selectedBatteryHighColor ?: android.graphics.Color.rgb(0, 255, 0))
     }
 
-    private fun applyColorSwatch(button: MaterialButton, color: Int) {
+    private fun applyColorSwatch(button: MaterialButton, color: Int, forceWhiteText: Boolean = false) {
         button.backgroundTintList = ColorStateList.valueOf(color)
         val red = android.graphics.Color.red(color)
         val green = android.graphics.Color.green(color)
         val blue = android.graphics.Color.blue(color)
         val luminance = (0.299 * red) + (0.587 * green) + (0.114 * blue)
-        button.setTextColor(if (luminance > 155) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+        button.setTextColor(
+            if (forceWhiteText) android.graphics.Color.WHITE
+            else if (luminance > 155) android.graphics.Color.BLACK else android.graphics.Color.WHITE
+        )
     }
 
     private fun updateAnimationColorControls() {
