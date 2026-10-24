@@ -137,7 +137,9 @@ class ProfileSettingsActivity : AppCompatActivity() {
         fpsSpinner = findViewById(R.id.profileSettingsTargetFpsSpinner)
 
         setupEnumSpinner(performanceSpinner, PerformanceProfile.values().map { label(it.name) })
-        setupEnumSpinner(animationSpinner, LedAnimationType.values().map { label(it.name) })
+        setupAnimationSpinner()
+        animationDescription = findViewById(R.id.profileSettingsAnimationModeDescription)
+        updateAnimationDescription()
         viewingProfileDescription = findViewById(R.id.profileSettingsViewingProfileDescription)
         appProfileSwitch = findViewById(R.id.profileSettingsAutoSwitchByAppSwitch)
         setupAppProfileToggle()
@@ -268,7 +270,10 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                     if (!bindingPreset) {
                         if (spinner == themeSpinner) applyThemeSelection(position)
-                        if (spinner == animationSpinner) updateViewingProfileAvailability()
+                        if (spinner == animationSpinner) {
+                            updateAnimationDescription()
+                            updateViewingProfileAvailability()
+                        }
                     }
                 }
                 override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
@@ -802,6 +807,89 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
         tint(root)
     }
+
+    private lateinit var animationDescription: TextView
+
+    private fun setupAnimationSpinner() {
+        val types = LedAnimationType.values().toList()
+        val adapter = object : ArrayAdapter<LedAnimationType>(this, 0, types) {
+            private fun title(type: LedAnimationType) = label(type.name)
+
+            private fun styledText(text: String, size: Float, color: Int, bold: Boolean = false): TextView =
+                TextView(this@ProfileSettingsActivity).apply {
+                    this.text = text
+                    textSize = size
+                    setTextColor(color)
+                    if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
+                }
+
+            override fun getView(position: Int, convertView: View?, parent: android.view.ViewGroup): View {
+                return styledText(
+                    title(getItem(position) ?: LedAnimationType.AMBIENT),
+                    15f,
+                    getColor(R.color.bifrost_text),
+                    true
+                ).apply {
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                    setPadding(dp(12), 0, dp(36), 0)
+                    minHeight = dp(48)
+                    maxLines = 1
+                }
+            }
+
+            override fun getDropDownView(position: Int, convertView: View?, parent: android.view.ViewGroup): View {
+                val type = getItem(position) ?: LedAnimationType.AMBIENT
+                val selected = position == animationSpinner.selectedItemPosition
+                val row = android.widget.LinearLayout(this@ProfileSettingsActivity).apply {
+                    orientation = android.widget.LinearLayout.VERTICAL
+                    setPadding(dp(14), dp(10), dp(14), dp(10))
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        setColor(getColor(if (selected) R.color.bifrost_selected else R.color.bifrost_dropdown_bg))
+                        cornerRadius = dp(10).toFloat()
+                        setStroke(dp(1), getColor(if (selected) R.color.bifrost_accent else R.color.bifrost_border))
+                    }
+                }
+                row.addView(styledText(title(type), 14f, getColor(R.color.bifrost_text), true))
+                row.addView(styledText(animationModeDescription(type), 12f, getColor(R.color.bifrost_text_secondary)).apply {
+                    setPadding(0, dp(3), 0, 0)
+                })
+                return row
+            }
+        }
+        animationSpinner.adapter = adapter
+        animationSpinner.dropDownVerticalOffset = dp(4)
+        animationSpinner.popupBackground = android.graphics.drawable.GradientDrawable().apply {
+            setColor(getColor(R.color.bifrost_dropdown_bg))
+            cornerRadius = dp(12).toFloat()
+            setStroke(dp(1), getColor(R.color.bifrost_border))
+        }
+    }
+
+    private fun updateAnimationDescription() {
+        val position = animationSpinner.selectedItemPosition
+        val type = LedAnimationType.values().getOrNull(position) ?: LedAnimationType.AMBIENT
+        animationDescription.text = animationModeDescription(type)
+    }
+
+    private fun animationModeDescription(type: LedAnimationType): String = when (type) {
+        LedAnimationType.AMBIENT -> "Matches LED colours to sampled on-screen colours for ambient lighting."
+        LedAnimationType.AUDIO_REACTIVE -> "Drives colour and movement from audio; requires screen/audio capture permission where prompted."
+        LedAnimationType.AMBIAURORA -> "Creates flowing aurora-like colour effects, reacting to the captured source."
+        LedAnimationType.BATTERY_INDICATOR -> "Shows battery status through the LED colour output."
+        LedAnimationType.CPU_TEMPERATURE -> "Uses device CPU temperature to drive the LED output."
+        LedAnimationType.STATIC -> "Keeps the LEDs on a fixed colour you choose."
+        LedAnimationType.BREATH -> "Fades a chosen colour in and out smoothly."
+        LedAnimationType.RAINBOW -> "Cycles continuously through rainbow colours."
+        LedAnimationType.PULSE -> "Pulses a chosen colour in repeating bursts."
+        LedAnimationType.STROBE -> "Flashes a chosen colour rapidly."
+        LedAnimationType.SPARKLE -> "Adds sparkling flashes to a chosen colour."
+        LedAnimationType.FADE_TRANSITION -> "Fades smoothly between colours."
+        LedAnimationType.RAVE -> "Cycles vivid colours with a fast, energetic effect."
+        LedAnimationType.CHASE -> "Moves a chosen colour along the LED sequence."
+        LedAnimationType.PIPBOY -> "Uses a Pip-Boy-inspired green display style."
+    }
+
+    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private fun setupEnumSpinner(spinner: Spinner, items: List<String>) {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, items)
