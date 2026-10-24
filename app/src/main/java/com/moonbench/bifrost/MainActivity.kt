@@ -1332,10 +1332,7 @@ class MainActivity : AppCompatActivity() {
                         startActivity(Intent(this, SamplingEditorActivity::class.java)
                             .putExtra(SamplingEditorActivity.EXTRA_START_MODE, SamplingEditorActivity.SOURCE_STILL))
                     },
-                    "Edit Sample Area" to {
-                        startActivity(Intent(this, EditSampleAreaActivity::class.java))
-                    },
-                    "LED Colour Match" to {
+                                        "LED Colour Match" to {
                         startActivity(Intent(this, SamplingEditorActivity::class.java)
                             .putExtra(SamplingEditorActivity.EXTRA_START_MODE, SamplingEditorActivity.MODE_COLOUR_MATCH))
                     },
@@ -1418,7 +1415,7 @@ class MainActivity : AppCompatActivity() {
         performanceCard.visibility = if (showingUi) View.VISIBLE else View.GONE
 
         settingsSystemStatusCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
-        appProfileCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
+        appProfileCard.visibility = View.GONE
         defaultFallbackCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
         miscellaneousCard.visibility = if (showingBehavior) View.VISIBLE else View.GONE
 
