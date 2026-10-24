@@ -117,7 +117,7 @@
                         <Spinner android:id="@+id/profileSettingsAnimationModeSpinner" android:layout_width="match_parent" android:layout_height="64dp"
                             android:layout_marginTop="10dp" android:background="@drawable/bifrost_spinner_modern" android:paddingHorizontal="12dp"
                             android:contentDescription="Animation mode"/>
-                        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Select the animation pattern used by this profile." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
+                        <TextView android:id="@+id/profileSettingsAnimationModeDescription" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Matches LED colours to sampled on-screen colours for ambient lighting." android:textColor="@color/bifrost_text_secondary" android:textSize="12sp"/>
                         <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
                             android:text="Animation Viewing Profile" android:textColor="@color/bifrost_text" android:textSize="14sp"/>
                         <Spinner android:id="@+id/profileSettingsViewingProfileSpinner" android:layout_width="match_parent" android:layout_height="56dp"
