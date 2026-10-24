@@ -505,6 +505,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 selectedBatteryMidColor = null
                 selectedBatteryHighColor = null
                 selectedProfileColor = android.graphics.Color.WHITE
+                updateColorButtonSwatches()
+                updateAnimationColorControls()
                 presets.optJSONObject(selectedPreset)?.put("profileIconColor", selectedProfileColor)
                 renderProfileArtworkEditor()
                 applySettingsTheme("classic")
@@ -1026,11 +1028,20 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
     private fun updateColorButtonSwatches() {
         if (!::leftStickColorButton.isInitialized) return
-        leftStickColorButton.setBackgroundColor(selectedLedColor)
-        rightStickColorButton.setBackgroundColor(selectedRightLedColor)
-        batteryLowColorButton.setBackgroundColor(selectedBatteryLowColor ?: android.graphics.Color.rgb(255, 0, 0))
-        batteryMidColorButton.setBackgroundColor(selectedBatteryMidColor ?: android.graphics.Color.rgb(255, 255, 0))
-        batteryHighColorButton.setBackgroundColor(selectedBatteryHighColor ?: android.graphics.Color.rgb(0, 255, 0))
+        applyColorSwatch(leftStickColorButton, selectedLedColor)
+        applyColorSwatch(rightStickColorButton, selectedRightLedColor)
+        applyColorSwatch(batteryLowColorButton, selectedBatteryLowColor ?: android.graphics.Color.rgb(255, 0, 0))
+        applyColorSwatch(batteryMidColorButton, selectedBatteryMidColor ?: android.graphics.Color.rgb(255, 255, 0))
+        applyColorSwatch(batteryHighColorButton, selectedBatteryHighColor ?: android.graphics.Color.rgb(0, 255, 0))
+    }
+
+    private fun applyColorSwatch(button: MaterialButton, color: Int) {
+        button.backgroundTintList = ColorStateList.valueOf(color)
+        val red = android.graphics.Color.red(color)
+        val green = android.graphics.Color.green(color)
+        val blue = android.graphics.Color.blue(color)
+        val luminance = (0.299 * red) + (0.587 * green) + (0.114 * blue)
+        button.setTextColor(if (luminance > 155) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
     }
 
     private fun updateAnimationColorControls() {
