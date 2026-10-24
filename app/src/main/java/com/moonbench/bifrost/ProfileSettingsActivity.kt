@@ -32,6 +32,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class ProfileSettingsActivity : AppCompatActivity() {
+    companion object {
+        const val EXTRA_PRESET_NAME = "com.moonbench.bifrost.extra.PROFILE_SETTINGS_PRESET_NAME"
+    }
+
     private val prefs by lazy { getSharedPreferences("bifrost_prefs", MODE_PRIVATE) }
     private var presets = JSONArray()
     private var selectedPreset = 0
@@ -320,7 +324,12 @@ class ProfileSettingsActivity : AppCompatActivity() {
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, if (names.isEmpty()) listOf("No saved profiles — press Save to create") else names)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         presetSpinner.adapter = adapter
-        selectedPreset = selectedPreset.coerceIn(0, (names.size - 1).coerceAtLeast(0))
+        val requestedPresetName = intent.getStringExtra(EXTRA_PRESET_NAME)
+        val requestedIndex = requestedPresetName?.let { requested ->
+            names.indexOfFirst { it.equals(requested, ignoreCase = true) }
+        } ?: -1
+        selectedPreset = (if (requestedIndex >= 0) requestedIndex else selectedPreset)
+            .coerceIn(0, (names.size - 1).coerceAtLeast(0))
         if (names.isNotEmpty()) presetSpinner.setSelection(selectedPreset, false)
         bindingPreset = false
         loadSelectedPreset()
