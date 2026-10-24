@@ -47,7 +47,8 @@
                 android:backgroundTint="@color/bifrost_surface"
                 app:cornerRadius="12dp"
                 app:strokeColor="@color/bifrost_accent"
-                app:strokeWidth="1dp" />
+                app:strokeWidth="1dp" 
+                android:visibility="visible"/>
 
             <ImageView
                 android:id="@+id/settingsHeaderLogo"
@@ -75,7 +76,7 @@
                     android:id="@+id/settingsPageTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="PROFILE SETTINGS"
+                    android:text="SETTING"
                     android:textColor="@color/bifrost_text"
                     android:textSize="20sp"
                     android:textStyle="bold"
@@ -90,7 +91,7 @@
                     android:layout_marginTop="3dp"
                     android:text="Configure the selected preset and its behaviour."
                     android:textColor="@color/bifrost_text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:maxLines="2"
                     android:ellipsize="end" />
             </LinearLayout>
@@ -120,7 +121,8 @@
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:paddingTop="8dp"
-                android:paddingBottom="8dp" />
+                android:paddingBottom="8dp" 
+                android:visibility="gone"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/savePresetButton"
@@ -142,7 +144,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Save"
-                android:tooltipText="Save" />
+                android:tooltipText="Save" 
+                android:visibility="gone"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/modifyPresetButton"
@@ -164,7 +167,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Edit"
-                android:tooltipText="Edit" />
+                android:tooltipText="Edit" 
+                android:visibility="gone"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/deletePresetButton"
@@ -186,7 +190,8 @@
                 app:strokeWidth="1dp"
                 app:strokeColor="@color/bifrost_accent" 
                 android:contentDescription="Delete"
-                android:tooltipText="Delete" />
+                android:tooltipText="Delete" 
+                android:visibility="gone"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/customizePresetArtworkButton"
@@ -219,67 +224,20 @@
                 android:backgroundTint="@color/bifrost_surface"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
-                android:text="DONE"
+                android:text="EXIT"
                 android:textColor="@color/bifrost_text"
                 android:textSize="11sp"
                 app:cornerRadius="10dp"
                 app:strokeColor="@color/bifrost_accent"
                 app:strokeWidth="1dp" 
-                android:contentDescription="Done"
-                android:tooltipText="Done" />
+                android:contentDescription="Exit"
+                android:tooltipText="Exit"
+                android:visibility="gone" />
     </LinearLayout>
 
     </HorizontalScrollView>
 
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:scrollbars="none"
-        android:overScrollMode="never">
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="0dp">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/exportPresetsButton"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            android:text="BACKUP"
-            android:textSize="11sp"
-            android:letterSpacing="0.05"
-            android:textColor="@color/bifrost_text"
-            android:backgroundTint="@color/bifrost_surface"
-            app:cornerRadius="10dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Backup"
-                android:tooltipText="Backup" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/importPresetsButton"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:text="RESTORE"
-            android:textSize="11sp"
-            android:letterSpacing="0.05"
-            android:textColor="@color/bifrost_text"
-            android:backgroundTint="@color/bifrost_surface"
-            app:cornerRadius="10dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Restore"
-                android:tooltipText="Restore" />
-    </LinearLayout>
-
-    </HorizontalScrollView>
+    
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -288,12 +246,30 @@
         android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
+            android:id="@+id/tabBehaviorSettings"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:layout_marginStart="0dp"
+            android:layout_marginEnd="4dp"
+            android:text="CALIBRATION"
+            android:textColor="@color/bifrost_text"
+            android:textSize="10sp"
+            android:letterSpacing="0.05"
+            android:backgroundTint="@color/bifrost_surface"
+            app:cornerRadius="10dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/bifrost_accent" 
+                android:contentDescription="Open calibration tools"
+                android:tooltipText="Calibration" />
+
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/tabUiSettings"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:layout_weight="1"
             android:layout_marginEnd="4dp"
-            android:text="PROFILE SETTINGS"
+            android:text="SETTING"
             android:textColor="@color/bifrost_text"
             android:textSize="10sp"
             android:letterSpacing="0.05"
@@ -301,26 +277,8 @@
             app:cornerRadius="10dp"
             app:strokeWidth="1dp"
             app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Profile settings: colour, animation and profile tuning"
-                android:tooltipText="Profile settings" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/tabBehaviorSettings"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_weight="1"
-            android:layout_marginStart="2dp"
-            android:layout_marginEnd="2dp"
-            android:text="BIFROST SETTINGS"
-            android:textColor="@color/bifrost_text"
-            android:textSize="10sp"
-            android:letterSpacing="0.05"
-            android:backgroundTint="@color/bifrost_surface"
-            app:cornerRadius="10dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="@color/bifrost_accent" 
-                android:contentDescription="Bifrost settings: global behaviour and app profiles"
-                android:tooltipText="Bifrost settings" />
+                android:contentDescription="BIFROST Settings: global behaviour and app preferences"
+                android:tooltipText="Setting" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/tabThemesSettings"
@@ -328,7 +286,7 @@
             android:layout_height="40dp"
             android:layout_weight="1"
             android:layout_marginStart="4dp"
-            android:text="THEMES"
+            android:text="IMPORT / EXPORT"
             android:textColor="@color/bifrost_text"
             android:textSize="10sp"
             android:letterSpacing="0.05"
@@ -573,67 +531,7 @@
                             app:trackTint="@color/switch_track_tint" />
                     </LinearLayout>
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/bifrost_spacing_md"
-                        android:text="EDIT SAMPLE AREA"
-                        android:textColor="@color/bifrost_text"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center"
-                        android:weightSum="3">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/editSampleAreaColorWheelButton"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginEnd="4dp"
-                            android:text="COLOR WHEEL"
-                            android:textSize="11sp"
-                            android:contentDescription="Edit sample area using a colour wheel"
-                            android:tooltipText="Use a generated colour wheel to test sampled colours" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/editSampleAreaLiveButton"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="2dp"
-                            android:layout_marginEnd="2dp"
-                            android:text="LIVE IMAGE"
-                            android:textSize="12sp"
-                            android:contentDescription="Edit sample area using a live screen capture"
-                            android:tooltipText="Capture the live game screen for sample area editing" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/editSampleAreaStillButton"
-                            style="@style/Widget.Material3.Button.OutlinedButton"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:layout_marginStart="2dp"
-                            android:text="STILL IMAGE"
-                            android:textSize="12sp"
-                            android:contentDescription="Edit sample area using a still image"
-                            android:tooltipText="Choose a saved screenshot for sample area editing" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Adjust and save viewing areas for Ambient colour matching."
-                        android:textColor="@color/bifrost_text_secondary"
-                        android:textSize="8sp" />
+                    
 
                     
 
@@ -1556,7 +1454,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="APP PROFILES"
+                                android:text="APP ASSIGNMENTS"
                                 android:textColor="@color/bifrost_text"
                                 android:textSize="12sp"
                                 android:letterSpacing="0.08"
@@ -1565,7 +1463,7 @@
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Auto-switch by foreground app"
+                                android:text="Assign foreground apps to presets below"
                                 android:textColor="@color/bifrost_text_secondary"
                                 android:textSize="8sp"
                                 android:layout_marginTop="2dp" />
@@ -1575,6 +1473,7 @@
                             android:id="@+id/appProfileSwitch"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:visibility="gone"
                             app:thumbTint="@color/switch_thumb_tint"
                             app:trackTint="@color/switch_track_tint" />
                     </LinearLayout>
@@ -1923,6 +1822,55 @@
             </com.google.android.material.card.MaterialCardView>
 
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/restoreDefaultsCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/bifrost_spacing_md"
+                app:cardBackgroundColor="@color/bifrost_card"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/bifrost_accent"
+                app:strokeWidth="1dp">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/bifrost_card_padding">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="RESTORE DEFAULTS"
+                        android:textColor="@color/bifrost_text"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="12dp"
+                        android:text="Reset only the Setting options above. Profiles, calibration, themes and backups remain unchanged."
+                        android:textColor="@color/bifrost_text_secondary"
+                        android:textSize="13sp" />
+                    <com.google.android.material.button.MaterialButton
+            android:id="@+id/importPresetsButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            
+            
+            android:text="Restore Setting Defaults"
+            android:textSize="14sp"
+            android:letterSpacing="0.05"
+            android:textColor="@color/bifrost_text"
+            android:backgroundTint="@color/bifrost_surface"
+            app:cornerRadius="10dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/bifrost_accent" 
+                android:contentDescription="Restore default BIFROST settings"
+                android:tooltipText="Restore default BIFROST settings" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
                 android:id="@+id/miscellaneousCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -1989,7 +1937,8 @@
         android:backgroundTint="@color/bifrost_surface"
         app:cornerRadius="10dp"
         app:strokeWidth="1dp"
-        app:strokeColor="@color/bifrost_accent" />
+        app:strokeColor="@color/bifrost_accent" 
+                android:visibility="gone"/>
                         
                             <com.google.android.material.button.MaterialButton
                         android:id="@+id/pluginStoreButton"

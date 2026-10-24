@@ -40,23 +40,28 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         window.statusBarColor = bg
         window.navigationBarColor = bg
 
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(bg)
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+        }
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(bg)
-            setPadding(dp(18), dp(12), dp(18), dp(18))
         }
-        val root = ScrollView(this).apply {
+        val scroll = ScrollView(this).apply {
             isFillViewport = true
             setBackgroundColor(bg)
+            clipToPadding = false
             addView(content, android.view.ViewGroup.LayoutParams(-1, -2))
         }
 
         val header = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
+            radius = dp(18).toFloat()
             setCardBackgroundColor(panel)
             strokeWidth = dp(1)
             strokeColor = accent
-            setContentPadding(dp(12), dp(10), dp(18), dp(10))
+            setContentPadding(dp(12), dp(8), dp(12), dp(8))
         }
 
         val headerRow = LinearLayout(this).apply {
@@ -66,59 +71,67 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
 
         val back = MaterialButton(this).apply {
             text = "‹"
-            textSize = 34f
+            isAllCaps = false
+            textSize = 30f
             setTextColor(this@Rp5CalibrationMenuActivity.text)
-            minWidth = dp(58)
-            minHeight = dp(52)
+            backgroundTintList = android.content.res.ColorStateList.valueOf(panel)
+            strokeColor = android.content.res.ColorStateList.valueOf(accent)
+            strokeWidth = dp(1)
+            cornerRadius = dp(12)
+            minWidth = dp(48)
+            minHeight = dp(48)
             insetTop = 0
             insetBottom = 0
             setOnClickListener { finish() }
-            background = roundedDrawable(Color.TRANSPARENT, accent, 18)
-            contentDescription = "Back"
+            contentDescription = "Back to BIFROST Settings"
+            tooltipText = "Back"
         }
-        headerRow.addView(back, LinearLayout.LayoutParams(dp(62), dp(56)))
+        headerRow.addView(back, LinearLayout.LayoutParams(dp(48), dp(48)))
 
         val logo = ImageView(this).apply {
-            setImageResource(R.mipmap.ic_launcher_foreground)
-            contentDescription = "Bifrost logo"
+            setImageResource(R.mipmap.ic_launcher)
+            contentDescription = "BIFROST logo"
             scaleType = ImageView.ScaleType.FIT_CENTER
-            setPadding(dp(6), dp(6), dp(6), dp(6))
         }
-        headerRow.addView(logo, LinearLayout.LayoutParams(dp(52), dp(52)))
+        headerRow.addView(logo, LinearLayout.LayoutParams(dp(36), dp(36)).apply {
+            marginStart = dp(10)
+            marginEnd = dp(10)
+        })
 
-        val brand = TextView(this).apply {
-            this.text = "BIFROST"
-            textSize = 20f
-            setTextColor(this@Rp5CalibrationMenuActivity.text)
-            gravity = Gravity.CENTER_VERTICAL
-            letterSpacing = 0.18f
-            setPadding(dp(8), 0, dp(12), 0)
-        }
-        headerRow.addView(brand, LinearLayout.LayoutParams(dp(128), dp(56)))
-
-        val divider = View(this).apply { setBackgroundColor(accent) }
-        headerRow.addView(divider, LinearLayout.LayoutParams(dp(1), dp(38)))
+        headerRow.addView(View(this).apply {
+            setBackgroundColor(accent)
+        }, LinearLayout.LayoutParams(dp(1), dp(40)).apply { marginEnd = dp(12) })
 
         val titleBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), 0, 0, 0)
         }
         titleBox.addView(TextView(this).apply {
-            text = "Calibration"
-            textSize = 28f
-            setTextColor(this@Rp5CalibrationMenuActivity.text)
+            text = "BIFROST"
+            textSize = 12f
+            letterSpacing = 0.12f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(accent)
         })
         titleBox.addView(TextView(this).apply {
-            text = "Adjust your device for the best visual performance."
+            text = "CALIBRATION"
+            textSize = 20f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setTextColor(this@Rp5CalibrationMenuActivity.text)
+            maxLines = 1
+        })
+        titleBox.addView(TextView(this).apply {
+            text = "Test and calibrate controller lighting."
             textSize = 13f
             setTextColor(secondary)
+            maxLines = 2
         })
-        headerRow.addView(titleBox, LinearLayout.LayoutParams(0, dp(56), 1f))
+        headerRow.addView(titleBox, LinearLayout.LayoutParams(0, -2, 1f))
         header.addView(headerRow)
 
-        content.addView(header, LinearLayout.LayoutParams(-1, dp(100)).apply {
-            bottomMargin = dp(22)
+        root.addView(header, LinearLayout.LayoutParams(-1, -2).apply {
+            bottomMargin = dp(12)
         })
+        root.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
 
         content.addView(card(
             "▣",
@@ -222,11 +235,11 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
         onAction: (Int) -> Unit
     ): View {
         val card = MaterialCardView(this).apply {
-            radius = dp(20).toFloat()
+            radius = dp(18).toFloat()
             setCardBackgroundColor(panel)
             strokeWidth = dp(1)
             strokeColor = accent
-            setContentPadding(dp(32), dp(24), dp(24), dp(24))
+            setContentPadding(dp(16), dp(16), dp(16), dp(16))
         }
 
         val compact = resources.configuration.smallestScreenWidthDp < 720 ||
@@ -243,37 +256,38 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
             setTextColor(accent)
             background = roundedDrawable(Color.TRANSPARENT, accent, 14)
         }
-        row.addView(iconBox, LinearLayout.LayoutParams(if (compact) dp(64) else dp(92), if (compact) dp(64) else dp(90)).apply {
+        row.addView(iconBox, LinearLayout.LayoutParams(if (compact) dp(56) else dp(64), if (compact) dp(56) else dp(64)).apply {
             if (compact) bottomMargin = dp(12)
         })
 
         val textBox = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(if (compact) 0 else dp(28), 0, if (compact) 0 else dp(18), 0)
+            setPadding(if (compact) 0 else dp(16), 0, if (compact) 0 else dp(12), 0)
             gravity = if (compact) Gravity.CENTER_HORIZONTAL else Gravity.START
         }
         textBox.addView(TextView(this).apply {
             text = title
-            textSize = if (compact) 16f else 19f
+            textSize = 16f
             gravity = if (compact) Gravity.CENTER else Gravity.START
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
             setTextColor(this@Rp5CalibrationMenuActivity.text)
         })
         if (description.isNotEmpty()) textBox.addView(TextView(this).apply {
             text = description
-            textSize = if (compact) 12f else 14f
+            textSize = 13f
             gravity = if (compact) Gravity.CENTER else Gravity.START
             setTextColor(secondary)
             setPadding(0, dp(8), 0, 0)
         })
         if (line2.isNotEmpty()) textBox.addView(TextView(this).apply {
             text = line2
-            textSize = 14f
+            textSize = 13f
             setTextColor(secondary)
             setPadding(0, dp(4), 0, 0)
         })
         if (line3.isNotEmpty()) textBox.addView(TextView(this).apply {
             text = line3
-            textSize = 14f
+            textSize = 13f
             setTextColor(secondary)
             setPadding(0, dp(4), 0, 0)
         })
@@ -288,17 +302,17 @@ class Rp5CalibrationMenuActivity : AppCompatActivity() {
                 text = label
                 textSize = 14f
                 setTextColor(this@Rp5CalibrationMenuActivity.text)
-                minHeight = dp(56)
+                minHeight = dp(48)
                 insetTop = 0
                 insetBottom = 0
-                cornerRadius = dp(28)
+                cornerRadius = dp(12)
                 backgroundTintList = android.content.res.ColorStateList.valueOf(if (index == 0) accent else Color.TRANSPARENT)
                 strokeWidth = if (index == 0) 0 else dp(1)
                 strokeColor = android.content.res.ColorStateList.valueOf(accent)
                 setOnClickListener { onAction(index) }
             }
-            actionBox.addView(b, LinearLayout.LayoutParams(if (compact) -1 else dp(if (actions.size == 1) 300 else 270), dp(48)).apply {
-                if (compact) topMargin = dp(8) else if (index > 0) marginStart = dp(18)
+            actionBox.addView(b, LinearLayout.LayoutParams(if (compact) -1 else dp(if (actions.size == 1) 180 else 160), dp(48)).apply {
+                if (compact) topMargin = dp(8) else if (index > 0) marginStart = dp(8)
             })
         }
         if (compact) {
