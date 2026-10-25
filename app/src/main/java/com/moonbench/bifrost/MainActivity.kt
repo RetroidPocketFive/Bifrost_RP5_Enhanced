@@ -1520,7 +1520,7 @@ class MainActivity : AppCompatActivity() {
         applyThemeToViewTree(settingsOverlay, theme)
         applyHeaderLogoPreference()
         updateSettingsTabButtonStyles()
-        if (::presetController.isInitialized) refreshCoverFlowFromPresets()
+        if (::presetController.isInitialized && ::appProfileManager.isInitialized) refreshCoverFlowFromPresets()
     }
 
     private fun applyThemeToViewTree(view: View, theme: UiTheme) {
