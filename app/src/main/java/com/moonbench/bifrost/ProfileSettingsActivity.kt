@@ -181,7 +181,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.profileSettingsEditViewingProfileButton).setOnClickListener {
             editViewingProfileSelection()
         }
-        setupEnumSpinner(themeSpinner, listOf("Classic", "OLED Purple"))
+        setupEnumSpinner(themeSpinner, listOf("Classic", "OLED Purple", "PIP-BOY"))
         setupEnumSpinner(fpsSpinner, listOf("24 FPS", "30 FPS", "60 FPS"))
         reactivity.max = 100
         saturation.max = 100
@@ -615,13 +615,21 @@ class ProfileSettingsActivity : AppCompatActivity() {
             selectedBatteryHighColor = null
             selectedProfileColor = android.graphics.Color.WHITE
             val themeId = prefs.getString("selected_ui_theme", "classic") ?: "classic"
-            themeSpinner.setSelection(if (themeId == "oled_purple") 1 else 0, false)
+            themeSpinner.setSelection(when (themeId) {
+                "oled_purple" -> 1
+                "pip_boy" -> 2
+                else -> 0
+            }, false)
             coloredLogoSwitch.isChecked = prefs.getBoolean("colored_logo_enabled", false)
         }
         screenCaptureSwitch.isChecked = p?.optBoolean("useCustomSampling", prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION))
             ?: prefs.getBoolean(LEDService.PREF_AMBILIGHT_USE_MEDIA_PROJECTION, LEDService.DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
         val themeId = p?.optString("uiThemeId", prefs.getString("selected_ui_theme", "classic")) ?: prefs.getString("selected_ui_theme", "classic")
-        themeSpinner.setSelection(if (themeId == "oled_purple") 1 else 0, false)
+        themeSpinner.setSelection(when (themeId) {
+                "oled_purple" -> 1
+                "pip_boy" -> 2
+                else -> 0
+            }, false)
         coloredLogoSwitch.isChecked = p?.optBoolean("coloredLogoEnabled", prefs.getBoolean("colored_logo_enabled", false))
             ?: prefs.getBoolean("colored_logo_enabled", false)
         applySettingsTheme(themeId ?: "classic")
@@ -881,7 +889,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 val sampleAreaProfileName = selectedSampleAreaProfileName()
                 if (sampleAreaProfileName != null) target.put("sampleAreaProfileName", sampleAreaProfileName)
                 else target.remove("sampleAreaProfileName")
-                target.put("uiThemeId", if (themeSpinner.selectedItemPosition == 1) "oled_purple" else "classic")
+                target.put("uiThemeId", when (themeSpinner.selectedItemPosition) {
+                    1 -> "oled_purple"
+                    2 -> "pip_boy"
+                    else -> "classic"
+                })
                 target.put("coloredLogoEnabled", coloredLogoSwitch.isChecked)
                 target.put("breatheWhenCharging", target.optBoolean("breatheWhenCharging", false))
                 target.put("indicateChargingSpeed", target.optBoolean("indicateChargingSpeed", false))
@@ -969,7 +981,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
     }
 
     private fun applyThemeSelection(position: Int) {
-        val id = if (position == 1) "oled_purple" else "classic"
+        val id = when (position) {
+            1 -> "oled_purple"
+            2 -> "pip_boy"
+            else -> "classic"
+        }
         // Preview the theme in this editor; the profile is only changed by Save.
         applySettingsTheme(id)
     }
@@ -977,10 +993,27 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private fun applySettingsTheme(themeId: String) {
         val root = findViewById<View>(android.R.id.content) ?: return
         val purple = themeId == "oled_purple"
-        val background = android.graphics.Color.parseColor(if (purple) "#10091A" else "#0A0E1A")
-        val card = android.graphics.Color.parseColor(if (purple) "#1B1029" else "#12182B")
-        val surface = android.graphics.Color.parseColor(if (purple) "#2A1740" else "#1A2236")
-        val accent = android.graphics.Color.parseColor(if (purple) "#C084FC" else "#6366F1")
+        val pipBoy = themeId == "pip_boy"
+        val background = android.graphics.Color.parseColor(when {
+            pipBoy -> "#020B05"
+            purple -> "#10091A"
+            else -> "#0A0E1A"
+        })
+        val card = android.graphics.Color.parseColor(when {
+            pipBoy -> "#061A0A"
+            purple -> "#1B1029"
+            else -> "#12182B"
+        })
+        val surface = android.graphics.Color.parseColor(when {
+            pipBoy -> "#0B2A10"
+            purple -> "#2A1740"
+            else -> "#1A2236"
+        })
+        val accent = android.graphics.Color.parseColor(when {
+            pipBoy -> "#39FF14"
+            purple -> "#C084FC"
+            else -> "#6366F1"
+        })
         root.setBackgroundColor(background)
         fun tint(view: View) {
             when (view) {
