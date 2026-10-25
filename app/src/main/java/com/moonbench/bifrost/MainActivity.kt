@@ -1550,11 +1550,9 @@ class MainActivity : AppCompatActivity() {
 
             is Spinner -> view.backgroundTintList = ColorStateList.valueOf(theme.accentColor)
 
-            is LinearLayout -> {
-                if (view.background != null && view.background !is ColorDrawable) {
-                    view.backgroundTintList = ColorStateList.valueOf(theme.cardColor)
-                }
-            }
+            // Do not blanket-tint LinearLayout backgrounds: many are intentional
+            // subheading, icon-preview, and custom-action surfaces with their own drawable.
+            // Their owning MaterialCardView or dedicated component controls the surface colour.
 
             is TextView -> {
                 if (theme.id == "pip_boy") view.setTextColor(theme.textColor)
