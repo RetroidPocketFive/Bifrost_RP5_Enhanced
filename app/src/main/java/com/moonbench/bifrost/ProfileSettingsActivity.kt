@@ -997,6 +997,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         }
         // Preview the theme in this editor; the profile is only changed by Save.
         applySettingsTheme(id)
+        renderProfileArtworkEditor()
     }
 
     private fun applySettingsTheme(themeId: String) {
@@ -1048,6 +1049,11 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     view.setTextColor(text)
                 }
                 is Spinner -> view.backgroundTintList = ColorStateList.valueOf(accent)
+                is android.widget.LinearLayout -> {
+                    if (view.background != null && view.background !is android.graphics.drawable.ColorDrawable) {
+                        view.backgroundTintList = ColorStateList.valueOf(card)
+                    }
+                }
                 is TextView -> view.setTextColor(text)
             }
             if (view is android.view.ViewGroup) {
