@@ -446,6 +446,32 @@ class MainActivity : AppCompatActivity() {
                 settleAlphaWave = 19,
                 settlePhaseDegrees = 12f
             )
+        ),
+        UiTheme(
+            id = "pip_boy",
+            label = "PIP-BOY",
+            backgroundColor = Color.parseColor("#020B05"),
+            cardColor = Color.parseColor("#061A0A"),
+            surfaceColor = Color.parseColor("#0B2A10"),
+            textColor = Color.parseColor("#A8FFB0"),
+            accentColor = Color.parseColor("#39FF14"),
+            accentLightColor = Color.parseColor("#7CFF6B"),
+            headerPalette = HeaderThemePalette(
+                introHueStart = 96f,
+                introHueSpan = 34f,
+                introSaturation = 0.92f,
+                introValue = 0.86f,
+                settleHueStart = 108f,
+                settleHueSpan = 16f,
+                settleHueWobbleAmplitude = 2f,
+                settleSaturationBase = 0.82f,
+                settleSaturationWave = 0.08f,
+                settleValueBase = 0.76f,
+                settleValueWave = 0.12f,
+                settleAlphaBase = 250,
+                settleAlphaWave = 5,
+                settlePhaseDegrees = 0f
+            )
         )
     )
     private var selectedUiTheme: UiTheme = builtInThemes.first()
@@ -2350,7 +2376,7 @@ class MainActivity : AppCompatActivity() {
             prefs.edit().remove("active_sample_area_profile_name").apply()
         }
         val themeId = profile.optString("uiThemeId", "")
-        if (themeId == "classic" || themeId == "oled_purple") {
+        if (themeId == "classic" || themeId == "oled_purple" || themeId == "pip_boy") {
             prefs.edit().putString(PREF_SELECTED_UI_THEME, themeId).apply()
             val theme = builtInThemes.firstOrNull { it.id == themeId }
             if (theme != null && theme.id != selectedUiTheme.id) {
