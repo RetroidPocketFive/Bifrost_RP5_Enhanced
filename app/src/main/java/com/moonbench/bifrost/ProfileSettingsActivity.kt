@@ -1049,11 +1049,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     view.setTextColor(text)
                 }
                 is Spinner -> view.backgroundTintList = ColorStateList.valueOf(accent)
-                is android.widget.LinearLayout -> {
-                    if (view.background != null && view.background !is android.graphics.drawable.ColorDrawable) {
-                        view.backgroundTintList = ColorStateList.valueOf(card)
-                    }
-                }
+                // Preserve custom LinearLayout drawables. Blanket tinting here recolours
+                // nested subheading bars, icon previews, and customisation panels incorrectly.
                 is TextView -> view.setTextColor(text)
             }
             if (view is android.view.ViewGroup) {
