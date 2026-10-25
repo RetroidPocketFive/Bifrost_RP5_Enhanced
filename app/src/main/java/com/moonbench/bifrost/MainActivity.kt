@@ -1539,13 +1539,27 @@ class MainActivity : AppCompatActivity() {
 
             is SwitchMaterial -> {
                 view.thumbTintList = ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                    intArrayOf(theme.accentLightColor, theme.textColor)
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
+                        intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
+                        intArrayOf(-android.R.attr.state_enabled)
+                    ),
+                    intArrayOf(theme.accentLightColor, theme.textColor, theme.surfaceColor)
                 )
                 view.trackTintList = ColorStateList(
-                    arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                    intArrayOf(theme.accentColor, theme.surfaceColor)
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
+                        intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
+                        intArrayOf(-android.R.attr.state_enabled)
+                    ),
+                    intArrayOf(theme.accentColor, theme.surfaceColor, theme.cardColor)
                 )
+            }
+
+            is SeekBar -> {
+                view.progressTintList = ColorStateList.valueOf(theme.accentColor)
+                view.thumbTintList = ColorStateList.valueOf(theme.accentLightColor)
+                view.progressBackgroundTintList = ColorStateList.valueOf(theme.surfaceColor)
             }
 
             is Spinner -> view.backgroundTintList = ColorStateList.valueOf(theme.accentColor)
