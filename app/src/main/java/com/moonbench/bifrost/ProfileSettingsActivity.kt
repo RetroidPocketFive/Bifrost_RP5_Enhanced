@@ -1039,14 +1039,27 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 }
                 is SwitchMaterial -> {
                     view.thumbTintList = ColorStateList(
-                        arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                        intArrayOf(accentLight, text)
+                        arrayOf(
+                            intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
+                            intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
+                            intArrayOf(-android.R.attr.state_enabled)
+                        ),
+                        intArrayOf(accentLight, text, surface)
                     )
                     view.trackTintList = ColorStateList(
-                        arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
-                        intArrayOf(accent, surface)
+                        arrayOf(
+                            intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
+                            intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
+                            intArrayOf(-android.R.attr.state_enabled)
+                        ),
+                        intArrayOf(accent, surface, card)
                     )
                     view.setTextColor(text)
+                }
+                is SeekBar -> {
+                    view.progressTintList = ColorStateList.valueOf(accent)
+                    view.thumbTintList = ColorStateList.valueOf(accentLight)
+                    view.progressBackgroundTintList = ColorStateList.valueOf(surface)
                 }
                 is Spinner -> view.backgroundTintList = ColorStateList.valueOf(accent)
                 // Preserve custom LinearLayout drawables. Blanket tinting here recolours
