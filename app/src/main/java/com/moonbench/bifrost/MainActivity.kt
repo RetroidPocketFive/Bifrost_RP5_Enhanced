@@ -1534,6 +1534,12 @@ class MainActivity : AppCompatActivity() {
                 view.iconTint = ColorStateList.valueOf(theme.textColor)
                 view.strokeColor = ColorStateList.valueOf(theme.accentColor)
             }
+
+            is TextView -> {
+                if (theme.id == "pip_boy") {
+                    view.setTextColor(theme.textColor)
+                }
+            }
         }
 
         if (view is ViewGroup) {
