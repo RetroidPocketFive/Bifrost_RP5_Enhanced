@@ -1550,6 +1550,12 @@ class MainActivity : AppCompatActivity() {
 
             is Spinner -> view.backgroundTintList = ColorStateList.valueOf(theme.accentColor)
 
+            is LinearLayout -> {
+                if (view.background != null && view.background !is ColorDrawable) {
+                    view.backgroundTintList = ColorStateList.valueOf(theme.cardColor)
+                }
+            }
+
             is TextView -> {
                 if (theme.id == "pip_boy") view.setTextColor(theme.textColor)
             }
