@@ -1020,7 +1020,12 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 is com.google.android.material.card.MaterialCardView -> view.setCardBackgroundColor(card)
                 is MaterialButton -> {
                     view.backgroundTintList = ColorStateList.valueOf(surface)
+                    view.setTextColor(android.graphics.Color.parseColor(if (pipBoy) "#A8FFB0" else if (purple) "#C084FC" else "#E8EEFF"))
+                    view.iconTint = ColorStateList.valueOf(accent)
                     view.strokeColor = ColorStateList.valueOf(accent)
+                }
+                is TextView -> {
+                    if (pipBoy) view.setTextColor(android.graphics.Color.parseColor("#A8FFB0"))
                 }
             }
             if (view is android.view.ViewGroup) {
