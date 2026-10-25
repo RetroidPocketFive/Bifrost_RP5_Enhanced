@@ -273,13 +273,18 @@ class ProfileSettingsActivity : AppCompatActivity() {
             listOf(characteristicsTab, themeTab, blankTab).forEach { tab ->
                 val active = tab == selected
                 tab.isSelected = active
-                tab.backgroundTintList = ColorStateList.valueOf(
-                    getColor(if (active) R.color.bifrost_selected else R.color.bifrost_card)
-                )
-                tab.setTextColor(getColor(if (active) R.color.bifrost_text else R.color.bifrost_text_secondary))
-                tab.strokeColor = ColorStateList.valueOf(
-                    getColor(if (active) R.color.bifrost_accent_light else R.color.bifrost_border)
-                )
+                val themeId = when (themeSpinner.selectedItemPosition) { 1 -> "oled_purple"; 2 -> "pip_boy"; else -> "classic" }
+                val pipBoy = themeId == "pip_boy"
+                val purple = themeId == "oled_purple"
+                val cardColor = android.graphics.Color.parseColor(if (pipBoy) "#061A0A" else if (purple) "#1B1029" else "#12182B")
+                val accentColor = android.graphics.Color.parseColor(if (pipBoy) "#39FF14" else if (purple) "#C084FC" else "#6366F1")
+                val accentLightColor = android.graphics.Color.parseColor(if (pipBoy) "#7CFF6B" else if (purple) "#D8B4FE" else "#818CF8")
+                val textColor = android.graphics.Color.parseColor(if (pipBoy) "#A8FFB0" else if (purple) "#C084FC" else "#E8EEFF")
+                val secondaryColor = android.graphics.Color.parseColor(if (pipBoy) "#7CFF6B" else if (purple) "#B78AE8" else "#AAB5D1")
+                val borderColor = android.graphics.Color.parseColor(if (pipBoy) "#24552B" else if (purple) "#43265F" else "#2B3650")
+                tab.backgroundTintList = ColorStateList.valueOf(if (active) accentColor else cardColor)
+                tab.setTextColor(if (active && pipBoy) android.graphics.Color.parseColor("#020B05") else if (active) textColor else secondaryColor)
+                tab.strokeColor = ColorStateList.valueOf(if (active) accentLightColor else borderColor)
                 tab.strokeWidth = dp(if (active) 2 else 1)
                 tab.alpha = if (active) 1f else 0.86f
             }
@@ -513,8 +518,12 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 layoutParams = android.widget.LinearLayout.LayoutParams((64 * density).toInt(), (64 * density).toInt()).apply { marginEnd = (10 * density).toInt() }
                 radius = 14 * density
                 cardElevation = 0f
-                setCardBackgroundColor(androidx.core.content.ContextCompat.getColor(this@ProfileSettingsActivity, R.color.bifrost_surface))
-                setStrokeColor(androidx.core.content.ContextCompat.getColor(this@ProfileSettingsActivity, if (selected) R.color.bifrost_accent else R.color.bifrost_text_secondary))
+                val themeId = when (themeSpinner.selectedItemPosition) { 1 -> "oled_purple"; 2 -> "pip_boy"; else -> "classic" }
+                val surfaceColor = android.graphics.Color.parseColor(if (themeId == "pip_boy") "#0B2A10" else if (themeId == "oled_purple") "#2A1740" else "#1A2236")
+                val accentColor = android.graphics.Color.parseColor(if (themeId == "pip_boy") "#39FF14" else if (themeId == "oled_purple") "#C084FC" else "#6366F1")
+                val secondaryColor = android.graphics.Color.parseColor(if (themeId == "pip_boy") "#7CFF6B" else if (themeId == "oled_purple") "#B78AE8" else "#AAB5D1")
+                setCardBackgroundColor(surfaceColor)
+                setStrokeColor(if (selected) accentColor else secondaryColor)
                 strokeWidth = if (selected) (2 * density).toInt() else (1 * density).toInt()
                 isClickable = true
                 isFocusable = true
@@ -1009,30 +1018,51 @@ class ProfileSettingsActivity : AppCompatActivity() {
             purple -> "#2A1740"
             else -> "#1A2236"
         })
-        val accent = android.graphics.Color.parseColor(when {
-            pipBoy -> "#39FF14"
-            purple -> "#C084FC"
-            else -> "#6366F1"
-        })
+        val text = android.graphics.Color.parseColor(if (pipBoy) "#A8FFB0" else if (purple) "#C084FC" else "#E8EEFF")
+        val secondaryText = android.graphics.Color.parseColor(if (pipBoy) "#7CFF6B" else if (purple) "#B78AE8" else "#AAB5D1")
+        val accent = android.graphics.Color.parseColor(if (pipBoy) "#39FF14" else if (purple) "#C084FC" else "#6366F1")
+        val accentLight = android.graphics.Color.parseColor(if (pipBoy) "#7CFF6B" else if (purple) "#D8B4FE" else "#818CF8")
+        val border = android.graphics.Color.parseColor(if (pipBoy) "#24552B" else if (purple) "#43265F" else "#2B3650")
         root.setBackgroundColor(background)
         fun tint(view: View) {
             when (view) {
-                is com.google.android.material.card.MaterialCardView -> view.setCardBackgroundColor(card)
+                is com.google.android.material.card.MaterialCardView -> {
+                    view.setCardBackgroundColor(card)
+                    view.strokeColor = accent
+                }
                 is MaterialButton -> {
                     view.backgroundTintList = ColorStateList.valueOf(surface)
-                    view.setTextColor(android.graphics.Color.parseColor(if (pipBoy) "#A8FFB0" else if (purple) "#C084FC" else "#E8EEFF"))
-                    view.iconTint = ColorStateList.valueOf(accent)
+                    view.setTextColor(text)
+                    view.iconTint = ColorStateList.valueOf(text)
                     view.strokeColor = ColorStateList.valueOf(accent)
                 }
-                is TextView -> {
-                    if (pipBoy) view.setTextColor(android.graphics.Color.parseColor("#A8FFB0"))
+                is SwitchMaterial -> {
+                    view.thumbTintList = ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                        intArrayOf(accentLight, text)
+                    )
+                    view.trackTintList = ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf()),
+                        intArrayOf(accent, surface)
+                    )
+                    view.setTextColor(text)
                 }
+                is Spinner -> view.backgroundTintList = ColorStateList.valueOf(accent)
+                is TextView -> view.setTextColor(text)
             }
             if (view is android.view.ViewGroup) {
                 for (i in 0 until view.childCount) tint(view.getChildAt(i))
             }
         }
         tint(root)
+        listOf(R.id.profileSettingsArtworkTab, R.id.profileSettingsThemesTab, R.id.profileSettingsWallpaperTab).forEach { id ->
+            findViewById<MaterialButton>(id)?.let { tab ->
+                val active = tab.isSelected
+                tab.backgroundTintList = ColorStateList.valueOf(if (active) accent else card)
+                tab.setTextColor(if (active && pipBoy) background else if (active) text else secondaryText)
+                tab.strokeColor = ColorStateList.valueOf(if (active) accentLight else border)
+            }
+        }
     }
 
     private lateinit var animationDescription: TextView
