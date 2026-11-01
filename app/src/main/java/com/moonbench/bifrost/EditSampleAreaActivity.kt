@@ -249,7 +249,9 @@ class EditSampleAreaActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         val names = (prefs.getStringSet(KEY_NAMES, emptySet()) ?: emptySet()).toMutableSet()
         names.add(name)
-        val layout = SamplingLayoutMode.values().getOrElse(layoutSpinner.selectedItemPosition) { SamplingLayoutMode.CUSTOM_REGIONS }\n        val border = SamplingBorderMode.values().getOrElse(borderSpinner.selectedItemPosition) { SamplingBorderMode.EXCLUDE }\n        val saved = SampleAreaProfileStore.save(this, name, canvas.leftRegion, canvas.rightRegion, layout, border)
+        val layout = SamplingLayoutMode.values().getOrElse(layoutSpinner.selectedItemPosition) { SamplingLayoutMode.CUSTOM_REGIONS }
+        val border = SamplingBorderMode.values().getOrElse(borderSpinner.selectedItemPosition) { SamplingBorderMode.EXCLUDE }
+        val saved = SampleAreaProfileStore.save(this, name, canvas.leftRegion, canvas.rightRegion, layout, border)
         if (!saved) return false
         prefs.edit().putStringSet(KEY_NAMES, names).putString(KEY_ACTIVE, name)
             .putString("$name.left", canvas.leftRegion.encode())
@@ -343,12 +345,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
                     if (region.right >= 0.999f && !split) 1f - edge else region.right,
                     if (region.bottom >= 0.999f) 1f - edge else region.bottom
                 ).clamped()
-                SamplingBorderMode.ONLY -> {
-                    // Outer perimeter only. The centre split is deliberately not treated as a border.
-                    val l = if (region.left <= 0.001f) 0f else region.left
-                    val r = if (region.right >= 0.999f) 1f else region.right
-                    SamplingRegion(l, 0f, r, edge).clamped()
-                }
+                SamplingBorderMode.ONLY -> region
             }
         }
         fun sample(region: SamplingRegion, dominant: Boolean, weighted: Boolean): Int {
@@ -376,12 +373,33 @@ class EditSampleAreaActivity : AppCompatActivity() {
             }
             return Color.rgb((rr / total).toInt().coerceIn(0, 255), (gg / total).toInt().coerceIn(0, 255), (bb / total).toInt().coerceIn(0, 255))
         }
-        return when (modeSpinner.selectedItemPosition) {
-            0, 1 -> sample(withBorder(left, true), false, false) to sample(withBorder(right, false), false, false)
-            2 -> sample(withBorder(left, true), false, true) to sample(withBorder(right, false), false, true)
-            3 -> sample(withBorder(left, true), true, false) to sample(withBorder(right, false), true, false)
-            else -> primeDominant(bmp, withBorder(left, true)) to primeDominant(bmp, withBorder(right, false))
+        fun configured(region: SamplingRegion, isLeft: Boolean): Int {
+            val dominant = modeSpinner.selectedItemPosition == 3
+            val weighted = modeSpinner.selectedItemPosition == 2
+            if (borderMode != SamplingBorderMode.ONLY) {
+                val adjusted = withBorder(region, isLeft)
+                return if (modeSpinner.selectedItemPosition >= 4) primeDominant(bmp, adjusted)
+                    else sample(adjusted, dominant, weighted)
+            }
+            // Four physical perimeter strips. The centre split is not a border.
+            val e = 0.035f
+            val strips = listOf(
+                SamplingRegion(region.left, 0f, region.right, e),
+                SamplingRegion(region.left, 1f - e, region.right, 1f),
+                SamplingRegion(region.left, e, (region.left + e).coerceAtMost(region.right), 1f - e),
+                SamplingRegion((region.right - e).coerceAtLeast(region.left), e, region.right, 1f - e)
+            )
+            val colors = strips.map { strip ->
+                if (modeSpinner.selectedItemPosition >= 4) primeDominant(bmp, strip)
+                else sample(strip, dominant, weighted)
+            }
+            return Color.rgb(
+                colors.map { Color.red(it) }.average().toInt(),
+                colors.map { Color.green(it) }.average().toInt(),
+                colors.map { Color.blue(it) }.average().toInt()
+            )
         }
+        return configured(left, true) to configured(right, false)
     }
 
     private fun primeDominant(bmp: Bitmap, region: SamplingRegion): Int {
