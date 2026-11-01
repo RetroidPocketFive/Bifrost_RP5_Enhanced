@@ -445,11 +445,13 @@ class SamplingEditorActivity : AppCompatActivity() {
     private fun showColorTest() {
         page = Page.COLOR_TEST
         samplingHeaderTitle.text = "LED Colour Match"
-        samplingHeaderDescription.visibility = View.GONE
+        samplingHeaderDescription.visibility = View.VISIBLE
+        samplingHeaderDescription.text = "Match the physical LEDs to the colours displayed on screen."
         colorIndex = 0
         chooserPanel.visibility = View.GONE
         editorPanel.visibility = View.GONE
         colorTestPanel.visibility = View.VISIBLE
+        colorTestPanel.findViewById<TextView>(R.id.colorTestSubtitle)?.visibility = View.GONE
         updateColorTest()
     }
 
