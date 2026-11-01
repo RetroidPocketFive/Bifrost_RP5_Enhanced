@@ -17,7 +17,13 @@ object SampleAreaProfileStore {
     private const val MAX_PROFILES = 100
     private const val MAX_NAME_LENGTH = 64
 
-    data class Profile(\n        val name: String,\n        val left: SamplingRegion,\n        val right: SamplingRegion,\n        val layout: SamplingLayoutMode = SamplingLayoutMode.CUSTOM_REGIONS,\n        val border: SamplingBorderMode = SamplingBorderMode.EXCLUDE\n    )
+    data class Profile(
+        val name: String,
+        val left: SamplingRegion,
+        val right: SamplingRegion,
+        val layout: SamplingLayoutMode = SamplingLayoutMode.CUSTOM_REGIONS,
+        val border: SamplingBorderMode = SamplingBorderMode.EXCLUDE
+    )
 
     private fun preferences(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -32,7 +38,9 @@ object SampleAreaProfileStore {
             val left = SamplingRegion.decode(item.optString("left"))
             val right = SamplingRegion.decode(item.optString("right"))
             if (name.isNotEmpty() && left != null && right != null) {
-                val layout = runCatching { SamplingLayoutMode.valueOf(item.optString("layout", SamplingLayoutMode.CUSTOM_REGIONS.name)) }.getOrDefault(SamplingLayoutMode.CUSTOM_REGIONS)\n                val border = runCatching { SamplingBorderMode.valueOf(item.optString("border", SamplingBorderMode.EXCLUDE.name)) }.getOrDefault(SamplingBorderMode.EXCLUDE)\n                profiles += Profile(name, left, right, layout, border)
+                val layout = runCatching { SamplingLayoutMode.valueOf(item.optString("layout", SamplingLayoutMode.CUSTOM_REGIONS.name)) }.getOrDefault(SamplingLayoutMode.CUSTOM_REGIONS)
+                val border = runCatching { SamplingBorderMode.valueOf(item.optString("border", SamplingBorderMode.EXCLUDE.name)) }.getOrDefault(SamplingBorderMode.EXCLUDE)
+                profiles += Profile(name, left, right, layout, border)
             }
         }
         return profiles.sortedBy { it.name.lowercase() }
@@ -48,7 +56,7 @@ object SampleAreaProfileStore {
             current[existingIndex] = Profile(cleanName, left.clamped(), right.clamped(), layout, border)
         } else {
             if (current.size >= MAX_PROFILES) return false
-            current += Profile(cleanName, left.clamped(), right.clamped())
+            current += Profile(cleanName, left.clamped(), right.clamped(), layout, border)
         }
         return preferences(context).edit().putString(KEY_PROFILES, encode(current)).commit()
     }
@@ -64,7 +72,9 @@ object SampleAreaProfileStore {
             array.put(JSONObject().apply {
                 put("name", profile.name)
                 put("left", profile.left.clamped().encode())
-                put("right", profile.right.clamped().encode())\n                put("layout", profile.layout.name)\n                put("border", profile.border.name)
+                put("right", profile.right.clamped().encode())
+                put("layout", profile.layout.name)
+                put("border", profile.border.name)
             })
         }
         return array.toString()
