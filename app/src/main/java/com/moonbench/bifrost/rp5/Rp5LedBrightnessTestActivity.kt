@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -28,6 +29,7 @@ class Rp5LedBrightnessTestActivity : AppCompatActivity() {
     private var running = false
     private var selectedLevel = 128
     private var levelLabel: TextView? = null
+    private var brightnessBar: ProgressBar? = null
     private var startButton: MaterialButton? = null
     private val sweepLevels = listOf(16, 32, 48, 64, 96, 128, 160, 192, 224, 255)
 
@@ -66,16 +68,24 @@ class Rp5LedBrightnessTestActivity : AppCompatActivity() {
         intro.addView(label("Set a fixed output level or run the full brightness sweep. Both thumb sticks are tested together in neutral white.", 14f, muted).apply {
             setPadding(0, dp(8), 0, dp(12))
         })
-        levelLabel = label("128 / 255  •  50%", 16f, fg, true)
+        levelLabel = label("128 / 255  •  50%", 24f, fg, true)
         intro.addView(levelLabel)
+        brightnessBar = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply {
+            max = 100
+            progress = (selectedLevel * 100f / 255f).roundToInt()
+            progressTintList = android.content.res.ColorStateList.valueOf(accent)
+            progressBackgroundTintList = android.content.res.ColorStateList.valueOf(muted)
+            contentDescription = "Current LED brightness percentage"
+        }
+        intro.addView(brightnessBar, LinearLayout.LayoutParams(-1, dp(12)).apply { topMargin = dp(8) })
         val slider = SeekBar(this).apply {
             max = 255
             progress = selectedLevel
             contentDescription = "LED brightness level"
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    selectedLevel = progress.coerceAtLeast(1)
-                    levelLabel?.text = "$selectedLevel / 255  •  ${(selectedLevel * 100f / 255f).roundToInt()}%"
+                    selectedLevel = progress.coerceIn(0, 255)
+                    updateBrightnessIndicator(selectedLevel)
                 }
                 override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
                 override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
@@ -122,7 +132,7 @@ class Rp5LedBrightnessTestActivity : AppCompatActivity() {
         if (index >= sweepLevels.size) {
             running = false
             startButton?.text = "START BRIGHTNESS SWEEP"
-            sendLevel(0, 250L)
+            sendLevel(0, 1_000L)
             Toast.makeText(this, "Brightness sweep complete", Toast.LENGTH_SHORT).show()
             return
         }
@@ -136,12 +146,21 @@ class Rp5LedBrightnessTestActivity : AppCompatActivity() {
     }
 
     private fun testLevel(level: Int, durationMs: Long, showToast: Boolean = true) {
+        updateBrightnessIndicator(level)
         sendLevel(level, durationMs)
         if (showToast) Toast.makeText(this, "Testing brightness $level / 255", Toast.LENGTH_SHORT).show()
     }
 
+    private fun updateBrightnessIndicator(level: Int) {
+        val value = level.coerceIn(0, 255)
+        val percent = (value * 100f / 255f).roundToInt()
+        levelLabel?.text = "$value / 255  •  $percent%"
+        brightnessBar?.progress = percent
+    }
+
     private fun sendLevel(level: Int, durationMs: Long) {
         val value = level.coerceIn(0, 255)
+        updateBrightnessIndicator(value)
         val color = Color.rgb(value, value, value)
         val intent = Intent(this, LEDService::class.java).apply {
             action = LEDService.ACTION_RP5_LED_TEST
