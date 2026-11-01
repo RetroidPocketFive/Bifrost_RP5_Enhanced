@@ -127,7 +127,12 @@ class Rp5LedBrightnessTestActivity : AppCompatActivity() {
             return
         }
         testLevel(sweepLevels[index], 3_000L, showToast = false)
-        handler.postDelayed({ runSweepStep(index + 1) }, 3_000L)
+        handler.postDelayed({
+            if (!running || isFinishing || isDestroyed) return@postDelayed
+            // Insert a one-second LED-off pause between brightness stages.
+            sendLevel(0, 1_000L)
+            handler.postDelayed({ runSweepStep(index + 1) }, 1_000L)
+        }, 3_000L)
     }
 
     private fun testLevel(level: Int, durationMs: Long, showToast: Boolean = true) {
