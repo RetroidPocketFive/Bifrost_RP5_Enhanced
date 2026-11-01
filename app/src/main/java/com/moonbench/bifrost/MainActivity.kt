@@ -446,6 +446,32 @@ class MainActivity : AppCompatActivity() {
                 settleAlphaWave = 19,
                 settlePhaseDegrees = 12f
             )
+        ),
+        UiTheme(
+            id = "pip_boy",
+            label = "PIP-BOY",
+            backgroundColor = Color.parseColor("#020B05"),
+            cardColor = Color.parseColor("#061A0A"),
+            surfaceColor = Color.parseColor("#0B2A10"),
+            textColor = Color.parseColor("#A8FFB0"),
+            accentColor = Color.parseColor("#39FF14"),
+            accentLightColor = Color.parseColor("#7CFF6B"),
+            headerPalette = HeaderThemePalette(
+                introHueStart = 96f,
+                introHueSpan = 34f,
+                introSaturation = 0.92f,
+                introValue = 0.86f,
+                settleHueStart = 108f,
+                settleHueSpan = 16f,
+                settleHueWobbleAmplitude = 2f,
+                settleSaturationBase = 0.82f,
+                settleSaturationWave = 0.08f,
+                settleValueBase = 0.76f,
+                settleValueWave = 0.12f,
+                settleAlphaBase = 250,
+                settleAlphaWave = 5,
+                settlePhaseDegrees = 0f
+            )
         )
     )
     private var selectedUiTheme: UiTheme = builtInThemes.first()
@@ -1451,7 +1477,8 @@ class MainActivity : AppCompatActivity() {
         val selectedTint = ColorStateList.valueOf(selectedUiTheme.accentColor)
         val unselectedTint = ColorStateList.valueOf(selectedUiTheme.surfaceColor)
         button.backgroundTintList = if (selected) selectedTint else unselectedTint
-        button.setTextColor(if (selected) Color.WHITE else selectedUiTheme.textColor)
+        val selectedTextColor = if (selectedUiTheme.id == "pip_boy") Color.parseColor("#020B05") else Color.WHITE
+        button.setTextColor(if (selected) selectedTextColor else selectedUiTheme.textColor)
         button.strokeColor = ColorStateList.valueOf(selectedUiTheme.accentLightColor)
     }
 
@@ -1491,22 +1518,99 @@ class MainActivity : AppCompatActivity() {
         settingsOverlay.setBackgroundColor(theme.backgroundColor)
         applyThemeToViewTree(homeContainer, theme)
         applyThemeToViewTree(settingsOverlay, theme)
+        // The preset summary card uses a layered glow drawable inside its card.
+        // Re-tint that inner surface too, otherwise its original navy/purple
+        // gradient remains visible when the outer card changes theme.
+        if (::activePresetInfoCard.isInitialized) {
+            (activePresetInfoCard.getChildAt(0) as? View)?.let { inner ->
+                androidx.core.view.ViewCompat.setBackgroundTintList(inner, ColorStateList.valueOf(theme.cardColor))
+            }
+        }
         applyHeaderLogoPreference()
         updateSettingsTabButtonStyles()
+        if (::presetController.isInitialized && ::appProfileManager.isInitialized) refreshCoverFlowFromPresets()
     }
 
     private fun applyThemeToViewTree(view: View, theme: UiTheme) {
         when (view) {
             is MaterialCardView -> {
                 view.setCardBackgroundColor(theme.cardColor)
-                view.strokeColor = theme.accentColor
+                view.setStrokeColor(ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(theme.accentLightColor, theme.accentColor)
+                ))
+                if (view.isClickable) view.isFocusable = true
+                val inner = view.getChildAt(0)
+                if (inner?.background is android.graphics.drawable.LayerDrawable) {
+                    androidx.core.view.ViewCompat.setBackgroundTintList(inner, ColorStateList.valueOf(theme.cardColor))
+                }
             }
 
             is MaterialButton -> {
-                view.backgroundTintList = ColorStateList.valueOf(theme.surfaceColor)
-                view.setTextColor(theme.textColor)
+                view.backgroundTintList = ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_focused),
+                        intArrayOf(android.R.attr.state_pressed),
+                        intArrayOf()
+                    ),
+                    intArrayOf(theme.accentColor, theme.surfaceColor, theme.surfaceColor)
+                )
+                view.setTextColor(ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(if (theme.id == "pip_boy") theme.backgroundColor else theme.textColor, theme.textColor)
+                ))
                 view.iconTint = ColorStateList.valueOf(theme.textColor)
-                view.strokeColor = ColorStateList.valueOf(theme.accentColor)
+                view.strokeColor = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(theme.accentLightColor, theme.accentColor)
+                )
+                view.strokeWidth = resources.displayMetrics.density.toInt().coerceAtLeast(1)
+            }
+
+            is SwitchMaterial -> {
+                view.thumbTintList = ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_focused),
+                        intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
+                        intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
+                        intArrayOf(-android.R.attr.state_enabled)
+                    ),
+                    intArrayOf(theme.accentLightColor, theme.accentLightColor, theme.textColor, theme.surfaceColor)
+                )
+                view.trackTintList = ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_focused),
+                        intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
+                        intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
+                        intArrayOf(-android.R.attr.state_enabled)
+                    ),
+                    intArrayOf(theme.accentLightColor, theme.accentColor, theme.surfaceColor, theme.cardColor)
+                )
+            }
+
+            is SeekBar -> {
+                view.progressTintList = ColorStateList.valueOf(theme.accentColor)
+                view.thumbTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(theme.accentLightColor, theme.accentColor)
+                )
+                view.progressBackgroundTintList = ColorStateList.valueOf(theme.surfaceColor)
+            }
+
+            is Spinner -> view.backgroundTintList = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                intArrayOf(theme.accentLightColor, theme.accentColor)
+            )
+
+            // Do not blanket-tint LinearLayout backgrounds: many are intentional
+            // subheading, icon-preview, and custom-action surfaces with their own drawable.
+            // Their owning MaterialCardView or dedicated component controls the surface colour.
+
+            is TextView -> {
+                // Always apply the selected palette, not only PIP-BOY. Otherwise
+                // TextViews tinted green by PIP-BOY retain that colour after
+                // switching back to Classic or OLED Purple.
+                view.setTextColor(theme.textColor)
             }
         }
 
@@ -2031,8 +2135,8 @@ class MainActivity : AppCompatActivity() {
                 this.layoutParams = layoutParams
                 radius = dpToPx(16).toFloat()
                 cardElevation = 0f
-                setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_card))
-                setStrokeColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_accent))
+                setCardBackgroundColor(selectedUiTheme.cardColor)
+                setStrokeColor(selectedUiTheme.accentColor)
                 strokeWidth = dpToPx(1)
                 setOnClickListener {
                     if (autoSwitchEnabled) return@setOnClickListener
@@ -2146,7 +2250,10 @@ class MainActivity : AppCompatActivity() {
             val content = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(dpToPx(14), dpToPx(10), dpToPx(14), dpToPx(10))
-                background = ContextCompat.getDrawable(this@MainActivity, R.drawable.card_glow_bg)
+                background = GradientDrawable().apply {
+                    setColor(selectedUiTheme.cardColor)
+                    cornerRadius = dpToPx(16).toFloat()
+                }
                 isClickable = true
                 isLongClickable = true
                 setOnClickListener {
@@ -2169,7 +2276,7 @@ class MainActivity : AppCompatActivity() {
                 )
                 gravity = android.view.Gravity.TOP or android.view.Gravity.CENTER_HORIZONTAL
                 textAlignment = View.TEXT_ALIGNMENT_CENTER
-                setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text))
+                setTextColor(selectedUiTheme.textColor)
                 textSize = 16f
                 setTypeface(typeface, android.graphics.Typeface.BOLD)
                 maxLines = 1
@@ -2248,8 +2355,8 @@ class MainActivity : AppCompatActivity() {
             }
             radius = dpToPx(16).toFloat()
             cardElevation = 0f
-            setCardBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_card))
-            setStrokeColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_accent))
+            setCardBackgroundColor(selectedUiTheme.cardColor)
+            setStrokeColor(selectedUiTheme.accentColor)
             strokeWidth = dpToPx(1)
             setOnClickListener {
                 if (::appProfileManager.isInitialized && appProfileManager.isEnabled) return@setOnClickListener
@@ -2260,7 +2367,10 @@ class MainActivity : AppCompatActivity() {
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER
-            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.card_glow_bg)
+            background = GradientDrawable().apply {
+                setColor(selectedUiTheme.cardColor)
+                cornerRadius = dpToPx(16).toFloat()
+            }
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -2271,12 +2381,12 @@ class MainActivity : AppCompatActivity() {
         val plusBubble = TextView(this).apply {
             text = "+"
             gravity = android.view.Gravity.CENTER
-            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text))
+            setTextColor(selectedUiTheme.textColor)
             textSize = 34f
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_surface))
-                setStroke(dpToPx(2), ContextCompat.getColor(this@MainActivity, R.color.bifrost_accent))
+                setColor(selectedUiTheme.surfaceColor)
+                setStroke(dpToPx(2), selectedUiTheme.accentColor)
             }
             layoutParams = LinearLayout.LayoutParams(dpToPx(88), dpToPx(88))
             contentDescription = "Create new preset"
@@ -2284,7 +2394,7 @@ class MainActivity : AppCompatActivity() {
 
         val label = TextView(this).apply {
             text = "NEW PRESET"
-            setTextColor(ContextCompat.getColor(this@MainActivity, R.color.bifrost_text_secondary))
+            setTextColor(selectedUiTheme.textColor)
             textSize = 11f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             letterSpacing = 0.06f
@@ -2350,7 +2460,7 @@ class MainActivity : AppCompatActivity() {
             prefs.edit().remove("active_sample_area_profile_name").apply()
         }
         val themeId = profile.optString("uiThemeId", "")
-        if (themeId == "classic" || themeId == "oled_purple") {
+        if (themeId == "classic" || themeId == "oled_purple" || themeId == "pip_boy") {
             prefs.edit().putString(PREF_SELECTED_UI_THEME, themeId).apply()
             val theme = builtInThemes.firstOrNull { it.id == themeId }
             if (theme != null && theme.id != selectedUiTheme.id) {
@@ -2613,8 +2723,8 @@ class MainActivity : AppCompatActivity() {
     private fun updateCoverFlowCardTransforms() {
         val scrollWidth = presetCoverFlowScroll.width
         val centerX = presetCoverFlowScroll.scrollX + (presetCoverFlowScroll.width / 2f)
-        val accentColor = ContextCompat.getColor(this, R.color.bifrost_accent)
-        val secondaryColor = ContextCompat.getColor(this, R.color.bifrost_text_secondary)
+        val accentColor = selectedUiTheme.accentColor
+        val secondaryColor = selectedUiTheme.accentLightColor
         val autoSwitchEnabled = ::appProfileManager.isInitialized && appProfileManager.isEnabled
 
         if (scrollWidth <= 0) {
