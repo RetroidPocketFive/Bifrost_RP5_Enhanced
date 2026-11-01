@@ -1049,11 +1049,12 @@ class ProfileSettingsActivity : AppCompatActivity() {
             when (view) {
                 is com.google.android.material.card.MaterialCardView -> {
                     view.setCardBackgroundColor(card)
-                    view.strokeColor = ColorStateList(
+                    view.setStrokeColor(ColorStateList(
                         arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
                         intArrayOf(accentLight, border)
-                    )
-                    view.strokeWidth = dp(if (view.hasFocus()) 2 else 1)
+                    ))
+                    if (view.isClickable) view.isFocusable = true
+                    view.strokeWidth = dp(1)
                     val inner = view.getChildAt(0)
                     if (inner?.background is android.graphics.drawable.LayerDrawable) {
                         inner.backgroundTintList = ColorStateList.valueOf(card)
