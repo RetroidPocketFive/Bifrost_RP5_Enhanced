@@ -1522,8 +1522,9 @@ class MainActivity : AppCompatActivity() {
         // Re-tint that inner surface too, otherwise its original navy/purple
         // gradient remains visible when the outer card changes theme.
         if (::activePresetInfoCard.isInitialized) {
-            (activePresetInfoCard.getChildAt(0) as? View)?.backgroundTintList =
-                ColorStateList.valueOf(theme.cardColor)
+            (activePresetInfoCard.getChildAt(0) as? View)?.let { inner ->
+                androidx.core.view.ViewCompat.setBackgroundTintList(inner, ColorStateList.valueOf(theme.cardColor))
+            }
         }
         applyHeaderLogoPreference()
         updateSettingsTabButtonStyles()
@@ -1541,7 +1542,7 @@ class MainActivity : AppCompatActivity() {
                 if (view.isClickable) view.isFocusable = true
                 val inner = view.getChildAt(0)
                 if (inner?.background is android.graphics.drawable.LayerDrawable) {
-                    inner.backgroundTintList = ColorStateList.valueOf(theme.cardColor)
+                    androidx.core.view.ViewCompat.setBackgroundTintList(inner, ColorStateList.valueOf(theme.cardColor))
                 }
             }
 
