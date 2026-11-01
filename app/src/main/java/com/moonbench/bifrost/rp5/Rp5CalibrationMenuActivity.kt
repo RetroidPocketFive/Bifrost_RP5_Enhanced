@@ -28,11 +28,12 @@ import com.moonbench.bifrost.services.LEDService
  */
 class Rp5CalibrationMenuActivity : AppCompatActivity() {
 
-    private val bg = Color.rgb(8, 12, 24)
-    private val panel = Color.rgb(16, 22, 41)
-    private val accent = Color.rgb(104, 101, 242)
-    private val text = Color.rgb(242, 244, 255)
-    private val secondary = Color.rgb(145, 154, 190)
+    private val palette by lazy { CalibrationTheme.from(this) }
+    private val bg get() = palette.background
+    private val panel get() = palette.card
+    private val accent get() = palette.accent
+    private val text get() = palette.text
+    private val secondary get() = palette.secondary
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
