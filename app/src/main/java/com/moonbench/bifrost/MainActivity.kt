@@ -1563,7 +1563,7 @@ class MainActivity : AppCompatActivity() {
                     arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
                     intArrayOf(theme.accentLightColor, theme.accentColor)
                 )
-                view.strokeWidth = dp(if (view.hasFocus()) 2 else 1)
+                view.strokeWidth = resources.displayMetrics.density.toInt().coerceAtLeast(1)
             }
 
             is SwitchMaterial -> {
