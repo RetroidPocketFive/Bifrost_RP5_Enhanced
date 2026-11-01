@@ -107,6 +107,10 @@ class Rp5CalibrationActivity : AppCompatActivity() {
         root.addView(buttons)
         testButton.isEnabled=false
         setContentView(root)
+        val calibrationTheme = CalibrationTheme.from(this)
+        window.statusBarColor = calibrationTheme.background
+        window.navigationBarColor = calibrationTheme.background
+        applyCalibrationTheme(root, calibrationTheme)
 
         status.text="CALIBRATION"
         root.post {
