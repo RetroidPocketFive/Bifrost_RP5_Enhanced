@@ -1025,43 +1025,89 @@ class ProfileSettingsActivity : AppCompatActivity() {
         val accentLight = android.graphics.Color.parseColor(if (pipBoy) "#7CFF6B" else if (purple) "#D8B4FE" else "#818CF8")
         val border = android.graphics.Color.parseColor(if (pipBoy) "#24552B" else if (purple) "#43265F" else "#2B3650")
         root.setBackgroundColor(background)
+        val originalCard = getColor(R.color.bifrost_card)
+        val originalSurface = getColor(R.color.bifrost_surface)
+        val originalBackground = getColor(R.color.bifrost_bg)
+        val originalBorder = getColor(R.color.bifrost_border)
+        val originalSelected = getColor(R.color.bifrost_selected)
+        val originalDropdown = getColor(R.color.bifrost_dropdown_bg)
         fun tint(view: View) {
+            // Re-map only known BIFROST solid surfaces. Do not blanket-tint arbitrary
+            // custom drawables: profile artwork and semantic swatches must retain shape/colour.
+            val drawable = view.background
+            if (drawable is android.graphics.drawable.ColorDrawable) {
+                val replacement = when (drawable.color) {
+                    originalBackground -> background
+                    originalCard -> card
+                    originalSurface, originalDropdown -> surface
+                    originalBorder -> border
+                    originalSelected -> accent
+                    else -> null
+                }
+                if (replacement != null) view.setBackgroundColor(replacement)
+            }
             when (view) {
                 is com.google.android.material.card.MaterialCardView -> {
                     view.setCardBackgroundColor(card)
-                    view.strokeColor = accent
+                    view.strokeColor = ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                        intArrayOf(accentLight, border)
+                    )
+                    view.strokeWidth = dp(if (view.hasFocus()) 2 else 1)
+                    val inner = view.getChildAt(0)
+                    if (inner?.background is android.graphics.drawable.LayerDrawable) {
+                        inner.backgroundTintList = ColorStateList.valueOf(card)
+                    }
                 }
                 is MaterialButton -> {
-                    view.backgroundTintList = ColorStateList.valueOf(surface)
-                    view.setTextColor(text)
+                    view.backgroundTintList = ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf(android.R.attr.state_pressed), intArrayOf()),
+                        intArrayOf(accent, surface, surface)
+                    )
+                    view.setTextColor(ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                        intArrayOf(if (pipBoy) background else text, text)
+                    ))
                     view.iconTint = ColorStateList.valueOf(text)
-                    view.strokeColor = ColorStateList.valueOf(accent)
+                    view.strokeColor = ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                        intArrayOf(accentLight, border)
+                    )
+                    view.strokeWidth = dp(if (view.hasFocus()) 2 else 1)
                 }
                 is SwitchMaterial -> {
                     view.thumbTintList = ColorStateList(
                         arrayOf(
+                            intArrayOf(android.R.attr.state_focused),
                             intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
                             intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
                             intArrayOf(-android.R.attr.state_enabled)
                         ),
-                        intArrayOf(accentLight, text, surface)
+                        intArrayOf(accentLight, accentLight, text, surface)
                     )
                     view.trackTintList = ColorStateList(
                         arrayOf(
+                            intArrayOf(android.R.attr.state_focused),
                             intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
                             intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
                             intArrayOf(-android.R.attr.state_enabled)
                         ),
-                        intArrayOf(accent, surface, card)
+                        intArrayOf(accentLight, accent, surface, card)
                     )
                     view.setTextColor(text)
                 }
                 is SeekBar -> {
                     view.progressTintList = ColorStateList.valueOf(accent)
-                    view.thumbTintList = ColorStateList.valueOf(accentLight)
+                    view.thumbTintList = ColorStateList(
+                        arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                        intArrayOf(accentLight, accent)
+                    )
                     view.progressBackgroundTintList = ColorStateList.valueOf(surface)
                 }
-                is Spinner -> view.backgroundTintList = ColorStateList.valueOf(accent)
+                is Spinner -> view.backgroundTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(accentLight, accent)
+                )
                 // Preserve custom LinearLayout drawables. Blanket tinting here recolours
                 // nested subheading bars, icon previews, and customisation panels incorrectly.
                 is TextView -> view.setTextColor(text)
