@@ -1139,7 +1139,8 @@ class ProfileSettingsActivity : AppCompatActivity() {
     private fun setupAnimationSpinner() {
         val types = LedAnimationType.values().toList()
         val adapter = object : ArrayAdapter<LedAnimationType>(this, 0, types) {
-            private fun title(type: LedAnimationType) = label(type.name)
+            private fun title(type: LedAnimationType) =
+                if (type == LedAnimationType.SPLIT_SCREEN) "Split Screen (50/50)" else label(type.name)
 
             private fun styledText(text: String, size: Float, color: Int, bold: Boolean = false): TextView =
                 TextView(this@ProfileSettingsActivity).apply {
@@ -1272,6 +1273,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
 
     private fun animationModeDescription(type: LedAnimationType): String = when (type) {
         LedAnimationType.AMBIENT -> "Matches LED colours to sampled on-screen colours for ambient lighting."
+        LedAnimationType.SPLIT_SCREEN -> "Samples the left 50% of the display for the left LED and the right 50% for the right LED."
         LedAnimationType.AUDIO_REACTIVE -> "Drives colour and movement from audio; requires screen/audio capture permission where prompted."
         LedAnimationType.AMBIAURORA -> "Creates flowing aurora-like colour effects, reacting to the captured source."
         LedAnimationType.BATTERY_INDICATOR -> "Shows battery status through the LED colour output."
