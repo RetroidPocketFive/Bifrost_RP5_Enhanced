@@ -1938,7 +1938,8 @@ class LEDService : Service() {
                     false,
                     saturationBoost,
                     currentAmbientDisplayId,
-                    regionContext = null
+                    regionContext = null,
+                    animationType = LedAnimationType.SPLIT_SCREEN
                 )
             }
             LedAnimationType.AUDIO_REACTIVE -> {
