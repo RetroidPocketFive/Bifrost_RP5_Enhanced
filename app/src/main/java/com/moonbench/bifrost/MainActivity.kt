@@ -1518,6 +1518,13 @@ class MainActivity : AppCompatActivity() {
         settingsOverlay.setBackgroundColor(theme.backgroundColor)
         applyThemeToViewTree(homeContainer, theme)
         applyThemeToViewTree(settingsOverlay, theme)
+        // The preset summary card uses a layered glow drawable inside its card.
+        // Re-tint that inner surface too, otherwise its original navy/purple
+        // gradient remains visible when the outer card changes theme.
+        if (::activePresetInfoCard.isInitialized) {
+            (activePresetInfoCard.getChildAt(0) as? View)?.backgroundTintList =
+                ColorStateList.valueOf(theme.cardColor)
+        }
         applyHeaderLogoPreference()
         updateSettingsTabButtonStyles()
         if (::presetController.isInitialized && ::appProfileManager.isInitialized) refreshCoverFlowFromPresets()
@@ -1531,38 +1538,60 @@ class MainActivity : AppCompatActivity() {
             }
 
             is MaterialButton -> {
-                view.backgroundTintList = ColorStateList.valueOf(theme.surfaceColor)
-                view.setTextColor(theme.textColor)
+                view.backgroundTintList = ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_focused),
+                        intArrayOf(android.R.attr.state_pressed),
+                        intArrayOf()
+                    ),
+                    intArrayOf(theme.accentColor, theme.surfaceColor, theme.surfaceColor)
+                )
+                view.setTextColor(ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(if (theme.id == "pip_boy") theme.backgroundColor else theme.textColor, theme.textColor)
+                ))
                 view.iconTint = ColorStateList.valueOf(theme.textColor)
-                view.strokeColor = ColorStateList.valueOf(theme.accentColor)
+                view.strokeColor = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(theme.accentLightColor, theme.accentColor)
+                )
+                view.strokeWidth = dp(if (view.hasFocus()) 2 else 1)
             }
 
             is SwitchMaterial -> {
                 view.thumbTintList = ColorStateList(
                     arrayOf(
+                        intArrayOf(android.R.attr.state_focused),
                         intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
                         intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
                         intArrayOf(-android.R.attr.state_enabled)
                     ),
-                    intArrayOf(theme.accentLightColor, theme.textColor, theme.surfaceColor)
+                    intArrayOf(theme.accentLightColor, theme.accentLightColor, theme.textColor, theme.surfaceColor)
                 )
                 view.trackTintList = ColorStateList(
                     arrayOf(
+                        intArrayOf(android.R.attr.state_focused),
                         intArrayOf(android.R.attr.state_enabled, android.R.attr.state_checked),
                         intArrayOf(android.R.attr.state_enabled, -android.R.attr.state_checked),
                         intArrayOf(-android.R.attr.state_enabled)
                     ),
-                    intArrayOf(theme.accentColor, theme.surfaceColor, theme.cardColor)
+                    intArrayOf(theme.accentLightColor, theme.accentColor, theme.surfaceColor, theme.cardColor)
                 )
             }
 
             is SeekBar -> {
                 view.progressTintList = ColorStateList.valueOf(theme.accentColor)
-                view.thumbTintList = ColorStateList.valueOf(theme.accentLightColor)
+                view.thumbTintList = ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(theme.accentLightColor, theme.accentColor)
+                )
                 view.progressBackgroundTintList = ColorStateList.valueOf(theme.surfaceColor)
             }
 
-            is Spinner -> view.backgroundTintList = ColorStateList.valueOf(theme.accentColor)
+            is Spinner -> view.backgroundTintList = ColorStateList(
+                arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                intArrayOf(theme.accentLightColor, theme.accentColor)
+            )
 
             // Do not blanket-tint LinearLayout backgrounds: many are intentional
             // subheading, icon-preview, and custom-action surfaces with their own drawable.
