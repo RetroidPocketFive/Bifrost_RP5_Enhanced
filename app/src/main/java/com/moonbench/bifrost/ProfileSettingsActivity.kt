@@ -1057,7 +1057,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
                     view.strokeWidth = dp(1)
                     val inner = view.getChildAt(0)
                     if (inner?.background is android.graphics.drawable.LayerDrawable) {
-                        inner.backgroundTintList = ColorStateList.valueOf(card)
+                        androidx.core.view.ViewCompat.setBackgroundTintList(inner, ColorStateList.valueOf(card))
                     }
                 }
                 is MaterialButton -> {
@@ -1122,7 +1122,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         // MaterialCardView; explicitly theme its framed surface without touching
         // the user-selected icon image or colour swatch.
         findViewById<View>(R.id.presetArtworkPreviewImage)?.parent?.let { previewFrame ->
-            previewFrame.backgroundTintList = ColorStateList.valueOf(surface)
+            androidx.core.view.ViewCompat.setBackgroundTintList(previewFrame, ColorStateList.valueOf(surface))
         }
         listOf(R.id.profileSettingsArtworkTab, R.id.profileSettingsThemesTab, R.id.profileSettingsWallpaperTab).forEach { id ->
             findViewById<MaterialButton>(id)?.let { tab ->
