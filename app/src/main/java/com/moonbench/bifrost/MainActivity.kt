@@ -1534,7 +1534,15 @@ class MainActivity : AppCompatActivity() {
         when (view) {
             is MaterialCardView -> {
                 view.setCardBackgroundColor(theme.cardColor)
-                view.strokeColor = theme.accentColor
+                view.setStrokeColor(ColorStateList(
+                    arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()),
+                    intArrayOf(theme.accentLightColor, theme.accentColor)
+                ))
+                if (view.isClickable) view.isFocusable = true
+                val inner = view.getChildAt(0)
+                if (inner?.background is android.graphics.drawable.LayerDrawable) {
+                    inner.backgroundTintList = ColorStateList.valueOf(theme.cardColor)
+                }
             }
 
             is MaterialButton -> {
