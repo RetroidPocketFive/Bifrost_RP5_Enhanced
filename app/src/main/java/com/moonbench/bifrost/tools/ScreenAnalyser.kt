@@ -322,7 +322,6 @@ class ScreenAnalyzer(
                     add(PixelRect(base.startX, (base.startX + edgeX).coerceAtMost(base.endX), base.startY, base.endY))
                 if (touchesRight && !isLeft || touchesRight && cachedLayoutMode != SamplingLayoutMode.SPLIT_SCREEN)
                     add(PixelRect((base.endX - edgeX).coerceAtLeast(base.startX), base.endX, base.startY, base.endY))
-                if (isEmpty()) add(base)
             }
         }
     }
