@@ -92,6 +92,8 @@ class ScreenAnalyzer(
     private var regionModeActive: Boolean = false
     private var cachedLeftRegion: SamplingRegion = SamplingRegion.LEFT_HALF
     private var cachedRightRegion: SamplingRegion = SamplingRegion.RIGHT_HALF
+    private var cachedLayoutMode: SamplingLayoutMode = SamplingLayoutMode.CUSTOM_REGIONS
+    private var cachedBorderMode: SamplingBorderMode = SamplingBorderMode.EXCLUDE
     private var lastRegionRefreshMs = 0L
 
     private var imageReader: ImageReader? = null
@@ -115,6 +117,8 @@ class ScreenAnalyzer(
         if (regionModeActive && regionContext != null) {
             cachedLeftRegion = SamplingRegionStore.getLeft(regionContext)
             cachedRightRegion = SamplingRegionStore.getRight(regionContext)
+            cachedLayoutMode = SamplingRegionStore.getLayoutMode(regionContext)
+            cachedBorderMode = SamplingRegionStore.getBorderMode(regionContext)
         }
 
         if (regionModeActive) {
@@ -225,15 +229,10 @@ class ScreenAnalyzer(
 
         refreshRegions()
         val colors = if (regionModeActive) {
-            val left = regionToPixels(cachedLeftRegion)
-            val right = regionToPixels(cachedRightRegion)
-            val leftColor = averageRegionTopWeighted(
-                buffer, left.startX, left.endX, left.startY, left.endY, rowStride, pixelStride
+            ScreenColors(
+                leftColor = sampleConfigured(buffer, true, rowStride, pixelStride),
+                rightColor = sampleConfigured(buffer, false, rowStride, pixelStride)
             )
-            val rightColor = averageRegionTopWeighted(
-                buffer, right.startX, right.endX, right.startY, right.endY, rowStride, pixelStride
-            )
-            ScreenColors(leftColor = leftColor, rightColor = rightColor)
         } else if (useSingleColor) {
             val singleColor = if (useCustomSampling) {
                 averageRegionTopWeighted(buffer, 0, captureWidth - 1, 0, captureHeight - 1, rowStride, pixelStride)
@@ -293,6 +292,60 @@ class ScreenAnalyzer(
         lastRegionRefreshMs = now
         cachedLeftRegion = SamplingRegionStore.getLeft(ctx)
         cachedRightRegion = SamplingRegionStore.getRight(ctx)
+        cachedLayoutMode = SamplingRegionStore.getLayoutMode(ctx)
+        cachedBorderMode = SamplingRegionStore.getBorderMode(ctx)
+    }
+
+    private fun configuredRects(isLeft: Boolean): List<PixelRect> {
+        val region = if (cachedLayoutMode == SamplingLayoutMode.SPLIT_SCREEN) {
+            if (isLeft) SamplingRegion.LEFT_HALF else SamplingRegion.RIGHT_HALF
+        } else if (isLeft) cachedLeftRegion else cachedRightRegion
+        val base = regionToPixels(region)
+        val edgeX = (captureWidth * 0.035f).toInt().coerceAtLeast(1)
+        val edgeY = (captureHeight * 0.035f).toInt().coerceAtLeast(1)
+        val touchesLeft = region.left <= 0.001f
+        val touchesRight = region.right >= 0.999f
+        val touchesTop = region.top <= 0.001f
+        val touchesBottom = region.bottom >= 0.999f
+        return when (cachedBorderMode) {
+            SamplingBorderMode.INCLUDE -> listOf(base)
+            SamplingBorderMode.EXCLUDE -> listOf(PixelRect(
+                (base.startX + if (touchesLeft) edgeX else 0).coerceAtMost(base.endX),
+                (base.endX - if (touchesRight) edgeX else 0).coerceAtLeast(base.startX),
+                (base.startY + if (touchesTop) edgeY else 0).coerceAtMost(base.endY),
+                (base.endY - if (touchesBottom) edgeY else 0).coerceAtLeast(base.startY)
+            ))
+            SamplingBorderMode.ONLY -> buildList {
+                if (touchesTop) add(PixelRect(base.startX, base.endX, base.startY, (base.startY + edgeY).coerceAtMost(base.endY)))
+                if (touchesBottom) add(PixelRect(base.startX, base.endX, (base.endY - edgeY).coerceAtLeast(base.startY), base.endY))
+                if (touchesLeft && isLeft || touchesLeft && cachedLayoutMode != SamplingLayoutMode.SPLIT_SCREEN)
+                    add(PixelRect(base.startX, (base.startX + edgeX).coerceAtMost(base.endX), base.startY, base.endY))
+                if (touchesRight && !isLeft || touchesRight && cachedLayoutMode != SamplingLayoutMode.SPLIT_SCREEN)
+                    add(PixelRect((base.endX - edgeX).coerceAtLeast(base.startX), base.endX, base.startY, base.endY))
+                if (isEmpty()) add(base)
+            }
+        }
+    }
+
+    private fun sampleConfigured(buffer: ByteBuffer, isLeft: Boolean, rowStride: Int, pixelStride: Int): Int {
+        val rects = configuredRects(isLeft)
+        val colors = rects.map { averageRegionTopWeighted(buffer, it.startX, it.endX, it.startY, it.endY, rowStride, pixelStride) }
+        return combineColors(colors)
+    }
+
+    private fun sampleConfigured(bitmap: Bitmap, isLeft: Boolean): Int {
+        val rects = configuredRects(isLeft)
+        val colors = rects.map { averageRegionTopWeighted(bitmap, it.startX, it.endX, it.startY, it.endY) }
+        return combineColors(colors)
+    }
+
+    private fun combineColors(colors: List<Int>): Int {
+        if (colors.isEmpty()) return Color.BLACK
+        return Color.rgb(
+            colors.map { Color.red(it) }.average().toInt(),
+            colors.map { Color.green(it) }.average().toInt(),
+            colors.map { Color.blue(it) }.average().toInt()
+        )
     }
 
     // ── Accessibility path (takeScreenshot, ~10 fps max) ──────────────────────
@@ -381,11 +434,9 @@ class ScreenAnalyzer(
         if (!isRunning) return
         refreshRegions()
         val colors = if (regionModeActive) {
-            val left = regionToPixels(cachedLeftRegion)
-            val right = regionToPixels(cachedRightRegion)
             ScreenColors(
-                leftColor = averageRegionTopWeighted(bitmap, left.startX, left.endX, left.startY, left.endY),
-                rightColor = averageRegionTopWeighted(bitmap, right.startX, right.endX, right.startY, right.endY)
+                leftColor = sampleConfigured(bitmap, true),
+                rightColor = sampleConfigured(bitmap, false)
             )
         } else if (useSingleColor) {
             val c = if (useCustomSampling)
