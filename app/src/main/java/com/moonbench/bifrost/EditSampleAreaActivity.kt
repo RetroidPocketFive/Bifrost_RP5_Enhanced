@@ -181,7 +181,12 @@ class EditSampleAreaActivity : AppCompatActivity() {
             setBackgroundColor(surface)
         }
         root.addView(borderSpinner, LinearLayout.LayoutParams(-1, dp(44)).apply { bottomMargin = dp(8) })
-        val optionsChanged = { refreshLedColors() }
+        val optionsChanged = {
+            val layout = SamplingLayoutMode.values().getOrElse(layoutSpinner.selectedItemPosition) { SamplingLayoutMode.CUSTOM_REGIONS }
+            val border = SamplingBorderMode.values().getOrElse(borderSpinner.selectedItemPosition) { SamplingBorderMode.EXCLUDE }
+            canvas.setSamplingOptions(layout, border)
+            refreshLedColors()
+        }
         layoutSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) = optionsChanged()
             override fun onNothingSelected(parent: AdapterView<*>?) = Unit
@@ -291,6 +296,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
         canvas.setRegions(profile.left, profile.right)
         layoutSpinner.setSelection(profile.layout.ordinal)
         borderSpinner.setSelection(profile.border.ordinal)
+        canvas.setSamplingOptions(profile.layout, profile.border)
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         modeSpinner.setSelection(prefs.getInt("${profile.name}.mode", 0).coerceIn(0, MODES.lastIndex))
         Toast.makeText(this, "Editing ${profile.name} on the selected background. Save to update it.", Toast.LENGTH_SHORT).show()
@@ -311,6 +317,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
                 canvas.setRegions(profile.left, profile.right)
                 layoutSpinner.setSelection(profile.layout.ordinal)
                 borderSpinner.setSelection(profile.border.ordinal)
+                canvas.setSamplingOptions(profile.layout, profile.border)
                 modeSpinner.setSelection(prefs.getInt("${profile.name}.mode", 0).coerceIn(0, MODES.lastIndex))
                 Toast.makeText(this, "Editing ${profile.name} — save to update it.", Toast.LENGTH_SHORT).show()
             }.show()
@@ -321,6 +328,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
         modeSpinner.setSelection(0)
         layoutSpinner.setSelection(0)
         borderSpinner.setSelection(0)
+        canvas.setSamplingOptions(SamplingLayoutMode.CUSTOM_REGIONS, SamplingBorderMode.EXCLUDE)
         activeProfile = ""
         // Reset should return to the same held identity colours used on editor startup,
         // not a short test pulse that clears the LEDs after 450ms.
