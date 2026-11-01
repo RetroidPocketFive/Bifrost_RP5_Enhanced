@@ -2,6 +2,8 @@ package com.moonbench.bifrost
 
 import android.content.Context
 import com.moonbench.bifrost.tools.SamplingRegion
+import com.moonbench.bifrost.tools.SamplingLayoutMode
+import com.moonbench.bifrost.tools.SamplingBorderMode
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -15,7 +17,7 @@ object SampleAreaProfileStore {
     private const val MAX_PROFILES = 100
     private const val MAX_NAME_LENGTH = 64
 
-    data class Profile(val name: String, val left: SamplingRegion, val right: SamplingRegion)
+    data class Profile(\n        val name: String,\n        val left: SamplingRegion,\n        val right: SamplingRegion,\n        val layout: SamplingLayoutMode = SamplingLayoutMode.CUSTOM_REGIONS,\n        val border: SamplingBorderMode = SamplingBorderMode.EXCLUDE\n    )
 
     private fun preferences(context: Context) =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -30,20 +32,20 @@ object SampleAreaProfileStore {
             val left = SamplingRegion.decode(item.optString("left"))
             val right = SamplingRegion.decode(item.optString("right"))
             if (name.isNotEmpty() && left != null && right != null) {
-                profiles += Profile(name, left, right)
+                val layout = runCatching { SamplingLayoutMode.valueOf(item.optString("layout", SamplingLayoutMode.CUSTOM_REGIONS.name)) }.getOrDefault(SamplingLayoutMode.CUSTOM_REGIONS)\n                val border = runCatching { SamplingBorderMode.valueOf(item.optString("border", SamplingBorderMode.EXCLUDE.name)) }.getOrDefault(SamplingBorderMode.EXCLUDE)\n                profiles += Profile(name, left, right, layout, border)
             }
         }
         return profiles.sortedBy { it.name.lowercase() }
     }
 
     /** Adds or replaces a profile with the same name, case-insensitively. */
-    fun save(context: Context, name: String, left: SamplingRegion, right: SamplingRegion): Boolean {
+    fun save(context: Context, name: String, left: SamplingRegion, right: SamplingRegion, layout: SamplingLayoutMode = SamplingLayoutMode.CUSTOM_REGIONS, border: SamplingBorderMode = SamplingBorderMode.EXCLUDE): Boolean {
         val cleanName = name.trim()
         if (cleanName.isEmpty() || cleanName.length > MAX_NAME_LENGTH) return false
         val current = list(context).toMutableList()
         val existingIndex = current.indexOfFirst { it.name.equals(cleanName, ignoreCase = true) }
         if (existingIndex >= 0) {
-            current[existingIndex] = Profile(cleanName, left.clamped(), right.clamped())
+            current[existingIndex] = Profile(cleanName, left.clamped(), right.clamped(), layout, border)
         } else {
             if (current.size >= MAX_PROFILES) return false
             current += Profile(cleanName, left.clamped(), right.clamped())
@@ -62,7 +64,7 @@ object SampleAreaProfileStore {
             array.put(JSONObject().apply {
                 put("name", profile.name)
                 put("left", profile.left.clamped().encode())
-                put("right", profile.right.clamped().encode())
+                put("right", profile.right.clamped().encode())\n                put("layout", profile.layout.name)\n                put("border", profile.border.name)
             })
         }
         return array.toString()
@@ -77,7 +79,7 @@ object SampleAreaProfileStore {
             val name = profile.name.trim()
             val key = name.lowercase()
             if (name.isEmpty() || name.length > MAX_NAME_LENGTH || !seen.add(key)) return false
-            clean += Profile(name, profile.left.clamped(), profile.right.clamped())
+            clean += Profile(name, profile.left.clamped(), profile.right.clamped(), profile.layout, profile.border)
         }
         return preferences(context).edit().putString(KEY_PROFILES, encode(clean)).commit()
     }
