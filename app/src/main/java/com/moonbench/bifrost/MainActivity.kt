@@ -1569,7 +1569,10 @@ class MainActivity : AppCompatActivity() {
             // Their owning MaterialCardView or dedicated component controls the surface colour.
 
             is TextView -> {
-                if (theme.id == "pip_boy") view.setTextColor(theme.textColor)
+                // Always apply the selected palette, not only PIP-BOY. Otherwise
+                // TextViews tinted green by PIP-BOY retain that colour after
+                // switching back to Classic or OLED Purple.
+                view.setTextColor(theme.textColor)
             }
         }
 
