@@ -13,7 +13,7 @@ import java.io.IOException
  */
 object SampleAreaProfileTransfer {
     private const val SCHEMA = "bifrost_sample_area_profiles"
-    private const val VERSION = 1
+    private const val VERSION = 2
     private const val MAX_BYTES = 1024 * 1024
     private const val MAX_PROFILES = 100
     private const val MAX_NAME_LENGTH = 64
@@ -31,6 +31,8 @@ object SampleAreaProfileTransfer {
                         put("name", profile.name)
                         put("left", profile.left.clamped().encode())
                         put("right", profile.right.clamped().encode())
+                        put("layout", profile.layout.name)
+                        put("border", profile.border.name)
                     })
                 }
             })
@@ -65,7 +67,8 @@ object SampleAreaProfileTransfer {
             throw IOException("This is not a valid Sample Area profile JSON file.", error)
         }
         if (root.optString("schema") != SCHEMA) throw IOException("Unsupported file type: expected Sample Area profiles.")
-        if (root.optInt("version", -1) != VERSION) throw IOException("Unsupported Sample Area profile file version.")
+        val fileVersion = root.optInt("version", -1)
+        if (fileVersion !in 1..VERSION) throw IOException("Unsupported Sample Area profile file version.")
         val array = root.optJSONArray("profiles") ?: throw IOException("The file has no profiles list.")
         if (array.length() > MAX_PROFILES) throw IOException("The file exceeds the $MAX_PROFILES profile limit.")
 
@@ -82,7 +85,9 @@ object SampleAreaProfileTransfer {
                 ?: throw IOException("Profile '$name' has an invalid left sampling area.")
             val right = SamplingRegion.decode(item.optString("right"))
                 ?: throw IOException("Profile '$name' has an invalid right sampling area.")
-            imported += SampleAreaProfileStore.Profile(name, left, right)
+            val layout = runCatching { com.moonbench.bifrost.tools.SamplingLayoutMode.valueOf(item.optString("layout", "CUSTOM_REGIONS")) }.getOrDefault(com.moonbench.bifrost.tools.SamplingLayoutMode.CUSTOM_REGIONS)
+            val border = runCatching { com.moonbench.bifrost.tools.SamplingBorderMode.valueOf(item.optString("border", "EXCLUDE")) }.getOrDefault(com.moonbench.bifrost.tools.SamplingBorderMode.EXCLUDE)
+            imported += SampleAreaProfileStore.Profile(name, left, right, layout, border)
         }
 
         // Merge by name; validate the complete result before writing, so a failed
