@@ -1121,7 +1121,7 @@ class ProfileSettingsActivity : AppCompatActivity() {
         // The profile icon preview is a custom GradientDrawable rather than a
         // MaterialCardView; explicitly theme its framed surface without touching
         // the user-selected icon image or colour swatch.
-        findViewById<View>(R.id.presetArtworkPreviewImage)?.parent?.let { previewFrame ->
+        (findViewById<View>(R.id.presetArtworkPreviewImage)?.parent as? View)?.let { previewFrame ->
             androidx.core.view.ViewCompat.setBackgroundTintList(previewFrame, ColorStateList.valueOf(surface))
         }
         listOf(R.id.profileSettingsArtworkTab, R.id.profileSettingsThemesTab, R.id.profileSettingsWallpaperTab).forEach { id ->
