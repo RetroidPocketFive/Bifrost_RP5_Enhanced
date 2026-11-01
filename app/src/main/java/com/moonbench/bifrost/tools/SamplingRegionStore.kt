@@ -11,9 +11,6 @@ import android.content.SharedPreferences
  * an arbitrary, user-positioned area of the screen instead of the fixed
  * left-half / right-half split.
  */
-enum class SamplingLayoutMode { CUSTOM_REGIONS, SPLIT_SCREEN }
-enum class SamplingBorderMode { EXCLUDE, INCLUDE, ONLY }
-
 data class SamplingRegion(
     val left: Float,
     val top: Float,
@@ -77,8 +74,6 @@ object SamplingRegionStore {
     private const val KEY_ENABLED = "regions_enabled"
     private const val KEY_LEFT = "left_region"
     private const val KEY_RIGHT = "right_region"
-    private const val KEY_LAYOUT = "layout_mode"
-    private const val KEY_BORDER = "border_mode"
 
     private fun prefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -97,18 +92,6 @@ object SamplingRegionStore {
     fun getRight(context: Context): SamplingRegion =
         SamplingRegion.decode(prefs(context).getString(KEY_RIGHT, null))
             ?: SamplingRegion.RP5_RIGHT_DEFAULT
-
-    fun getLayoutMode(context: Context): SamplingLayoutMode =
-        runCatching { SamplingLayoutMode.valueOf(prefs(context).getString(KEY_LAYOUT, SamplingLayoutMode.CUSTOM_REGIONS.name)!!) }
-            .getOrDefault(SamplingLayoutMode.CUSTOM_REGIONS)
-
-    fun getBorderMode(context: Context): SamplingBorderMode =
-        runCatching { SamplingBorderMode.valueOf(prefs(context).getString(KEY_BORDER, SamplingBorderMode.EXCLUDE.name)!!) }
-            .getOrDefault(SamplingBorderMode.EXCLUDE)
-
-    fun setSamplingOptions(context: Context, layout: SamplingLayoutMode, border: SamplingBorderMode) {
-        prefs(context).edit().putString(KEY_LAYOUT, layout.name).putString(KEY_BORDER, border.name).apply()
-    }
 
     fun setRegions(context: Context, left: SamplingRegion, right: SamplingRegion) {
         prefs(context).edit()

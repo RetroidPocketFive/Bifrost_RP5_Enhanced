@@ -11,8 +11,6 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import com.moonbench.bifrost.tools.SamplingRegion
-import com.moonbench.bifrost.tools.SamplingLayoutMode
-import com.moonbench.bifrost.tools.SamplingBorderMode
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -42,17 +40,6 @@ class SamplingCanvasView @JvmOverloads constructor(
         }
 
     var listener: OnRegionsChangedListener? = null
-
-    var layoutMode: SamplingLayoutMode = SamplingLayoutMode.CUSTOM_REGIONS
-        private set
-    var borderMode: SamplingBorderMode = SamplingBorderMode.EXCLUDE
-        private set
-
-    fun setSamplingOptions(layout: SamplingLayoutMode, border: SamplingBorderMode) {
-        layoutMode = layout
-        borderMode = border
-        invalidate()
-    }
 
     var screenAspectRatio: Float = 16f / 9f
         set(value) {
@@ -190,10 +177,7 @@ class SamplingCanvasView @JvmOverloads constructor(
             }
         }
 
-        if (layoutMode == SamplingLayoutMode.SPLIT_SCREEN) {
-            drawRegion(canvas, SamplingRegion.LEFT_HALF, defaultLeftColor, leftSampleColor, "Left LED", 255)
-            drawRegion(canvas, SamplingRegion.RIGHT_HALF, defaultRightColor, rightSampleColor, "Right LED", 255)
-        } else if (focus == Focus.BOTH) {
+        if (focus == Focus.BOTH) {
             drawRegion(canvas, leftRegion, leftBoxColor, leftSampleColor, "Left", 255)
             drawRegion(canvas, rightRegion, rightBoxColor, rightSampleColor, "Right", 255)
         } else {
@@ -207,39 +191,6 @@ class SamplingCanvasView @JvmOverloads constructor(
             drawRegion(canvas, active, activeColor, activeSampleColor, if (focus == Focus.LEFT) "Left" else "Right", 255)
             val label = if (focus == Focus.LEFT) "Left — zoomed editor" else "Right — zoomed editor"
             canvas.drawText(label, 18f, 32f, infoPaint)
-        }
-        drawBorderMode(canvas)
-    }
-
-    private fun drawBorderMode(canvas: Canvas) {
-        val edgeX = contentRect.width() * 0.035f
-        val edgeY = contentRect.height() * 0.035f
-        val strips = listOf(
-            RectF(contentRect.left, contentRect.top, contentRect.right, contentRect.top + edgeY),
-            RectF(contentRect.left, contentRect.bottom - edgeY, contentRect.right, contentRect.bottom),
-            RectF(contentRect.left, contentRect.top + edgeY, contentRect.left + edgeX, contentRect.bottom - edgeY),
-            RectF(contentRect.right - edgeX, contentRect.top + edgeY, contentRect.right, contentRect.bottom - edgeY)
-        )
-        when (borderMode) {
-            SamplingBorderMode.INCLUDE -> {
-                rectPaint.color = Color.WHITE
-                rectPaint.strokeWidth = 3f
-                canvas.drawRect(contentRect, rectPaint)
-            }
-            SamplingBorderMode.EXCLUDE -> {
-                fillPaint.color = Color.argb(145, 0, 0, 0)
-                strips.forEach { canvas.drawRect(it, fillPaint) }
-                rectPaint.color = Color.WHITE
-                rectPaint.strokeWidth = 2f
-                canvas.drawRect(contentRect, rectPaint)
-            }
-            SamplingBorderMode.ONLY -> {
-                fillPaint.color = Color.argb(175, 255, 205, 70)
-                strips.forEach { canvas.drawRect(it, fillPaint) }
-                rectPaint.color = Color.WHITE
-                rectPaint.strokeWidth = 2f
-                canvas.drawRect(contentRect, rectPaint)
-            }
         }
     }
 

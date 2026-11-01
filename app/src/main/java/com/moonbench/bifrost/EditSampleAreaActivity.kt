@@ -24,8 +24,6 @@ import com.google.android.material.button.MaterialButton
 import com.moonbench.bifrost.services.BifrostAccessibilityService
 import com.moonbench.bifrost.services.LEDService
 import com.moonbench.bifrost.tools.SamplingRegion
-import com.moonbench.bifrost.tools.SamplingLayoutMode
-import com.moonbench.bifrost.tools.SamplingBorderMode
 import com.moonbench.bifrost.ui.SamplingCanvasView
 import java.util.concurrent.Executor
 
@@ -53,8 +51,6 @@ class EditSampleAreaActivity : AppCompatActivity() {
     private lateinit var root: LinearLayout
     private lateinit var canvas: SamplingCanvasView
     private lateinit var modeSpinner: Spinner
-    private lateinit var layoutSpinner: Spinner
-    private lateinit var borderSpinner: Spinner
     private var bitmap: Bitmap? = null
     private var capturePending = false
     private var captureStatus: TextView? = null
@@ -168,33 +164,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
             setSelection(0)
             setBackgroundColor(surface)
         }
-        root.addView(modeSpinner, LinearLayout.LayoutParams(-1, dp(48)).apply { bottomMargin = dp(6) })
-        layoutSpinner = Spinner(this).apply {
-            adapter = ArrayAdapter(this@EditSampleAreaActivity, android.R.layout.simple_spinner_dropdown_item,
-                listOf("Custom left/right areas", "Split screen: left half / right half"))
-            setBackgroundColor(surface)
-        }
-        root.addView(layoutSpinner, LinearLayout.LayoutParams(-1, dp(44)).apply { bottomMargin = dp(4) })
-        borderSpinner = Spinner(this).apply {
-            adapter = ArrayAdapter(this@EditSampleAreaActivity, android.R.layout.simple_spinner_dropdown_item,
-                listOf("Exclude outer screen borders", "Include outer screen borders", "Borders only"))
-            setBackgroundColor(surface)
-        }
-        root.addView(borderSpinner, LinearLayout.LayoutParams(-1, dp(44)).apply { bottomMargin = dp(8) })
-        val optionsChanged = {
-            val layout = SamplingLayoutMode.values().getOrElse(layoutSpinner.selectedItemPosition) { SamplingLayoutMode.CUSTOM_REGIONS }
-            val border = SamplingBorderMode.values().getOrElse(borderSpinner.selectedItemPosition) { SamplingBorderMode.EXCLUDE }
-            canvas.setSamplingOptions(layout, border)
-            refreshLedColors()
-        }
-        layoutSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) = optionsChanged()
-            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
-        }
-        borderSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) = optionsChanged()
-            override fun onNothingSelected(parent: AdapterView<*>?) = Unit
-        }
+        root.addView(modeSpinner, LinearLayout.LayoutParams(-1, dp(48)).apply { bottomMargin = dp(8) })
         modeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             private var initialSelection = true
             override fun onItemSelected(parent: AdapterView<*>?, view: android.view.View?, position: Int, id: Long) {
@@ -254,9 +224,7 @@ class EditSampleAreaActivity : AppCompatActivity() {
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         val names = (prefs.getStringSet(KEY_NAMES, emptySet()) ?: emptySet()).toMutableSet()
         names.add(name)
-        val layout = SamplingLayoutMode.values().getOrElse(layoutSpinner.selectedItemPosition) { SamplingLayoutMode.CUSTOM_REGIONS }
-        val border = SamplingBorderMode.values().getOrElse(borderSpinner.selectedItemPosition) { SamplingBorderMode.EXCLUDE }
-        val saved = SampleAreaProfileStore.save(this, name, canvas.leftRegion, canvas.rightRegion, layout, border)
+        val saved = SampleAreaProfileStore.save(this, name, canvas.leftRegion, canvas.rightRegion)
         if (!saved) return false
         prefs.edit().putStringSet(KEY_NAMES, names).putString(KEY_ACTIVE, name)
             .putString("$name.left", canvas.leftRegion.encode())
@@ -294,9 +262,6 @@ class EditSampleAreaActivity : AppCompatActivity() {
         }
         activeProfile = profile.name
         canvas.setRegions(profile.left, profile.right)
-        layoutSpinner.setSelection(profile.layout.ordinal)
-        borderSpinner.setSelection(profile.border.ordinal)
-        canvas.setSamplingOptions(profile.layout, profile.border)
         val prefs = getSharedPreferences(PREFS, MODE_PRIVATE)
         modeSpinner.setSelection(prefs.getInt("${profile.name}.mode", 0).coerceIn(0, MODES.lastIndex))
         Toast.makeText(this, "Editing ${profile.name} on the selected background. Save to update it.", Toast.LENGTH_SHORT).show()
@@ -315,9 +280,6 @@ class EditSampleAreaActivity : AppCompatActivity() {
                 val profile = profiles[index]
                 activeProfile = profile.name
                 canvas.setRegions(profile.left, profile.right)
-                layoutSpinner.setSelection(profile.layout.ordinal)
-                borderSpinner.setSelection(profile.border.ordinal)
-                canvas.setSamplingOptions(profile.layout, profile.border)
                 modeSpinner.setSelection(prefs.getInt("${profile.name}.mode", 0).coerceIn(0, MODES.lastIndex))
                 Toast.makeText(this, "Editing ${profile.name} — save to update it.", Toast.LENGTH_SHORT).show()
             }.show()
@@ -326,9 +288,6 @@ class EditSampleAreaActivity : AppCompatActivity() {
     private fun resetEditor() {
         canvas.setRegions(SamplingRegion.RP5_LEFT_DEFAULT, SamplingRegion.RP5_RIGHT_DEFAULT)
         modeSpinner.setSelection(0)
-        layoutSpinner.setSelection(0)
-        borderSpinner.setSelection(0)
-        canvas.setSamplingOptions(SamplingLayoutMode.CUSTOM_REGIONS, SamplingBorderMode.EXCLUDE)
         activeProfile = ""
         // Reset should return to the same held identity colours used on editor startup,
         // not a short test pulse that clears the LEDs after 450ms.
@@ -339,23 +298,8 @@ class EditSampleAreaActivity : AppCompatActivity() {
     private fun sampleColors(): Pair<Int, Int> {
         val bmp = bitmap ?: return Color.BLACK to Color.BLACK
         // Always sample the exact regions shown by the draggable boxes.
-        val split = layoutSpinner.selectedItemPosition == SamplingLayoutMode.SPLIT_SCREEN.ordinal
-        val left = if (split) SamplingRegion.LEFT_HALF else canvas.leftRegion
-        val right = if (split) SamplingRegion.RIGHT_HALF else canvas.rightRegion
-        val borderMode = SamplingBorderMode.values().getOrElse(borderSpinner.selectedItemPosition) { SamplingBorderMode.EXCLUDE }
-        fun withBorder(region: SamplingRegion, isLeft: Boolean): SamplingRegion {
-            val edge = 0.035f
-            return when (borderMode) {
-                SamplingBorderMode.INCLUDE -> region
-                SamplingBorderMode.EXCLUDE -> SamplingRegion(
-                    if (region.left <= 0.001f) edge else region.left,
-                    if (region.top <= 0.001f) edge else region.top,
-                    if (region.right >= 0.999f && !split) 1f - edge else region.right,
-                    if (region.bottom >= 0.999f) 1f - edge else region.bottom
-                ).clamped()
-                SamplingBorderMode.ONLY -> region
-            }
-        }
+        val left = canvas.leftRegion
+        val right = canvas.rightRegion
         fun sample(region: SamplingRegion, dominant: Boolean, weighted: Boolean): Int {
             val x0 = (region.left * bmp.width).toInt().coerceIn(0, bmp.width - 1)
             val x1 = (region.right * bmp.width).toInt().coerceIn(x0 + 1, bmp.width)
@@ -381,33 +325,12 @@ class EditSampleAreaActivity : AppCompatActivity() {
             }
             return Color.rgb((rr / total).toInt().coerceIn(0, 255), (gg / total).toInt().coerceIn(0, 255), (bb / total).toInt().coerceIn(0, 255))
         }
-        fun configured(region: SamplingRegion, isLeft: Boolean): Int {
-            val dominant = modeSpinner.selectedItemPosition == 3
-            val weighted = modeSpinner.selectedItemPosition == 2
-            if (borderMode != SamplingBorderMode.ONLY) {
-                val adjusted = withBorder(region, isLeft)
-                return if (modeSpinner.selectedItemPosition >= 4) primeDominant(bmp, adjusted)
-                    else sample(adjusted, dominant, weighted)
-            }
-            // Four physical perimeter strips. The centre split is not a border.
-            val e = 0.035f
-            val strips = listOf(
-                SamplingRegion(region.left, 0f, region.right, e),
-                SamplingRegion(region.left, 1f - e, region.right, 1f),
-                SamplingRegion(region.left, e, (region.left + e).coerceAtMost(region.right), 1f - e),
-                SamplingRegion((region.right - e).coerceAtLeast(region.left), e, region.right, 1f - e)
-            )
-            val colors = strips.map { strip ->
-                if (modeSpinner.selectedItemPosition >= 4) primeDominant(bmp, strip)
-                else sample(strip, dominant, weighted)
-            }
-            return Color.rgb(
-                colors.map { Color.red(it) }.average().toInt(),
-                colors.map { Color.green(it) }.average().toInt(),
-                colors.map { Color.blue(it) }.average().toInt()
-            )
+        return when (modeSpinner.selectedItemPosition) {
+            0, 1 -> sample(left, false, false) to sample(right, false, false)
+            2 -> sample(left, false, true) to sample(right, false, true)
+            3 -> sample(left, true, false) to sample(right, true, false)
+            else -> primeDominant(bmp, left) to primeDominant(bmp, right)
         }
-        return configured(left, true) to configured(right, false)
     }
 
     private fun primeDominant(bmp: Bitmap, region: SamplingRegion): Int {

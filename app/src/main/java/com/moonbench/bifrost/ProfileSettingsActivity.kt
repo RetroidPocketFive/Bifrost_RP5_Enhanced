@@ -722,7 +722,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 return
             }
             SamplingRegionStore.setRegions(this, profile.left, profile.right)
-            SamplingRegionStore.setSamplingOptions(this, profile.layout, profile.border)
             SamplingRegionStore.setEnabled(this, true)
             current.put("sampleAreaProfileName", profile.name)
             toast("Applied '$selectedName'. Tap Save to store this choice in Profile Settings.")
@@ -751,7 +750,6 @@ class ProfileSettingsActivity : AppCompatActivity() {
                 return
             }
         SamplingRegionStore.setRegions(this, profile.left, profile.right)
-        SamplingRegionStore.setSamplingOptions(this, profile.layout, profile.border)
         SamplingRegionStore.setEnabled(this, true)
     }
 
