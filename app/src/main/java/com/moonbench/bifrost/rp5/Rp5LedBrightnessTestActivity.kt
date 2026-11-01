@@ -125,8 +125,8 @@ class Rp5LedBrightnessTestActivity : AppCompatActivity() {
             Toast.makeText(this, "Brightness sweep complete", Toast.LENGTH_SHORT).show()
             return
         }
-        testLevel(sweepLevels[index], 800L, showToast = false)
-        handler.postDelayed({ runSweepStep(index + 1) }, 950L)
+        testLevel(sweepLevels[index], 3_000L, showToast = false)
+        handler.postDelayed({ runSweepStep(index + 1) }, 3_000L)
     }
 
     private fun testLevel(level: Int, durationMs: Long, showToast: Boolean = true) {
