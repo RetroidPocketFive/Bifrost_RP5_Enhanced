@@ -2,6 +2,12 @@ package com.moonbench.bifrost.rp5
 
 import android.content.Context
 import android.graphics.Color
+import android.content.res.ColorStateList
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
 
 /** Shared palette for calibration screens, sourced from the app's selected UI theme. */
 internal data class CalibrationTheme(
@@ -38,4 +44,30 @@ internal data class CalibrationTheme(
             }
         }
     }
+}
+
+/** Apply the active palette to a programmatically built calibration screen. */
+internal fun applyCalibrationTheme(root: View, theme: CalibrationTheme) {
+    root.setBackgroundColor(theme.background)
+    fun visit(view: View) {
+        when (view) {
+            is MaterialCardView -> {
+                view.setCardBackgroundColor(theme.card)
+                view.strokeColor = theme.accent
+            }
+            is MaterialButton -> {
+                if (view.id != com.moonbench.bifrost.R.id.leftReferenceButton &&
+                    view.id != com.moonbench.bifrost.R.id.rightReferenceButton) {
+                    view.backgroundTintList = ColorStateList.valueOf(theme.surface)
+                    view.strokeColor = ColorStateList.valueOf(theme.accent)
+                    view.setTextColor(theme.text)
+                }
+            }
+            is TextView -> view.setTextColor(theme.text)
+        }
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) visit(view.getChildAt(index))
+        }
+    }
+    visit(root)
 }
