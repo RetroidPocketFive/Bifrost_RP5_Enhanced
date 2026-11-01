@@ -18,11 +18,12 @@ import kotlin.math.roundToInt
 
 /** Dedicated RP5 LED brightness test screen. */
 class Rp5LedBrightnessTestActivity : AppCompatActivity() {
-    private val bg = Color.rgb(8, 12, 24)
-    private val panel = Color.rgb(16, 22, 41)
-    private val accent = Color.rgb(104, 101, 242)
-    private val fg = Color.rgb(242, 244, 255)
-    private val muted = Color.rgb(165, 174, 205)
+    private val palette by lazy { CalibrationTheme.from(this) }
+    private val bg get() = palette.background
+    private val panel get() = palette.card
+    private val accent get() = palette.accent
+    private val fg get() = palette.text
+    private val muted get() = palette.secondary
     private val handler = Handler(Looper.getMainLooper())
     private var running = false
     private var selectedLevel = 128
