@@ -469,12 +469,13 @@ class SamplingEditorActivity : AppCompatActivity() {
         unselected.backgroundTintList = ColorStateList.valueOf(theme.surface)
         unselected.strokeColor = ColorStateList.valueOf(theme.accent)
         unselected.setTextColor(theme.text)
-        val primary = when (colorIndex.coerceAtMost(2)) {
-            0 -> LedColorCalibration.Primary.RED
-            1 -> LedColorCalibration.Primary.GREEN
-            else -> LedColorCalibration.Primary.BLUE
+        val primary = when (testColors[colorIndex].name) {
+            "RED" -> LedColorCalibration.Primary.RED
+            "BLUE" -> LedColorCalibration.Primary.BLUE
+            "GREEN" -> LedColorCalibration.Primary.GREEN
+            else -> null
         }
-        val command = if (colorIndex <= 2) {
+        val command = if (primary != null) {
             LedColorCalibration.getPrimaryCommand(this, matchStick, primary)
         } else {
             LedColorCalibration.CommandColor(
