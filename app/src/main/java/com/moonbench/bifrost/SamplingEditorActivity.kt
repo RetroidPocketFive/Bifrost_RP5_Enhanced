@@ -50,15 +50,12 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var samplingHeaderDescription: TextView
     private var editorSourceMode: String? = null
     private lateinit var canvas: SamplingCanvasView
-    private lateinit var editorTitle: TextView
-    private lateinit var editorSubtitle: TextView
     private lateinit var placeholder: TextView
     private lateinit var leftReferenceButton: MaterialButton
     private lateinit var rightReferenceButton: MaterialButton
-    private lateinit var btnNext: MaterialButton
-    private lateinit var btnBack: MaterialButton
     private lateinit var testColorName: TextView
-    private lateinit var matchStickName: TextView
+    private lateinit var matchLeftButton: MaterialButton
+    private lateinit var matchRightButton: MaterialButton
     private lateinit var targetColorSwatch: View
     private lateinit var rawColorSwatch: View
     private lateinit var redSeek: SeekBar
@@ -67,7 +64,12 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var redValue: TextView
     private lateinit var greenValue: TextView
     private lateinit var blueValue: TextView
+    private lateinit var testIntensitySeek: SeekBar
+    private lateinit var testIntensityValue: TextView
+    private var testIntensity = 100
     private var matchStick = LedColorCalibration.Stick.LEFT
+    private var matchBoth = false
+    private lateinit var matchBothButton: MaterialButton
     private var matchAdjusting = false
 
     private var referenceBitmap: Bitmap? = null
@@ -76,9 +78,10 @@ class SamplingEditorActivity : AppCompatActivity() {
 
     private data class TestColor(val name: String, val color: Int)
     private val testColors = listOf(
-        TestColor("RED", Color.rgb(255, 0, 0)),
-        TestColor("GREEN", Color.GREEN),
+        TestColor("RED", Color.RED),
         TestColor("BLUE", Color.BLUE),
+        TestColor("GREEN", Color.GREEN),
+        TestColor("YELLOW", Color.YELLOW),
         TestColor("WHITE", Color.WHITE),
     )
 
@@ -90,32 +93,30 @@ class SamplingEditorActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_sampling_editor)
-        window.statusBarColor = Color.rgb(8, 12, 24)
-        window.navigationBarColor = Color.rgb(8, 12, 24)
+        val calibrationTheme = com.moonbench.bifrost.rp5.CalibrationTheme.from(this)
+        window.statusBarColor = calibrationTheme.background
+        window.navigationBarColor = calibrationTheme.background
+        com.moonbench.bifrost.rp5.applyCalibrationTheme(findViewById(android.R.id.content), calibrationTheme)
 
         samplingHeaderTitle = findViewById(R.id.samplingHeaderTitle)
         samplingHeaderDescription = findViewById(R.id.samplingHeaderDescription)
         findViewById<MaterialButton>(R.id.samplingBackButton).setOnClickListener {
-            when (page) {
-                Page.CHOOSER -> finish()
-                Page.EDITOR -> if (activeStick == 0) showChooser() else showEditor(0)
-                Page.COLOR_TEST -> showEditor(1)
-            }
+            // These calibration tools are launched from the Bifrost Calibration menu.
+            // Always return directly to that menu instead of navigating between tool pages.
+            finish()
         }
 
         chooserPanel = findViewById(R.id.chooserPanel)
         editorPanel = findViewById(R.id.editorPanel)
         colorTestPanel = findViewById(R.id.colorTestPanel)
         canvas = findViewById(R.id.samplingCanvas)
-        editorTitle = findViewById(R.id.editorTitle)
-        editorSubtitle = findViewById(R.id.editorSubtitle)
         placeholder = findViewById(R.id.samplingPlaceholder)
         leftReferenceButton = findViewById(R.id.leftReferenceButton)
         rightReferenceButton = findViewById(R.id.rightReferenceButton)
-        btnNext = findViewById(R.id.btnNext)
-        btnBack = findViewById(R.id.btnBack)
         testColorName = findViewById(R.id.testColorName)
-        matchStickName = findViewById(R.id.matchStickName)
+        matchLeftButton = findViewById(R.id.btnMatchLeft)
+        matchRightButton = findViewById(R.id.btnMatchRight)
+        matchBothButton = findViewById(R.id.btnMatchBoth)
         targetColorSwatch = findViewById(R.id.targetColorSwatch)
         rawColorSwatch = findViewById(R.id.rawColorSwatch)
         redSeek = findViewById(R.id.redSeek)
@@ -124,6 +125,11 @@ class SamplingEditorActivity : AppCompatActivity() {
         redValue = findViewById(R.id.redValue)
         greenValue = findViewById(R.id.greenValue)
         blueValue = findViewById(R.id.blueValue)
+        testIntensitySeek = findViewById(R.id.testIntensitySeek)
+        testIntensityValue = findViewById(R.id.testIntensityValue)
+        testIntensitySeek.max = 100
+        testIntensitySeek.progress = testIntensity
+        testIntensityValue.text = "TEST INTENSITY 100%"
 
         val metrics = getDisplayMetrics()
         canvas.screenAspectRatio =
@@ -162,7 +168,11 @@ class SamplingEditorActivity : AppCompatActivity() {
             showSampleAreaProfileManager()
         }
         findViewById<MaterialButton>(R.id.btnRecapture).setOnClickListener {
-            startDelayedCapture()
+            when (editorSourceMode) {
+                SOURCE_STILL -> importImageLauncher.launch("image/*")
+                SOURCE_LIVE -> startDelayedCapture()
+                else -> startDelayedCapture()
+            }
         }
         findViewById<MaterialButton>(R.id.btnReset).setOnClickListener {
             canvas.setRegions(
@@ -181,30 +191,18 @@ class SamplingEditorActivity : AppCompatActivity() {
             finish()
         }
 
-        leftReferenceButton.setOnClickListener {
-            activeStick = 0
-            showEditor(0)
-            runLedTest(canvasColor(canvas.leftRegion), Color.BLACK)
-        }
-        rightReferenceButton.setOnClickListener {
-            activeStick = 1
-            showEditor(1)
-            runLedTest(Color.BLACK, canvasColor(canvas.rightRegion))
-        }
 
-        btnBack.setOnClickListener {
-            if (activeStick == 0) showChooser() else showEditor(0)
-        }
-        btnNext.setOnClickListener {
-            if (activeStick == 0) showEditor(1) else showColorTest()
-        }
-
-        findViewById<MaterialButton>(R.id.btnMatchLeft).setOnClickListener {
+        matchLeftButton.setOnClickListener {
             matchStick = LedColorCalibration.Stick.LEFT
             loadMatchCommand()
         }
-        findViewById<MaterialButton>(R.id.btnMatchRight).setOnClickListener {
+        matchRightButton.setOnClickListener {
             matchStick = LedColorCalibration.Stick.RIGHT
+            matchBoth = false
+            loadMatchCommand()
+        }
+        matchBothButton.setOnClickListener {
+            matchBoth = true
             loadMatchCommand()
         }
         findViewById<MaterialButton>(R.id.btnTestAdjusted).setOnClickListener {
@@ -214,9 +212,14 @@ class SamplingEditorActivity : AppCompatActivity() {
             saveCurrentPrimary()
         }
         findViewById<MaterialButton>(R.id.btnResetLedCalibration).setOnClickListener {
-            LedColorCalibration.reset(this, matchStick)
+            if (matchBoth) {
+                LedColorCalibration.reset(this, LedColorCalibration.Stick.LEFT)
+                LedColorCalibration.reset(this, LedColorCalibration.Stick.RIGHT)
+            } else {
+                LedColorCalibration.reset(this, matchStick)
+            }
             loadMatchCommand()
-            Toast.makeText(this, matchStickLabel() + " LED calibration reset.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, (if (matchBoth) "Both sticks" else matchStickLabel()) + " LED calibration reset.", Toast.LENGTH_SHORT).show()
         }
 
         val seekListener = object : SeekBar.OnSeekBarChangeListener {
@@ -229,6 +232,15 @@ class SamplingEditorActivity : AppCompatActivity() {
         redSeek.setOnSeekBarChangeListener(seekListener)
         greenSeek.setOnSeekBarChangeListener(seekListener)
         blueSeek.setOnSeekBarChangeListener(seekListener)
+        testIntensitySeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                testIntensity = progress.coerceIn(0, 100)
+                testIntensityValue.text = "TEST INTENSITY " + testIntensity + "%"
+                updateMatchValues()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
         findViewById<MaterialButton>(R.id.btnColorBack).setOnClickListener {
             if (colorIndex == 0) showEditor(1)
             else {
@@ -237,28 +249,11 @@ class SamplingEditorActivity : AppCompatActivity() {
             }
         }
         findViewById<MaterialButton>(R.id.btnColorNext).setOnClickListener {
-            if (colorIndex < testColors.lastIndex) {
-                saveCurrentPrimary()
-                colorIndex++
-                updateColorTest()
-            } else {
-                Toast.makeText(
-                    this,
-                    "White is a verification colour. Save & Apply when the stick looks correct.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            saveCurrentPrimary()
+            colorIndex = (colorIndex + 1) % testColors.size
+            updateColorTest()
         }
-        findViewById<MaterialButton>(R.id.btnFinishCalibration).setOnClickListener {
-            if (colorIndex <= 2) saveCurrentPrimary()
-            Toast.makeText(
-                this,
-                "LED colour calibration saved for normal Ambient / Ambi Aurora output.",
-                Toast.LENGTH_LONG
-            ).show()
-            finish()
-        }
-
+ 
         updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
         showChooser()
         when (intent.getStringExtra(EXTRA_START_MODE)) {
@@ -394,6 +389,7 @@ class SamplingEditorActivity : AppCompatActivity() {
     private fun showChooser() {
         page = Page.CHOOSER
         samplingHeaderTitle.text = "Calibration"
+        samplingHeaderDescription.visibility = View.VISIBLE
         samplingHeaderDescription.text = "Test and calibrate controller lighting."
         chooserPanel.visibility = View.VISIBLE
         editorPanel.visibility = View.GONE
@@ -423,47 +419,68 @@ class SamplingEditorActivity : AppCompatActivity() {
         chooserPanel.visibility = View.GONE
         editorPanel.visibility = View.VISIBLE
         colorTestPanel.visibility = View.GONE
+        samplingHeaderDescription.visibility = View.VISIBLE
 
-        canvas.focus = if (activeStick == 0) SamplingCanvasView.Focus.LEFT else SamplingCanvasView.Focus.RIGHT
-        editorTitle.text = if (activeStick == 0) "LEFT STICK" else "RIGHT STICK"
-        editorSubtitle.text =
-            "Zoomed view. Drag the box to move it; drag a corner to resize. Tap the color reference to test the physical LED."
-        btnBack.text = if (activeStick == 0) "BACK" else "LEFT STICK"
-        btnNext.text = if (activeStick == 0) "RIGHT STICK →" else "COLOR MATCH →"
+        canvas.focus = SamplingCanvasView.Focus.BOTH
         updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
         updatePlaceholder()
     }
 
     private fun showColorTest() {
         page = Page.COLOR_TEST
-        samplingHeaderTitle.text = "LED Colour Match"
+        samplingHeaderTitle.text = "LED Colour Match Check"
+        samplingHeaderDescription.visibility = View.VISIBLE
         samplingHeaderDescription.text = "Match the physical LEDs to the colours displayed on screen."
         colorIndex = 0
         chooserPanel.visibility = View.GONE
         editorPanel.visibility = View.GONE
         colorTestPanel.visibility = View.VISIBLE
+        colorTestPanel.findViewById<TextView>(R.id.colorTestSubtitle)?.visibility = View.GONE
         updateColorTest()
     }
 
     private fun updateColorTest() {
         val test = testColors[colorIndex]
-        targetColorSwatch.setBackgroundColor(test.color)
+        targetColorSwatch.setBackgroundColor(scaleColor(test.color, testIntensity))
         testColorName.text = test.name + "  (" + (colorIndex + 1) + "/" + testColors.size + ")"
         loadMatchCommand()
     }
 
     private fun matchStickLabel(): String =
-        if (matchStick == LedColorCalibration.Stick.LEFT) "LEFT" else "RIGHT"
+        if (matchBoth) "BOTH" else if (matchStick == LedColorCalibration.Stick.LEFT) "LEFT" else "RIGHT"
+
+    private fun scaleColor(color: Int, intensity: Int): Int {
+        val factor = intensity.coerceIn(0, 100) / 100f
+        return Color.rgb(
+            (Color.red(color) * factor).toInt(),
+            (Color.green(color) * factor).toInt(),
+            (Color.blue(color) * factor).toInt()
+        )
+    }
 
     private fun loadMatchCommand() {
-        matchStickName.text = "SELECTED: " + matchStickLabel()
-        val primary = when (colorIndex.coerceAtMost(2)) {
-            0 -> LedColorCalibration.Primary.RED
-            1 -> LedColorCalibration.Primary.GREEN
-            else -> LedColorCalibration.Primary.BLUE
+        val theme = com.moonbench.bifrost.rp5.CalibrationTheme.from(this)
+        listOf(matchLeftButton, matchBothButton, matchRightButton).forEach { button ->
+            val active = when (button) {
+                matchLeftButton -> !matchBoth && matchStick == LedColorCalibration.Stick.LEFT
+                matchRightButton -> !matchBoth && matchStick == LedColorCalibration.Stick.RIGHT
+                else -> matchBoth
+            }
+            button.backgroundTintList = ColorStateList.valueOf(if (active) theme.accent else theme.surface)
+            button.strokeColor = ColorStateList.valueOf(if (active) theme.accentLight else theme.accent)
+            button.setTextColor(if (active && theme.accent == Color.parseColor("#39FF14")) Color.BLACK else if (active) theme.background else theme.text)
         }
-        val command = if (colorIndex <= 2) {
-            LedColorCalibration.getPrimaryCommand(this, matchStick, primary)
+        val primary = when (testColors[colorIndex].name) {
+            "RED" -> LedColorCalibration.Primary.RED
+            "BLUE" -> LedColorCalibration.Primary.BLUE
+            "GREEN" -> LedColorCalibration.Primary.GREEN
+            else -> null
+        }
+        val command = if (primary != null) {
+            val left = LedColorCalibration.getPrimaryCommand(this, LedColorCalibration.Stick.LEFT, primary)
+            val right = LedColorCalibration.getPrimaryCommand(this, LedColorCalibration.Stick.RIGHT, primary)
+            if (matchBoth) LedColorCalibration.CommandColor((left.red + right.red) / 2, (left.green + right.green) / 2, (left.blue + right.blue) / 2)
+            else LedColorCalibration.getPrimaryCommand(this, matchStick, primary)
         } else {
             LedColorCalibration.CommandColor(
                 Color.red(testColors[colorIndex].color),
@@ -484,13 +501,14 @@ class SamplingEditorActivity : AppCompatActivity() {
         redValue.text = "R " + redSeek.progress
         greenValue.text = "G " + greenSeek.progress
         blueValue.text = "B " + blueSeek.progress
-        rawColorSwatch.setBackgroundColor(command)
+        rawColorSwatch.setBackgroundColor(scaleColor(command, testIntensity))
+        targetColorSwatch.setBackgroundColor(scaleColor(testColors[colorIndex].color, testIntensity))
     }
 
     private fun testAdjustedCommand() {
-        val command = Color.rgb(redSeek.progress, greenSeek.progress, blueSeek.progress)
-        val left = if (matchStick == LedColorCalibration.Stick.LEFT) command else Color.BLACK
-        val right = if (matchStick == LedColorCalibration.Stick.RIGHT) command else Color.BLACK
+        val command = scaleColor(Color.rgb(redSeek.progress, greenSeek.progress, blueSeek.progress), testIntensity)
+        val left = if (matchBoth || matchStick == LedColorCalibration.Stick.LEFT) command else Color.BLACK
+        val right = if (matchBoth || matchStick == LedColorCalibration.Stick.RIGHT) command else Color.BLACK
         runLedTest(left, right, true)
         Toast.makeText(
             this,
@@ -500,17 +518,23 @@ class SamplingEditorActivity : AppCompatActivity() {
     }
 
     private fun saveCurrentPrimary() {
-        if (colorIndex > 2) {
-            Toast.makeText(this, "WHITE is verification only; it is not a matrix primary.", Toast.LENGTH_LONG).show()
+        val primary = when (testColors[colorIndex].name) {
+            "RED" -> LedColorCalibration.Primary.RED
+            "BLUE" -> LedColorCalibration.Primary.BLUE
+            "GREEN" -> LedColorCalibration.Primary.GREEN
+            else -> null
+        }
+        if (primary == null) {
+            Toast.makeText(this, testColors[colorIndex].name + " is a verification colour, not a matrix primary.", Toast.LENGTH_LONG).show()
             return
         }
-        val primary = LedColorCalibration.Primary.values()[colorIndex]
-        LedColorCalibration.setPrimaryCommand(
-            this,
-            matchStick,
-            primary,
-            LedColorCalibration.CommandColor(redSeek.progress, greenSeek.progress, blueSeek.progress)
-        )
+        val adjusted = LedColorCalibration.CommandColor(redSeek.progress, greenSeek.progress, blueSeek.progress)
+        if (matchBoth) {
+            LedColorCalibration.setPrimaryCommand(this, LedColorCalibration.Stick.LEFT, primary, adjusted)
+            LedColorCalibration.setPrimaryCommand(this, LedColorCalibration.Stick.RIGHT, primary, adjusted)
+        } else {
+            LedColorCalibration.setPrimaryCommand(this, matchStick, primary, adjusted)
+        }
         Toast.makeText(
             this,
             matchStickLabel() + " " + primary.name + " correction saved.",

@@ -43,6 +43,7 @@ enum class PresetIcon(
 
                 LedAnimationType.AUDIO_REACTIVE -> PLAY
                 LedAnimationType.AMBIENT,
+                LedAnimationType.SPLIT_SCREEN,
                 LedAnimationType.AMBIAURORA -> DISPLAY
 
                 LedAnimationType.BATTERY_INDICATOR,

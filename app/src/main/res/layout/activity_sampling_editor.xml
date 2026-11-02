@@ -192,6 +192,20 @@
                 app:strokeWidth="1dp"
                 android:minHeight="44dp" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDisable"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="DISABLE CUSTOM SAMPLE AREAS"
+            app:cornerRadius="12dp"
+            android:textColor="#F2F4FF"
+            app:backgroundTint="#151D33"
+            app:strokeColor="#6865F2"
+            app:strokeWidth="1dp"
+            android:minHeight="44dp" />
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -214,26 +228,38 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="10dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="8dp"
             android:paddingVertical="4dp">
 
-            <TextView
-                android:id="@+id/editorTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="LEFT STICK"
-                android:textColor="#F2F4FF"
-                android:textStyle="bold"
-                android:textSize="16sp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/leftReferenceButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="5dp"
+                android:text="LEFT #000000"
+                android:textSize="12sp"
+                app:cornerRadius="10dp"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="2dp"
+                android:minHeight="40dp" />
 
-            <TextView
-                android:id="@+id/editorSubtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Zoomed view."
-                android:textColor="#8992AD"
-                android:textSize="12sp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/rightReferenceButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginStart="5dp"
+                android:text="RIGHT #000000"
+                android:textSize="12sp"
+                app:cornerRadius="10dp"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="2dp"
+                android:minHeight="40dp" />
         </LinearLayout>
 
         <FrameLayout
@@ -246,7 +272,7 @@
                 android:id="@+id/samplingCanvas"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_margin="4dp" />
+                android:layout_margin="2dp" />
 
             <TextView
                 android:id="@+id/samplingPlaceholder"
@@ -254,7 +280,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:gravity="center"
-                android:text="No reference image. The sampling box can still be positioned."
+                android:text="No reference image. The sampling boxes can still be positioned."
                 android:textColor="#8992AD"
                 android:textSize="12sp"
                 android:visibility="gone" />
@@ -262,49 +288,11 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="54dp"
+            android:layout_height="56dp"
             android:orientation="horizontal"
-            android:paddingHorizontal="6dp"
-            android:gravity="center_vertical">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/leftReferenceButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:text="LEFT"
-                android:textSize="12sp"
-                app:cornerRadius="12dp"
-                android:textColor="#F2F4FF"
-                app:backgroundTint="#151D33"
-                app:strokeColor="#6865F2"
-                app:strokeWidth="1dp"
-                android:minHeight="44dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/rightReferenceButton"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="48dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:text="RIGHT"
-                android:textSize="12sp"
-                app:cornerRadius="12dp"
-                android:textColor="#F2F4FF"
-                app:backgroundTint="#151D33"
-                app:strokeColor="#6865F2"
-                app:strokeWidth="1dp"
-                android:minHeight="44dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:orientation="horizontal"
-            android:paddingHorizontal="6dp">
+            android:gravity="center_vertical"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRecapture"
@@ -312,14 +300,13 @@
                 android:layout_width="0dp"
                 android:layout_height="44dp"
                 android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:text="RECAPTURE"
-                android:textSize="12sp"
+                android:layout_marginEnd="5dp"
+                android:text="NEW IMAGE"
                 app:cornerRadius="12dp"
                 android:textColor="#F2F4FF"
                 app:backgroundTint="#151D33"
                 app:strokeColor="#6865F2"
-                app:strokeWidth="1dp"
+                app:strokeWidth="2dp"
                 android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -328,66 +315,14 @@
                 android:layout_width="0dp"
                 android:layout_height="44dp"
                 android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
+                android:layout_marginStart="5dp"
                 android:text="RESET"
-                android:textSize="12sp"
                 app:cornerRadius="12dp"
                 android:textColor="#F2F4FF"
                 app:backgroundTint="#151D33"
                 app:strokeColor="#6865F2"
-                app:strokeWidth="1dp"
+                app:strokeWidth="2dp"
                 android:minHeight="44dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnDisable"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:text="DISABLE"
-                android:textSize="12sp"
-                app:cornerRadius="12dp"
-                android:textColor="#F2F4FF"
-                app:backgroundTint="#151D33"
-                app:strokeColor="#6865F2"
-                app:strokeWidth="1dp"
-                android:minHeight="44dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:orientation="horizontal"
-            android:padding="6dp">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnBack"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:text="BACK"
-                app:cornerRadius="12dp"
-                android:textColor="#F2F4FF"
-                app:backgroundTint="#151D33"
-                app:strokeColor="#6865F2"
-                app:strokeWidth="1dp"
-                android:minHeight="44dp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnNext"
-                style="@style/Widget.Material3.Button"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:text="NEXT"
-                app:cornerRadius="14dp"
-                android:textColor="#FFFFFF"
-                app:backgroundTint="#6865F2"
-                android:minHeight="48dp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -410,7 +345,7 @@
             android:id="@+id/colorTestTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="LED COLOR MATCH"
+            android:text="LED COLOUR MATCH CHECK"
             android:textColor="#F2F4FF"
             android:textStyle="bold"
             android:textSize="16sp" />
@@ -446,16 +381,21 @@
                 app:strokeWidth="1dp"
                 android:minHeight="44dp" />
 
-            <TextView
-                android:id="@+id/matchStickName"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMatchBoth"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="44dp"
-                android:layout_weight="0.75"
-                android:gravity="center"
-                android:text="SELECTED: LEFT"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="3dp"
+                android:text="BOTH"
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
                 android:textColor="#F2F4FF"
-                android:textStyle="bold"
-                android:textSize="12sp" />
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMatchRight"
@@ -476,7 +416,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="58dp"
+            android:layout_height="116dp"
             android:orientation="horizontal">
 
             <LinearLayout
@@ -523,6 +463,23 @@
                     android:background="#00FF00" />
             </LinearLayout>
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/testIntensityValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="TEST INTENSITY 100%"
+            android:textColor="#F2F4FF"
+            android:textStyle="bold"
+            android:textSize="12sp" />
+
+        <SeekBar
+            android:id="@+id/testIntensitySeek"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:max="100"
+            android:progress="100" />
 
         <TextView
             android:id="@+id/testColorName"
@@ -659,16 +616,6 @@
                 android:minHeight="48dp" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFinishCalibration"
-            style="@style/Widget.Material3.Button"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="SAVE &amp; APPLY"
-                app:cornerRadius="14dp"
-                android:textColor="#FFFFFF"
-                app:backgroundTint="#6865F2"
-                android:minHeight="48dp" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

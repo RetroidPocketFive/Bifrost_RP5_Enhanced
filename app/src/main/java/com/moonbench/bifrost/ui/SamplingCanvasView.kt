@@ -206,12 +206,15 @@ class SamplingCanvasView @JvmOverloads constructor(
         fillPaint.color = Color.argb(alpha * 40 / 255, Color.red(color), Color.green(color), Color.blue(color))
         canvas.drawRect(r, fillPaint)
 
-        rectPaint.strokeWidth = if (label.isBlank()) 3f else 6f
-        rectPaint.color = Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color))
+        rectPaint.strokeWidth = if (label.isBlank()) 3f else 7f
+        val identityColor = if (label == "Right") defaultRightColor else defaultLeftColor
+        // Keep the region outline tied to the physical LED identity; sample colour
+        // is shown only in the centre of each corner marker.
+        val outlineColor = if (label.isBlank()) color else identityColor
+        rectPaint.color = Color.argb(alpha, Color.red(outlineColor), Color.green(outlineColor), Color.blue(outlineColor))
         canvas.drawRect(r, rectPaint)
 
         if (label.isNotBlank()) {
-            val identityColor = if (label == "Left") defaultLeftColor else defaultRightColor
             val corners = listOf(
                 r.left to r.top, r.right to r.top,
                 r.left to r.bottom, r.right to r.bottom

@@ -20,10 +20,11 @@ class AmbientAnimation(
     private val useSingleColor: Boolean,
     initialSaturationBoost: Float = 0.0f,
     private val displayId: Int = Display.DEFAULT_DISPLAY,
-    private val regionContext: android.content.Context? = null
+    private val regionContext: android.content.Context? = null,
+    private val animationType: LedAnimationType = LedAnimationType.AMBIENT
 ) : LedAnimation(ledController) {
 
-    override val type: LedAnimationType = LedAnimationType.AMBIENT
+    override val type: LedAnimationType = animationType
     override val needsColorSelection: Boolean = false
 
     private var screenAnalyzer: ScreenAnalyzer? = null

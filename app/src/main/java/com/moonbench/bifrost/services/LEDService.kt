@@ -1891,7 +1891,8 @@ class LEDService : Service() {
         if (type == LedAnimationType.AMBIENT) {
             return prefs.getBoolean(PREF_AMBILIGHT_USE_MEDIA_PROJECTION, DEFAULT_AMBILIGHT_USE_MEDIA_PROJECTION)
         }
-        return type == LedAnimationType.AUDIO_REACTIVE ||
+        return (type == LedAnimationType.SPLIT_SCREEN && !mirrorMode) ||
+                type == LedAnimationType.AUDIO_REACTIVE ||
                 type == LedAnimationType.AMBIAURORA
     }
 
@@ -1919,6 +1920,26 @@ class LEDService : Service() {
                     saturationBoost,
                     currentAmbientDisplayId,
                     regionContext = this
+                )
+            }
+            LedAnimationType.SPLIT_SCREEN -> {
+                // Split Screen is a dedicated 50/50 screen-sampling mode. Force
+                // full-frame sampling so ScreenAnalyzer divides the captured
+                // image into equal left and right halves, independent of the
+                // user's custom sample-area settings.
+                val useMP = !mirrorMode
+                val displayMetrics = getDisplayMetrics(currentAmbientDisplayId)
+                AmbientAnimation(
+                    ledController,
+                    if (useMP) synchronized(mediaProjectionLock) { mediaProjection } else null,
+                    displayMetrics,
+                    profile,
+                    true,
+                    false,
+                    saturationBoost,
+                    currentAmbientDisplayId,
+                    regionContext = null,
+                    animationType = LedAnimationType.SPLIT_SCREEN
                 )
             }
             LedAnimationType.AUDIO_REACTIVE -> {
