@@ -50,13 +50,9 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var samplingHeaderDescription: TextView
     private var editorSourceMode: String? = null
     private lateinit var canvas: SamplingCanvasView
-    private lateinit var editorTitle: TextView
-    private lateinit var editorSubtitle: TextView
     private lateinit var placeholder: TextView
     private lateinit var leftReferenceButton: MaterialButton
     private lateinit var rightReferenceButton: MaterialButton
-    private lateinit var btnNext: MaterialButton
-    private lateinit var btnBack: MaterialButton
     private lateinit var testColorName: TextView
     private lateinit var matchStickName: TextView
     private lateinit var matchLeftButton: MaterialButton
@@ -111,8 +107,6 @@ class SamplingEditorActivity : AppCompatActivity() {
         editorPanel = findViewById(R.id.editorPanel)
         colorTestPanel = findViewById(R.id.colorTestPanel)
         canvas = findViewById(R.id.samplingCanvas)
-        editorTitle = findViewById(R.id.editorTitle)
-        editorSubtitle = findViewById(R.id.editorSubtitle)
         placeholder = findViewById(R.id.samplingPlaceholder)
         leftReferenceButton = findViewById(R.id.leftReferenceButton)
         rightReferenceButton = findViewById(R.id.rightReferenceButton)
@@ -168,7 +162,11 @@ class SamplingEditorActivity : AppCompatActivity() {
             showSampleAreaProfileManager()
         }
         findViewById<MaterialButton>(R.id.btnRecapture).setOnClickListener {
-            startDelayedCapture()
+            when (editorSourceMode) {
+                SOURCE_STILL -> importImageLauncher.launch("image/*")
+                SOURCE_LIVE -> startDelayedCapture()
+                else -> startDelayedCapture()
+            }
         }
         findViewById<MaterialButton>(R.id.btnReset).setOnClickListener {
             canvas.setRegions(
@@ -187,23 +185,6 @@ class SamplingEditorActivity : AppCompatActivity() {
             finish()
         }
 
-        leftReferenceButton.setOnClickListener {
-            activeStick = 0
-            showEditor(0)
-            runLedTest(canvasColor(canvas.leftRegion), Color.BLACK)
-        }
-        rightReferenceButton.setOnClickListener {
-            activeStick = 1
-            showEditor(1)
-            runLedTest(Color.BLACK, canvasColor(canvas.rightRegion))
-        }
-
-        btnBack.setOnClickListener {
-            if (activeStick == 0) showChooser() else showEditor(0)
-        }
-        btnNext.setOnClickListener {
-            if (activeStick == 0) showEditor(1) else showColorTest()
-        }
 
         matchLeftButton.setOnClickListener {
             matchStick = LedColorCalibration.Stick.LEFT
@@ -432,12 +413,7 @@ class SamplingEditorActivity : AppCompatActivity() {
         colorTestPanel.visibility = View.GONE
         samplingHeaderDescription.visibility = View.VISIBLE
 
-        canvas.focus = if (activeStick == 0) SamplingCanvasView.Focus.LEFT else SamplingCanvasView.Focus.RIGHT
-        editorTitle.text = if (activeStick == 0) "LEFT STICK" else "RIGHT STICK"
-        editorSubtitle.text =
-            "Zoomed view. Drag the box to move it; drag a corner to resize. Tap the color reference to test the physical LED."
-        btnBack.text = if (activeStick == 0) "BACK" else "LEFT STICK"
-        btnNext.text = if (activeStick == 0) "RIGHT STICK →" else "COLOR MATCH →"
+        canvas.focus = SamplingCanvasView.Focus.BOTH
         updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
         updatePlaceholder()
     }
