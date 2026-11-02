@@ -339,16 +339,21 @@
                 app:strokeWidth="1dp"
                 android:minHeight="44dp" />
 
-            <TextView
-                android:id="@+id/matchStickName"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnMatchBoth"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="36dp"
-                android:layout_weight="0.75"
-                android:gravity="center"
-                android:text="SELECT: LEFT"
+                android:layout_weight="1"
+                android:layout_marginHorizontal="3dp"
+                android:text="BOTH"
+                android:textSize="12sp"
+                app:cornerRadius="12dp"
                 android:textColor="#F2F4FF"
-                android:textStyle="bold"
-                android:textSize="12sp" />
+                app:backgroundTint="#151D33"
+                app:strokeColor="#6865F2"
+                app:strokeWidth="1dp"
+                android:minHeight="44dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnMatchRight"
