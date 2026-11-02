@@ -54,7 +54,6 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var leftReferenceButton: MaterialButton
     private lateinit var rightReferenceButton: MaterialButton
     private lateinit var testColorName: TextView
-    private lateinit var matchStickName: TextView
     private lateinit var matchLeftButton: MaterialButton
     private lateinit var matchRightButton: MaterialButton
     private lateinit var targetColorSwatch: View
@@ -117,7 +116,6 @@ class SamplingEditorActivity : AppCompatActivity() {
         leftReferenceButton = findViewById(R.id.leftReferenceButton)
         rightReferenceButton = findViewById(R.id.rightReferenceButton)
         testColorName = findViewById(R.id.testColorName)
-        matchStickName = findViewById(R.id.matchStickName)
         matchLeftButton = findViewById(R.id.btnMatchLeft)
         matchRightButton = findViewById(R.id.btnMatchRight)
         matchBothButton = findViewById(R.id.btnMatchBoth)
@@ -472,7 +470,6 @@ class SamplingEditorActivity : AppCompatActivity() {
     }
 
     private fun loadMatchCommand() {
-        matchStickName.text = "SELECTED: " + matchStickLabel()
         val theme = com.moonbench.bifrost.rp5.CalibrationTheme.from(this)
         listOf(matchLeftButton, matchBothButton, matchRightButton).forEach { button ->
             val active = when (button) {
