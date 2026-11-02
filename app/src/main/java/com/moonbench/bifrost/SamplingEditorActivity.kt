@@ -101,11 +101,9 @@ class SamplingEditorActivity : AppCompatActivity() {
         samplingHeaderTitle = findViewById(R.id.samplingHeaderTitle)
         samplingHeaderDescription = findViewById(R.id.samplingHeaderDescription)
         findViewById<MaterialButton>(R.id.samplingBackButton).setOnClickListener {
-            when (page) {
-                Page.CHOOSER -> finish()
-                Page.EDITOR -> if (activeStick == 0) showChooser() else showEditor(0)
-                Page.COLOR_TEST -> showEditor(1)
-            }
+            // These calibration tools are launched from the Bifrost Calibration menu.
+            // Always return directly to that menu instead of navigating between tool pages.
+            finish()
         }
 
         chooserPanel = findViewById(R.id.chooserPanel)
@@ -255,16 +253,7 @@ class SamplingEditorActivity : AppCompatActivity() {
             colorIndex = (colorIndex + 1) % testColors.size
             updateColorTest()
         }
-        findViewById<MaterialButton>(R.id.btnFinishCalibration).setOnClickListener {
-            if (colorIndex <= 2) saveCurrentPrimary()
-            Toast.makeText(
-                this,
-                "LED colour calibration saved for normal Ambient / Ambi Aurora output.",
-                Toast.LENGTH_LONG
-            ).show()
-            finish()
-        }
-
+ 
         updateReferenceButtons(canvas.leftRegion, canvas.rightRegion)
         showChooser()
         when (intent.getStringExtra(EXTRA_START_MODE)) {
@@ -439,7 +428,7 @@ class SamplingEditorActivity : AppCompatActivity() {
 
     private fun showColorTest() {
         page = Page.COLOR_TEST
-        samplingHeaderTitle.text = "LED Colour Match"
+        samplingHeaderTitle.text = "LED Colour Match Check"
         samplingHeaderDescription.visibility = View.VISIBLE
         samplingHeaderDescription.text = "Match the physical LEDs to the colours displayed on screen."
         colorIndex = 0
