@@ -110,8 +110,6 @@ class SamplingEditorActivity : AppCompatActivity() {
         placeholder = findViewById(R.id.samplingPlaceholder)
         leftReferenceButton = findViewById(R.id.leftReferenceButton)
         rightReferenceButton = findViewById(R.id.rightReferenceButton)
-        btnNext = findViewById(R.id.btnNext)
-        btnBack = findViewById(R.id.btnBack)
         testColorName = findViewById(R.id.testColorName)
         matchStickName = findViewById(R.id.matchStickName)
         matchLeftButton = findViewById(R.id.btnMatchLeft)
