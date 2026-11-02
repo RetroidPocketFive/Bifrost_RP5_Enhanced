@@ -65,6 +65,9 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var redValue: TextView
     private lateinit var greenValue: TextView
     private lateinit var blueValue: TextView
+    private lateinit var testIntensitySeek: SeekBar
+    private lateinit var testIntensityValue: TextView
+    private var testIntensity = 100
     private var matchStick = LedColorCalibration.Stick.LEFT
     private var matchAdjusting = false
 
@@ -74,9 +77,10 @@ class SamplingEditorActivity : AppCompatActivity() {
 
     private data class TestColor(val name: String, val color: Int)
     private val testColors = listOf(
-        TestColor("RED", Color.rgb(255, 0, 0)),
-        TestColor("GREEN", Color.GREEN),
+        TestColor("RED", Color.RED),
         TestColor("BLUE", Color.BLUE),
+        TestColor("GREEN", Color.GREEN),
+        TestColor("YELLOW", Color.YELLOW),
         TestColor("WHITE", Color.WHITE),
     )
 
@@ -122,6 +126,11 @@ class SamplingEditorActivity : AppCompatActivity() {
         redValue = findViewById(R.id.redValue)
         greenValue = findViewById(R.id.greenValue)
         blueValue = findViewById(R.id.blueValue)
+        testIntensitySeek = findViewById(R.id.testIntensitySeek)
+        testIntensityValue = findViewById(R.id.testIntensityValue)
+        testIntensitySeek.max = 100
+        testIntensitySeek.progress = testIntensity
+        testIntensityValue.text = "TEST INTENSITY 100%"
 
         val metrics = getDisplayMetrics()
         canvas.screenAspectRatio =
@@ -214,6 +223,15 @@ class SamplingEditorActivity : AppCompatActivity() {
         redSeek.setOnSeekBarChangeListener(seekListener)
         greenSeek.setOnSeekBarChangeListener(seekListener)
         blueSeek.setOnSeekBarChangeListener(seekListener)
+        testIntensitySeek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                testIntensity = progress.coerceIn(0, 100)
+                testIntensityValue.text = "TEST INTENSITY " + testIntensity + "%"
+                updateMatchValues()
+            }
+            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+        })
         findViewById<MaterialButton>(R.id.btnColorBack).setOnClickListener {
             if (colorIndex == 0) showEditor(1)
             else {
@@ -222,17 +240,9 @@ class SamplingEditorActivity : AppCompatActivity() {
             }
         }
         findViewById<MaterialButton>(R.id.btnColorNext).setOnClickListener {
-            if (colorIndex < testColors.lastIndex) {
-                saveCurrentPrimary()
-                colorIndex++
-                updateColorTest()
-            } else {
-                Toast.makeText(
-                    this,
-                    "White is a verification colour. Save & Apply when the stick looks correct.",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
+            saveCurrentPrimary()
+            colorIndex = (colorIndex + 1) % testColors.size
+            updateColorTest()
         }
         findViewById<MaterialButton>(R.id.btnFinishCalibration).setOnClickListener {
             if (colorIndex <= 2) saveCurrentPrimary()
@@ -431,13 +441,22 @@ class SamplingEditorActivity : AppCompatActivity() {
 
     private fun updateColorTest() {
         val test = testColors[colorIndex]
-        targetColorSwatch.setBackgroundColor(test.color)
+        targetColorSwatch.setBackgroundColor(scaleColor(test.color, testIntensity))
         testColorName.text = test.name + "  (" + (colorIndex + 1) + "/" + testColors.size + ")"
         loadMatchCommand()
     }
 
     private fun matchStickLabel(): String =
         if (matchStick == LedColorCalibration.Stick.LEFT) "LEFT" else "RIGHT"
+
+    private fun scaleColor(color: Int, intensity: Int): Int {
+        val factor = intensity.coerceIn(0, 100) / 100f
+        return Color.rgb(
+            (Color.red(color) * factor).toInt(),
+            (Color.green(color) * factor).toInt(),
+            (Color.blue(color) * factor).toInt()
+        )
+    }
 
     private fun loadMatchCommand() {
         matchStickName.text = "SELECTED: " + matchStickLabel()
@@ -477,11 +496,12 @@ class SamplingEditorActivity : AppCompatActivity() {
         redValue.text = "R " + redSeek.progress
         greenValue.text = "G " + greenSeek.progress
         blueValue.text = "B " + blueSeek.progress
-        rawColorSwatch.setBackgroundColor(command)
+        rawColorSwatch.setBackgroundColor(scaleColor(command, testIntensity))
+        targetColorSwatch.setBackgroundColor(scaleColor(testColors[colorIndex].color, testIntensity))
     }
 
     private fun testAdjustedCommand() {
-        val command = Color.rgb(redSeek.progress, greenSeek.progress, blueSeek.progress)
+        val command = scaleColor(Color.rgb(redSeek.progress, greenSeek.progress, blueSeek.progress), testIntensity)
         val left = if (matchStick == LedColorCalibration.Stick.LEFT) command else Color.BLACK
         val right = if (matchStick == LedColorCalibration.Stick.RIGHT) command else Color.BLACK
         runLedTest(left, right, true)
@@ -493,11 +513,16 @@ class SamplingEditorActivity : AppCompatActivity() {
     }
 
     private fun saveCurrentPrimary() {
-        if (colorIndex > 2) {
-            Toast.makeText(this, "WHITE is verification only; it is not a matrix primary.", Toast.LENGTH_LONG).show()
+        val primary = when (testColors[colorIndex].name) {
+            "RED" -> LedColorCalibration.Primary.RED
+            "BLUE" -> LedColorCalibration.Primary.BLUE
+            "GREEN" -> LedColorCalibration.Primary.GREEN
+            else -> null
+        }
+        if (primary == null) {
+            Toast.makeText(this, testColors[colorIndex].name + " is a verification colour, not a matrix primary.", Toast.LENGTH_LONG).show()
             return
         }
-        val primary = LedColorCalibration.Primary.values()[colorIndex]
         LedColorCalibration.setPrimaryCommand(
             this,
             matchStick,
