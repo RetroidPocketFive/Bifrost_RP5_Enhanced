@@ -460,6 +460,23 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/testIntensityValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="TEST INTENSITY 100%"
+            android:textColor="#F2F4FF"
+            android:textStyle="bold"
+            android:textSize="12sp" />
+
+        <SeekBar
+            android:id="@+id/testIntensitySeek"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:max="100"
+            android:progress="100" />
+
+        <TextView
             android:id="@+id/testColorName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
