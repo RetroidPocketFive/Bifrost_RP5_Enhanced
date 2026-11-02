@@ -69,6 +69,8 @@ class SamplingEditorActivity : AppCompatActivity() {
     private lateinit var testIntensityValue: TextView
     private var testIntensity = 100
     private var matchStick = LedColorCalibration.Stick.LEFT
+    private var matchBoth = false
+    private lateinit var matchBothButton: MaterialButton
     private var matchAdjusting = false
 
     private var referenceBitmap: Bitmap? = null
@@ -118,6 +120,7 @@ class SamplingEditorActivity : AppCompatActivity() {
         matchStickName = findViewById(R.id.matchStickName)
         matchLeftButton = findViewById(R.id.btnMatchLeft)
         matchRightButton = findViewById(R.id.btnMatchRight)
+        matchBothButton = findViewById(R.id.btnMatchBoth)
         targetColorSwatch = findViewById(R.id.targetColorSwatch)
         rawColorSwatch = findViewById(R.id.rawColorSwatch)
         redSeek = findViewById(R.id.redSeek)
@@ -199,6 +202,11 @@ class SamplingEditorActivity : AppCompatActivity() {
         }
         matchRightButton.setOnClickListener {
             matchStick = LedColorCalibration.Stick.RIGHT
+            matchBoth = false
+            loadMatchCommand()
+        }
+        matchBothButton.setOnClickListener {
+            matchBoth = true
             loadMatchCommand()
         }
         findViewById<MaterialButton>(R.id.btnTestAdjusted).setOnClickListener {
@@ -208,9 +216,14 @@ class SamplingEditorActivity : AppCompatActivity() {
             saveCurrentPrimary()
         }
         findViewById<MaterialButton>(R.id.btnResetLedCalibration).setOnClickListener {
-            LedColorCalibration.reset(this, matchStick)
+            if (matchBoth) {
+                LedColorCalibration.reset(this, LedColorCalibration.Stick.LEFT)
+                LedColorCalibration.reset(this, LedColorCalibration.Stick.RIGHT)
+            } else {
+                LedColorCalibration.reset(this, matchStick)
+            }
             loadMatchCommand()
-            Toast.makeText(this, matchStickLabel() + " LED calibration reset.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, (if (matchBoth) "Both sticks" else matchStickLabel()) + " LED calibration reset.", Toast.LENGTH_SHORT).show()
         }
 
         val seekListener = object : SeekBar.OnSeekBarChangeListener {
@@ -447,7 +460,7 @@ class SamplingEditorActivity : AppCompatActivity() {
     }
 
     private fun matchStickLabel(): String =
-        if (matchStick == LedColorCalibration.Stick.LEFT) "LEFT" else "RIGHT"
+        if (matchBoth) "BOTH" else if (matchStick == LedColorCalibration.Stick.LEFT) "LEFT" else "RIGHT"
 
     private fun scaleColor(color: Int, intensity: Int): Int {
         val factor = intensity.coerceIn(0, 100) / 100f
@@ -461,14 +474,16 @@ class SamplingEditorActivity : AppCompatActivity() {
     private fun loadMatchCommand() {
         matchStickName.text = "SELECTED: " + matchStickLabel()
         val theme = com.moonbench.bifrost.rp5.CalibrationTheme.from(this)
-        val selected = if (matchStick == LedColorCalibration.Stick.LEFT) matchLeftButton else matchRightButton
-        val unselected = if (matchStick == LedColorCalibration.Stick.LEFT) matchRightButton else matchLeftButton
-        selected.backgroundTintList = ColorStateList.valueOf(theme.accent)
-        selected.strokeColor = ColorStateList.valueOf(theme.accentLight)
-        selected.setTextColor(if (theme.accent == Color.parseColor("#39FF14")) Color.BLACK else theme.background)
-        unselected.backgroundTintList = ColorStateList.valueOf(theme.surface)
-        unselected.strokeColor = ColorStateList.valueOf(theme.accent)
-        unselected.setTextColor(theme.text)
+        listOf(matchLeftButton, matchBothButton, matchRightButton).forEach { button ->
+            val active = when (button) {
+                matchLeftButton -> !matchBoth && matchStick == LedColorCalibration.Stick.LEFT
+                matchRightButton -> !matchBoth && matchStick == LedColorCalibration.Stick.RIGHT
+                else -> matchBoth
+            }
+            button.backgroundTintList = ColorStateList.valueOf(if (active) theme.accent else theme.surface)
+            button.strokeColor = ColorStateList.valueOf(if (active) theme.accentLight else theme.accent)
+            button.setTextColor(if (active && theme.accent == Color.parseColor("#39FF14")) Color.BLACK else if (active) theme.background else theme.text)
+        }
         val primary = when (testColors[colorIndex].name) {
             "RED" -> LedColorCalibration.Primary.RED
             "BLUE" -> LedColorCalibration.Primary.BLUE
@@ -476,7 +491,10 @@ class SamplingEditorActivity : AppCompatActivity() {
             else -> null
         }
         val command = if (primary != null) {
-            LedColorCalibration.getPrimaryCommand(this, matchStick, primary)
+            val left = LedColorCalibration.getPrimaryCommand(this, LedColorCalibration.Stick.LEFT, primary)
+            val right = LedColorCalibration.getPrimaryCommand(this, LedColorCalibration.Stick.RIGHT, primary)
+            if (matchBoth) LedColorCalibration.CommandColor((left.red + right.red) / 2, (left.green + right.green) / 2, (left.blue + right.blue) / 2)
+            else LedColorCalibration.getPrimaryCommand(this, matchStick, primary)
         } else {
             LedColorCalibration.CommandColor(
                 Color.red(testColors[colorIndex].color),
@@ -503,8 +521,8 @@ class SamplingEditorActivity : AppCompatActivity() {
 
     private fun testAdjustedCommand() {
         val command = scaleColor(Color.rgb(redSeek.progress, greenSeek.progress, blueSeek.progress), testIntensity)
-        val left = if (matchStick == LedColorCalibration.Stick.LEFT) command else Color.BLACK
-        val right = if (matchStick == LedColorCalibration.Stick.RIGHT) command else Color.BLACK
+        val left = if (matchBoth || matchStick == LedColorCalibration.Stick.LEFT) command else Color.BLACK
+        val right = if (matchBoth || matchStick == LedColorCalibration.Stick.RIGHT) command else Color.BLACK
         runLedTest(left, right, true)
         Toast.makeText(
             this,
@@ -524,12 +542,13 @@ class SamplingEditorActivity : AppCompatActivity() {
             Toast.makeText(this, testColors[colorIndex].name + " is a verification colour, not a matrix primary.", Toast.LENGTH_LONG).show()
             return
         }
-        LedColorCalibration.setPrimaryCommand(
-            this,
-            matchStick,
-            primary,
-            LedColorCalibration.CommandColor(redSeek.progress, greenSeek.progress, blueSeek.progress)
-        )
+        val adjusted = LedColorCalibration.CommandColor(redSeek.progress, greenSeek.progress, blueSeek.progress)
+        if (matchBoth) {
+            LedColorCalibration.setPrimaryCommand(this, LedColorCalibration.Stick.LEFT, primary, adjusted)
+            LedColorCalibration.setPrimaryCommand(this, LedColorCalibration.Stick.RIGHT, primary, adjusted)
+        } else {
+            LedColorCalibration.setPrimaryCommand(this, matchStick, primary, adjusted)
+        }
         Toast.makeText(
             this,
             matchStickLabel() + " " + primary.name + " correction saved.",
