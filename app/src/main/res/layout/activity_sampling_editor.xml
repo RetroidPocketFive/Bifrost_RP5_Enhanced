@@ -345,7 +345,7 @@
             android:id="@+id/colorTestTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="LED COLOR MATCH"
+            android:text="LED COLOUR MATCH CHECK"
             android:textColor="#F2F4FF"
             android:textStyle="bold"
             android:textSize="16sp" />
@@ -616,16 +616,6 @@
                 android:minHeight="48dp" />
         </LinearLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnFinishCalibration"
-            style="@style/Widget.Material3.Button"
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:text="SAVE &amp; APPLY"
-                app:cornerRadius="14dp"
-                android:textColor="#FFFFFF"
-                app:backgroundTint="#6865F2"
-                android:minHeight="48dp" />
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
